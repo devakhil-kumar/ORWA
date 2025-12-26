@@ -92,7 +92,6 @@ const LoginScreen = () => {
             if (scheme === 'admin') {
                 response = await dispatch(loginAdmin(userData)).unwrap();
             } else {
-                console.log(userData, 'vndhlsfbvldnbbg')
                 response = await dispatch(LoginUser(userData)).unwrap();
             }
             dispatch(
@@ -193,9 +192,9 @@ const LoginScreen = () => {
                             </View>
                         </View>
 
-                        <TouchableOpacity style={styles.forgotPassword}>
+                        {/* <TouchableOpacity style={styles.forgotPassword}>
                             <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                     </View>
 
                     <TouchableOpacity

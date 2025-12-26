@@ -23,6 +23,7 @@ const PaymentDetails = () => {
     const dispatch = useDispatch();
 
     const { payment } = route.params;
+    console.log(payment, 'payment++++++')
     const { loading, success, error } = useSelector((state) => state.paymentApprove);
     const [verifyingStatus, setVerifyingStatus] = useState(null);
 

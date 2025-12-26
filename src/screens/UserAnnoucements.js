@@ -20,6 +20,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAnnouncements } from '../app/features/announcementSliceUser';
 import { stat } from 'react-native-fs';
+import { useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -251,6 +252,7 @@ const Announcement = () => {
     const [selectedAnnouncementFilter, setSelectedAnnouncementFilter] = useState('All');
     const dispatch = useDispatch();
     const [searchText, setSearchText] = useState('');
+    const navigation = useNavigation();
 
 
     useEffect(() => {
@@ -281,12 +283,21 @@ const Announcement = () => {
         return true;
     });
 
+    const EmptyState = ({ message }) => {
+        return (
+            <View style={styles.emptyContainer}>
+                <Ionicons name="notifications-off-outline" size={48} color="#9CA3AF" />
+                <Text style={styles.emptyText}>{message}</Text>
+            </View>
+        );
+    };
+
 
     return (
         <SafeAreaView style={styles.container} edges={['top', '0']}>
             <View style={styles.header}>
                 <View style={{ flexDirection: 'row' }}>
-                    <TouchableOpacity >
+                    <TouchableOpacity onPress={() => navigation.goBack()} >
                         <Ionicons name="arrow-back" size={28} color="#000" />
                     </TouchableOpacity>
                     {/* <Text style={styles.headerText}>Announcements</Text> */}
@@ -353,17 +364,27 @@ const Announcement = () => {
                 showsVerticalScrollIndicator={false}
                 style={{ flex: 1, backgroundColor: '#F9FAFB80' }}
             >
-                <FlatList
-                    data={filteredAnnouncements}
-                    showsVerticalScrollIndicator={false}
-                    scrollEnabled={false}
-                    keyExtractor={(item, index) => index.toString()}
-                    style={{ backgroundColor: 'rgba(249, 250, 251, 0.5)' }}
-                    renderItem={({ item }) => {
-                        return <AnnouncementListItem item={item} />;
-                    }}
-                />
-
+                {filteredAnnouncements.length === 0 ?
+                    <EmptyState
+                        message={
+                            selectedAnnouncementFilter === 'System'
+                                ? 'No system notifications available'
+                                : selectedAnnouncementFilter === 'Event'
+                                    ? 'No events available'
+                                    : 'No announcements available'
+                        }
+                    />
+                    : <FlatList
+                        data={filteredAnnouncements}
+                        showsVerticalScrollIndicator={false}
+                        scrollEnabled={false}
+                        keyExtractor={(item, index) => index.toString()}
+                        style={{ backgroundColor: 'rgba(249, 250, 251, 0.5)' }}
+                        renderItem={({ item }) => {
+                            return <AnnouncementListItem item={item} />;
+                        }}
+                    />
+                }
                 {/* OFFER container */}
 
             </ScrollView>
@@ -520,4 +541,19 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(12),
         color: '#519377',
     },
+    emptyContainer: {
+        marginTop: height * 0.15,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 30,
+      },
+      
+      emptyText: {
+        marginTop: 12,
+        fontSize: moderateScale(16),
+        color: '#9CA3AF',
+        textAlign: 'center',
+        fontWeight: '500',
+      },
+      
 });

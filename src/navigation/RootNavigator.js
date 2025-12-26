@@ -5,6 +5,7 @@ import AdminNavigator from './AdminRoute/AdminNavigator';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadInitialState } from '../app/features/authSlice';
+import AdminBottomTabs from './AdminRoute/BottomBar';
 
 const RootNavigator = () => {
     const dispatch = useDispatch();
@@ -28,7 +29,7 @@ const RootNavigator = () => {
         if (userRole === "residential") {
             return <MainNavigator />
         } else if (userRole === "admin") {
-            return <AdminNavigator />
+            return <AdminBottomTabs />
         }
     }
     return <AuthNavigator />

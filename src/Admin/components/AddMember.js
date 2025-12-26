@@ -10,6 +10,7 @@ import {
   TextInput,
   Dimensions,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -27,7 +28,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
-const SignatureBox = forwardRef(({ onSave }, ref) => {
+const SignatureBox = forwardRef(({ onSave, onBeginSigning, onEndSigning }, ref) => {
   const signRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
@@ -41,8 +42,9 @@ const SignatureBox = forwardRef(({ onSave }, ref) => {
     onSave(signature);
   };
 
-  const handleEnd = () => {
+  const handleStrokeEnd = () => {
     signRef.current?.readSignature(); // Auto-save on stroke end
+    onEndSigning();
   };
 
   const signatureStyle = `
@@ -57,16 +59,24 @@ const SignatureBox = forwardRef(({ onSave }, ref) => {
       <Signature
         ref={signRef}
         onOK={handleOK}
-        onEnd={handleEnd}
+        onEnd={handleStrokeEnd}
+        onBegin={onBeginSigning}
         descriptionText="Sign here"
         autoClear={false}
         imageType="image/png"
         webStyle={signatureStyle}
         backgroundColor="#ffffff"
         penColor="#000000"
-        dotSize={3}
-        minWidth={2}
+        dotSize={2} // Slightly reduced to minimize isolated dots
+        minWidth={1}
         maxWidth={4}
+        minDistance={0} // Connect points immediately for smoother lines
+        throttle={0} // No delay in processing strokes
+        webviewProps={{
+          androidHardwareAccelerationDisabled: true,
+          androidLayerType: 'software',
+          cacheEnabled: false,
+        }}
       />
     </View>
   );
@@ -91,10 +101,17 @@ const generateCaptcha = () => {
 
 export default function MembershipForm() {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.addmember); // Adjust if reducer name is different
+  const { loading } = useSelector((state) => state.addmember); 
   const navigation = useNavigation();
 
   const [step, setStep] = useState(1);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+  const scrollRef = useRef(null); 
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ y: 0, animated: true });
+    }
+  }, [step]);
 
   // Form Fields
   const [firstName, setFirstName] = useState('');
@@ -174,7 +191,7 @@ export default function MembershipForm() {
   const pickAndCrop = async (setter, options = {}) => {
     try {
       const image = await ImagePicker.openPicker({
-        width: options.width || 800,
+        width: options.width || 1200,
         height: options.height || 800,
         cropping: true,
         cropperCircleOverlay: options.circle || false,
@@ -235,7 +252,11 @@ export default function MembershipForm() {
     if (livingHere === null) missing.push('• Are you living here?');
     if (!dob) missing.push('• Date of Birth');
     if (!occupation.trim()) missing.push('• Occupation');
-    if (!phone.trim()) missing.push('• Phone Number');
+    if (!phone.trim()) {
+      missing.push('• Phone Number');
+    } else if (!/^\d{10}$/.test(phone.trim())) {
+      missing.push('• Phone Number: Must be exactly 10 digits');
+    }
     if (!email.trim()) missing.push('• Email');
     return missing;
   };
@@ -353,7 +374,7 @@ export default function MembershipForm() {
         await RNFS.writeFile(filePath, base64Data, 'base64');
 
         formData.append('signature', {
-          uri: Platform.OS === 'android' ? filePath : `file://${filePath}`, 
+          uri: Platform.OS === 'android' ? `file://${filePath}`: `file://${filePath}`, 
           type: 'image/png',
           name: 'signature.png',
         });
@@ -383,10 +404,19 @@ export default function MembershipForm() {
     }
   };
 
+  const handleBack = () => {
+    if (step === 1) {
+      navigation?.goBack?.();
+    } else {
+      setStep(step - 1);
+      setScrollEnabled(true);
+    }
+  };
+
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={{ flexDirection: 'row' }}>
-        <TouchableOpacity onPress={() => (step === 1 ? navigation?.goBack?.() : setStep(step - 1))}>
+        <TouchableOpacity onPress={handleBack}>
           <FontAwesome name="angle-left" size={28} color={'#000'} />
         </TouchableOpacity>
         <View style={{ width: '95%', justifyContent: 'center', marginTop: 20 }}>
@@ -423,260 +453,277 @@ export default function MembershipForm() {
     </TouchableOpacity>
   );
 
+  const onBeginSigning = () => setScrollEnabled(false);
+  const onEndSigning = () => setScrollEnabled(true);
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         {renderHeader()}
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {step === 1 && (
-            <>
-              <Text style={styles.label}>Name *</Text>
-              <TextInput style={styles.input} placeholder="First" value={firstName} onChangeText={setFirstName} placeholderTextColor={'#E0E0E0'} />
-              <Text style={styles.label}>Middle Name </Text>
-              <TextInput style={styles.input} placeholder="Middle" value={middleName} onChangeText={setMiddleName} placeholderTextColor={'#E0E0E0'} />
-              <Text style={styles.label}>Last Name *</Text>
-              <TextInput style={styles.input} placeholder="Last" value={lastName} onChangeText={setLastName} placeholderTextColor={'#E0E0E0'} />
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          <ScrollView 
+            style={styles.content} 
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            scrollEnabled={scrollEnabled}
+            ref={scrollRef} 
+          >
+            {step === 1 && (
+              <>
+                <Text style={styles.label}>Name *</Text>
+                <TextInput style={styles.input} placeholder="First" value={firstName} onChangeText={setFirstName} placeholderTextColor={'#E0E0E0'} />
+                <Text style={styles.label}>Middle Name </Text>
+                <TextInput style={styles.input} placeholder="Middle" value={middleName} onChangeText={setMiddleName} placeholderTextColor={'#E0E0E0'} />
+                <Text style={styles.label}>Last Name *</Text>
+                <TextInput style={styles.input} placeholder="Last" value={lastName} onChangeText={setLastName} placeholderTextColor={'#E0E0E0'} />
 
-              <Text style={styles.label}>Father/Husband/Mother/Wife's Name *</Text>
-              <TextInput style={styles.inputFull} value={relativeName} onChangeText={setRelativeName} />
-              <Text style={styles.label}>Middle Name </Text>
-              <TextInput style={styles.input} placeholder="Middle" value={relativemiddleName} onChangeText={setrelativeMiddleName} placeholderTextColor={'#E0E0E0'} />
-              <Text style={styles.label}>Last Name *</Text>
-              <TextInput style={styles.input} placeholder="Last" value={relativelastName} onChangeText={setrelativeLastName} placeholderTextColor={'#E0E0E0'} />
-              <Text style={styles.label}>Are you living here? </Text>
-              <View style={styles.radioRow}>
-                {['Yes', 'No'].map((item) => (
-                  <TouchableOpacity
-                    key={item}
-                    style={styles.radioBtn}
-                    onPress={() => setLivingHere(item === 'Yes')}
-                  >
-                    <View style={[styles.radioCircle, livingHere === (item === 'Yes') && styles.radioFilled]} />
-                    <Text style={styles.radioLabel}>{item}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <Text style={styles.label}>Date of Birth *</Text>
-              <TouchableOpacity onPress={() => setDatePickerVisible(true)}>
-                <TextInput
-                  style={styles.inputFull}
-                  value={dob ? dob.toDateString() : ''}
-                  placeholder="Select Date"
-                  editable={false}
-                  pointerEvents="none"
-                  placeholderTextColor={'#E0E0E0'}
+                <Text style={styles.label}>Father/Husband/Mother/Wife's Name *</Text>
+                <TextInput style={styles.inputFull} value={relativeName} onChangeText={setRelativeName} />
+                <Text style={styles.label}>Middle Name </Text>
+                <TextInput style={styles.input} placeholder="Middle" value={relativemiddleName} onChangeText={setrelativeMiddleName} placeholderTextColor={'#E0E0E0'} />
+                <Text style={styles.label}>Last Name *</Text>
+                <TextInput style={styles.input} placeholder="Last" value={relativelastName} onChangeText={setrelativeLastName} placeholderTextColor={'#E0E0E0'} />
+                <Text style={styles.label}>Are you living here? </Text>
+                <View style={styles.radioRow}>
+                  {['Yes', 'No'].map((item) => (
+                    <TouchableOpacity
+                      key={item}
+                      style={styles.radioBtn}
+                      onPress={() => setLivingHere(item === 'Yes')}
+                    >
+                      <View style={[styles.radioCircle, livingHere === (item === 'Yes') && styles.radioFilled]} />
+                      <Text style={styles.radioLabel}>{item}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={styles.label}>Date of Birth *</Text>
+                <TouchableOpacity onPress={() => setDatePickerVisible(true)}>
+                  <TextInput
+                    style={styles.inputFull}
+                    value={dob ? dob.toDateString() : ''}
+                    placeholder="Select Date"
+                    editable={false}
+                    pointerEvents="none"
+                    placeholderTextColor={'#E0E0E0'}
+                  />
+                </TouchableOpacity>
+                <DateTimePickerModal
+                  isVisible={isDatePickerVisible}
+                  mode="date"
+                  onConfirm={handleDateConfirm}
+                  onCancel={() => setDatePickerVisible(false)}
+                  maximumDate={new Date()}
                 />
-              </TouchableOpacity>
-              <DateTimePickerModal
-                isVisible={isDatePickerVisible}
-                mode="date"
-                onConfirm={handleDateConfirm}
-                onCancel={() => setDatePickerVisible(false)}
-                maximumDate={new Date()}
-              />
-              <Text style={styles.label}>Occupation *</Text>
-              <TextInput style={styles.inputFull} value={occupation} onChangeText={setOccupation} />
+                <Text style={styles.label}>Occupation *</Text>
+                <TextInput style={styles.inputFull} value={occupation} onChangeText={setOccupation} />
 
-              <Text style={styles.label}>Phone Number *</Text>
-              <TextInput style={styles.input} placeholder="Phone *" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholderTextColor={'#E0E0E0'} />
+                <Text style={styles.label}>Phone Number *</Text>
+                <TextInput style={styles.input} placeholder="Phone *" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholderTextColor={'#E0E0E0'} />
 
-              <Text style={styles.label}>Email *</Text>
-              <TextInput style={styles.input} placeholder="Email *" value={email} onChangeText={setEmail} keyboardType="email-address" placeholderTextColor={'#E0E0E0'} />
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <Text style={styles.label}>Flat/Villa/Plot No. *</Text>
-              <TextInput style={styles.inputFull} value={flatNo} onChangeText={setFlatNo} />
-
-              <Text style={styles.label}>Floor</Text>
-              <TextInput style={styles.inputFull} value={floor} onChangeText={setFloor} />
-
-              <Text style={styles.label}>Block Number</Text>
-              <TextInput style={styles.inputFull} value={blockNumber} onChangeText={setBlockNumber} />
-
-              <Text style={styles.label}>Scheme</Text>
-              <DropDownPicker
-                open={openScheme}
-                value={scheme}
-                items={schemes}
-                setOpen={setOpenScheme}
-                listMode="SCROLLVIEW"
-                setValue={setScheme}
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownList}
-              />
-
-              <Text style={styles.label}>Correspondence Address *</Text>
-              <TextInput style={styles.inputFull} placeholder="Address Line 1" value={address1} onChangeText={setAddress1} />
-              <TextInput style={styles.inputFull} placeholder="Address Line 2" value={address2} onChangeText={setAddress2} />
-
-              <View style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>City *</Text>
-                  <TextInput style={styles.input} value={city} onChangeText={setCity} />
-                </View>
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.label}>State *</Text>
-                  <TextInput style={styles.input} value={state} onChangeText={setState} />
-                </View>
-              </View>
-
-              <Text style={styles.label}>Postal Code *</Text>
-              <TextInput style={styles.inputFull} value={postalCode} onChangeText={setPostalCode} keyboardType="numeric" />
-
-              <Text style={styles.label}>Country</Text>
-              <TextInput style={styles.inputFull} value={country} onChangeText={setCountry} />
-
-              <Text style={styles.label}>No. of family members</Text>
-              <TextInput style={styles.inputFull} value={familyMembers} onChangeText={setFamilyMembers} keyboardType="numeric" />
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <Text style={styles.label}>Hobbies/Skills</Text>
-              <TextInput style={styles.inputFull} value={hobbies} onChangeText={setHobbies} multiline />
-            </>
-          )}
-
-          {step === 4 && (
-            <View style={styles.uploadGrid}>
-              <View>
-                <Text style={styles.label}>Identity Proof *</Text>
-                <UploadBox title="Identity Proof" file={idProof} onPress={() => pickAndCrop(setIdProof)} />
-              </View>
-              <View>
-                <Text style={styles.label}>Address Proof *</Text>
-                <UploadBox title="Address Proof" file={addressProof} onPress={() => pickAndCrop(setAddressProof)} />
-              </View>
-              <View>
-                <Text style={styles.label}>Ownership Proof *</Text>
-                <UploadBox title="Ownership Proof" file={ownershipProof} onPress={() => pickAndCrop(setOwnershipProof)} />
-              </View>
-              <View>
-                <Text style={styles.label}>Photo *</Text>
-                <UploadBox title="Photo" file={photo} onPress={() => pickAndCrop(setPhoto, { cropperCircleOverlay: true })} />
-              </View>
-            </View>
-          )}
-
-          {step === 5 && (
-            <>
-              <Text style={styles.label}>ID Proof Type *</Text>
-              <DropDownPicker
-                open={openIdType}
-                value={idProofType}
-                setOpen={setOpenIdType}
-                setValue={setIdProofType}
-                items={identityProofDocument}
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownList}
-                listMode="SCROLLVIEW"
-                zIndex={3000}
-                zIndexInverse={1000}
-              />
-
-              <Text style={styles.label}>Address Proof Type *</Text>
-              <DropDownPicker
-                open={openAddrType}
-                value={addressProofType}
-                setOpen={setOpenAddrType}
-                setValue={setAddressProofType}
-                items={docTypes}
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownList}
-                listMode="SCROLLVIEW"
-                zIndex={2000}
-                zIndexInverse={2000}
-              />
-
-              <Text style={styles.label}>Ownership Proof Type *</Text>
-              <DropDownPicker
-                open={openOwnType}
-                value={ownershipProofType}
-                setOpen={setOpenOwnType}
-                setValue={setOwnershipProofType}
-                items={ownershipTypes}
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownList}
-                listMode="SCROLLVIEW"
-                zIndex={1000}
-                zIndexInverse={3000}
-              />
-            </>
-          )}
-
-          {step === 6 && (
-            <>
-              <Text style={styles.label}>Captcha *</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-                <View style={styles.captchaBox}>
-                  <Text style={styles.captchaText}>
-                    {captchaData.num1} {captchaData.operator} {captchaData.num2} =
-                  </Text>
-                </View>
-                <TextInput
-                  style={[styles.input, { flex: 1, marginLeft: 10 }]}
-                  placeholder="Answer"
-                  value={captcha}
-                  onChangeText={setCaptcha}
-                  keyboardType="numeric"
-                  placeholderTextColor={'#E0E0E0'}
-                />
-              </View>
-
-              <Text style={styles.label}>Signature *</Text>
-              {signature && (
-                <View style={{ marginVertical: 10 }}>
-                  <Image source={{ uri: signature }} style={{ width: '100%', height: 150, borderRadius: 12 }} resizeMode="contain" />
-                  <Text style={{ textAlign: 'center', color: 'green', marginTop: 5 }}>✓ Signature captured</Text>
-                </View>
-              )}
-              <View style={styles.containerSing}>
-                <SignatureBox onSave={setSignature} ref={signatureRef} />
-              </View>
-
-              <TouchableOpacity
-                style={styles.clearBtn}
-                onPress={() => signatureRef.current?.clearSignature()}
-              >
-                <Text style={styles.clearText}>Clear Signature</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          <View style={styles.buttonRow}>
-            {step < 6 ? (
-              <TouchableOpacity style={styles.btnPrimary} onPress={nextStep}>
-                <Text style={styles.btnTextWhite}>Next</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity style={styles.btnSuccess} onPress={handleSubmit} disabled={loading}>
-                <Text style={styles.btnTextWhite}>
-                  {loading ? 'Submitting...' : 'Submit Application'}
-                </Text>
-              </TouchableOpacity>
+                <Text style={styles.label}>Email *</Text>
+                <TextInput style={styles.input} placeholder="Email *" value={email} onChangeText={setEmail} keyboardType="email-address" placeholderTextColor={'#E0E0E0'} />
+              </>
             )}
-          </View>
-        </ScrollView>
+
+            {step === 2 && (
+              <>
+                <Text style={styles.label}>Flat/Villa/Plot No. *</Text>
+                <TextInput style={styles.inputFull} value={flatNo} onChangeText={setFlatNo} />
+
+                <Text style={styles.label}>Floor</Text>
+                <TextInput style={styles.inputFull} value={floor} onChangeText={setFloor} />
+
+                <Text style={styles.label}>Block Number</Text>
+                <TextInput style={styles.inputFull} value={blockNumber} onChangeText={setBlockNumber} />
+
+                <Text style={styles.label}>Scheme</Text>
+                <DropDownPicker
+                  open={openScheme}
+                  value={scheme}
+                  items={schemes}
+                  setOpen={setOpenScheme}
+                  listMode="SCROLLVIEW"
+                  setValue={setScheme}
+                  style={styles.dropdown}
+                  dropDownContainerStyle={styles.dropdownList}
+                />
+
+                <Text style={styles.label}>Correspondence Address *</Text>
+                <TextInput style={styles.inputFull} placeholder="Address Line 1" value={address1} onChangeText={setAddress1} />
+                <TextInput style={styles.inputFull} placeholder="Address Line 2" value={address2} onChangeText={setAddress2} />
+
+                <View style={styles.row}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.label}>City *</Text>
+                    <TextInput style={styles.input} value={city} onChangeText={setCity} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text style={styles.label}>State *</Text>
+                    <TextInput style={styles.input} value={state} onChangeText={setState} />
+                  </View>
+                </View>
+
+                <Text style={styles.label}>Postal Code *</Text>
+                <TextInput style={styles.inputFull} value={postalCode} onChangeText={setPostalCode} keyboardType="numeric" />
+
+                <Text style={styles.label}>Country</Text>
+                <TextInput style={styles.inputFull} value={country} onChangeText={setCountry} />
+
+                <Text style={styles.label}>No. of family members</Text>
+                <TextInput style={styles.inputFull} value={familyMembers} onChangeText={setFamilyMembers} keyboardType="numeric" />
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <Text style={styles.label}>Hobbies/Skills</Text>
+                <TextInput style={styles.inputFull} value={hobbies} onChangeText={setHobbies} multiline />
+              </>
+            )}
+
+            {step === 4 && (
+              <View style={styles.uploadGrid}>
+                <View>
+                  <Text style={styles.label}>Identity Proof *</Text>
+                  <UploadBox title="Identity Proof" file={idProof} onPress={() => pickAndCrop(setIdProof)} />
+                </View>
+                <View>
+                  <Text style={styles.label}>Address Proof *</Text>
+                  <UploadBox title="Address Proof" file={addressProof} onPress={() => pickAndCrop(setAddressProof)} />
+                </View>
+                <View>
+                  <Text style={styles.label}>Ownership Proof *</Text>
+                  <UploadBox title="Ownership Proof" file={ownershipProof} onPress={() => pickAndCrop(setOwnershipProof)} />
+                </View>
+                <View>
+                  <Text style={styles.label}>Photo *</Text>
+                  <UploadBox title="Photo" file={photo} onPress={() => pickAndCrop(setPhoto, { cropperCircleOverlay: true })} />
+                </View>
+              </View>
+            )}
+
+            {step === 5 && (
+              <>
+                <Text style={styles.label}>ID Proof Type *</Text>
+                <DropDownPicker
+                  open={openIdType}
+                  value={idProofType}
+                  setOpen={setOpenIdType}
+                  setValue={setIdProofType}
+                  items={identityProofDocument}
+                  style={styles.dropdown}
+                  dropDownContainerStyle={styles.dropdownList}
+                  listMode="SCROLLVIEW"
+                  zIndex={3000}
+                  zIndexInverse={1000}
+                />
+
+                <Text style={styles.label}>Address Proof Type *</Text>
+                <DropDownPicker
+                  open={openAddrType}
+                  value={addressProofType}
+                  setOpen={setOpenAddrType}
+                  setValue={setAddressProofType}
+                  items={docTypes}
+                  style={styles.dropdown}
+                  dropDownContainerStyle={styles.dropdownList}
+                  listMode="SCROLLVIEW"
+                  zIndex={2000}
+                  zIndexInverse={2000}
+                />
+
+                <Text style={styles.label}>Ownership Proof Type *</Text>
+                <DropDownPicker
+                  open={openOwnType}
+                  value={ownershipProofType}
+                  setOpen={setOpenOwnType}
+                  setValue={setOwnershipProofType}
+                  items={ownershipTypes}
+                  style={styles.dropdown}
+                  dropDownContainerStyle={styles.dropdownList}
+                  listMode="SCROLLVIEW"
+                  zIndex={1000}
+                  zIndexInverse={3000}
+                />
+              </>
+            )}
+
+            {step === 6 && (
+              <>
+                <Text style={styles.label}>Captcha *</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+                  <View style={styles.captchaBox}>
+                    <Text style={styles.captchaText}>
+                      {captchaData.num1} {captchaData.operator} {captchaData.num2} =
+                    </Text>
+                  </View>
+                  <TextInput
+                    style={[styles.input, { flex: 1, marginLeft: 10 }]}
+                    placeholder="Answer"
+                    value={captcha}
+                    onChangeText={setCaptcha}
+                    keyboardType="numeric"
+                    placeholderTextColor={'#E0E0E0'}
+                  />
+                </View>
+
+                <Text style={styles.label}>Signature *</Text>
+                {signature && (
+                  <View style={{ marginVertical: 10 }}>
+                    <Image source={{ uri: signature }} style={{ width: '100%', height: 100, borderRadius: 12 }} resizeMode="contain" />
+                    <Text style={{ textAlign: 'center', color: 'green', marginTop: 5 }}>✓ Signature captured</Text>
+                  </View>
+                )}
+                <SignatureBox 
+                  onSave={setSignature} 
+                  ref={signatureRef} 
+                  onBeginSigning={onBeginSigning}
+                  onEndSigning={onEndSigning}
+                />
+                <TouchableOpacity
+                  style={styles.clearBtn}
+                  onPress={() => signatureRef.current?.clearSignature()}
+                >
+                  <Text style={styles.clearText}>Clear Signature</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            <View style={styles.buttonRow}>
+              {step < 6 ? (
+                <TouchableOpacity style={styles.btnPrimary} onPress={nextStep}>
+                  <Text style={styles.btnTextWhite}>Next</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity style={styles.btnSuccess} onPress={handleSubmit} disabled={loading}>
+                  <Text style={styles.btnTextWhite}>
+                    {loading ? 'Submitting...' : 'Submit Application'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F9FC' },
+  container: { flex: 1, backgroundColor: '#F7F9FC', padding:16 },
   header: {
     width: '100%',
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
     height: height / 4.2,
     backgroundColor: '#F7F9FC',
   },
   headerTitle: { fontSize: 14, fontWeight: '600', color: '#519377', textAlign: 'left', marginTop: 10 },
   stepIndicator: { fontSize: 14, color: '#666', fontWeight: '500', alignSelf: 'flex-end' },
-  content: { padding: 20 },
+  content: { padding:0},
   label: { fontSize: 16, fontWeight: '600', marginVertical: 10, color: '#1A1A1A' },
   row: { flexDirection: 'row', marginBottom: 10 },
   input: { backgroundColor: '#FFF', borderRadius: 12, height: 56, paddingHorizontal: 15, borderColor: '#C4C4C4', borderWidth: 1 },
@@ -690,7 +737,7 @@ const styles = StyleSheet.create({
   radioLabel: { fontSize: 16 },
   uploadGrid: { gap: 20 },
   uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding: 30, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed' },
-  uploadedImage: { width: 120, height: 120, borderRadius: 12, marginBottom: 10 },
+  uploadedImage: { width: 200, height: 120, borderRadius: 12, marginBottom: 10 },
   uploadText: { fontSize: 14, color: '#666', marginTop: 10 },
   fileName: { color: '#519377', fontSize: 12, marginTop: 8 },
   hint: { fontSize: 12, color: '#999', marginTop: 10 },
@@ -722,7 +769,7 @@ const styles = StyleSheet.create({
     borderColor: '#C4C4C4',
   },
   captchaText: { fontSize: 18, fontWeight: '600', color: '#1A1A1A' },
-  buttonRow: { marginVertical: 40 },
+  buttonRow: { marginVertical: 10 },
   btnPrimary: { backgroundColor: '#519377', padding: 16, borderRadius: 12 },
   btnSuccess: { backgroundColor: '#519377', padding: 16, borderRadius: 12 },
   btnTextWhite: { textAlign: 'center', fontWeight: '600', color: '#FFF', fontSize: 16 },

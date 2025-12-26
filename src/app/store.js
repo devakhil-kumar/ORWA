@@ -9,6 +9,12 @@ import paymentVerifySlice from '../app/features/paymentVerifySlice';
 import getprofileReducer from '../app/features/getprofileSlice';
 import announcementSliceUser from '../app/features/announcementSliceUser';
 import adminNotificationReducer from '../app/features/adminNotificationSlice';
+import eventAdminSliceReducer from '../app/features/eventAdminSlice';
+import adminResidentialSlice from '../app/features/getResidentails';
+import adminMemberRequestsSlice from '../app/features/adminMemberRequestsSlice';
+import societyReducer from '../app/features/societySlice';
+import contactSlice from '../app/features/contactSlice';
+import userContactSerivce from '../../src/app/features/userContactSlice';
 
 const store = configureStore({
     reducer: {
@@ -17,11 +23,17 @@ const store = configureStore({
         addmember:AddMemeberSlice,
         payment:paymentUploadSlice,
         paymentHistory:paymentHistorySlice,
-        residential:residentialPaymentsSlice,
+        residentialpayment:residentialPaymentsSlice,
         paymentApprove:paymentVerifySlice,
         profile:getprofileReducer,
         userAnnouncement:announcementSliceUser,
-        adminNotification:adminNotificationReducer
+        adminNotification:adminNotificationReducer,
+        eventAdmin:eventAdminSliceReducer,
+        residential:adminResidentialSlice,
+        memberList:adminMemberRequestsSlice,
+        society: societyReducer,
+        contact:contactSlice,
+        contactUser:userContactSerivce,
     }
 })
 

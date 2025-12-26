@@ -46,6 +46,7 @@ import UserSubmitPayment from '../screens/UserSubmitPayments.js';
 import UserHistoryPayments from '../screens/UserHistoryPayments.js';
 import UserProfile from '../screens/UserProfile.js';
 import imagePath from '../contests/imagePath.jsx';
+import  ContactUs  from '../screens/Profile/ContactUs.js';
 const { width, height } = Dimensions.get('window');
 
 
@@ -60,6 +61,8 @@ export const UserHomeDashboard = () => {
         <Stack.Navigator screenOptions={{headerShown: false}} initialRouteName='UserHome'>
             <Stack.Screen name='UserHome' component={UserHome} />
             <Stack.Screen name='UserAnnouncements' component={UserAnnouncements} />
+            <Stack.Screen name="UserHistoryPayments" component={UserHistoryPayments} />
+            <Stack.Screen name='ContactUs' component={ContactUs} />
         </Stack.Navigator>
     )
 }
@@ -111,7 +114,7 @@ const UserBottomTabs = () => {
                     ),
                     tabBarStyle: (() => {
                         const routeName = getFocusedRouteNameFromRoute(route) ?? 'Profile';
-                        if (routeName === 'UserAnnouncements') {
+                        if ( routeName === 'ContactUs' || routeName === "UserHistoryPayments") {
                             return { display: 'none' };
                         }
                         return defaultTabBarStyle;

@@ -14,11 +14,17 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 import store from './src/app/store';
 import { hideMessage } from './src/app/features/messageSlice';
 import CustomMessage from './src/components/CustomMessage';
+import { useEffect } from 'react';
 
 const GlobalMessageWrapper = () => {
   const { visible, text, type } = useSelector(state => state.message);
   console.log(visible, text, type, 'message++++++++++++++++++++')
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    console.log('App Connected to Metro - Bundle Loaded!');
+    // Yeh log-android mein dikhega
+  }, []);
 
   return (
     <>

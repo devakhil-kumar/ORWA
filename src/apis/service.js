@@ -1,4 +1,4 @@
-import { addMemberAPI, AnnouncementsHistroy, fetchResidentialPayments, getAdminNotification, getAdminProfile, getProfile, loginAPIAdmin, loginAPIUser, PaymentHistory, PaymentUpload, verifyPayment } from "./api";
+import { addMemberAPI, AnnouncementsHistroy, ContactUs, ContactUsUser, createEventAdmin, DeleteAdminEvent, fetchResidentialPayments, getAdminNotification, getAdminProfile, getEventAdmin, getMemberList, getProfile, getresidentailsAdmin, getSocietyAdmin, loginAPIAdmin, loginAPIUser, memberVerifyPayment, PaymentHistory, PaymentUpload, UpdateEventAdmin, updateSocietyAdmin, verifyPayment } from "./api";
 
 export const loginService = async userData => {
     try {
@@ -35,7 +35,7 @@ export const apiAddmemberService = async (formdata) => {
     } catch (error) {
         console.log(error, 'errorr++++++')
         throw new Error(
-            error?.response?.data?.message || "Failed to update profile"
+            error || "Failed to update profile"
         );
     }
 }
@@ -96,7 +96,7 @@ export const getProfileService = async () => {
     }
 };
 
-export const AnnouncementsUserService = async() => {
+export const AnnouncementsUserService = async () => {
     try {
         const response = await AnnouncementsHistroy();
         console.log(response, 'res')
@@ -110,7 +110,6 @@ export const AnnouncementsUserService = async() => {
 export const getAdminProfileService = async () => {
     try {
         const response = await getAdminProfile();
-        console.log(response.data, 'data=++++++++')
         return response.data;
     } catch (error) {
         console.log(error);
@@ -128,3 +127,114 @@ export const notificationAdminService = async (page, limit) => {
         return Promise.reject(error);
     }
 };
+
+export const announcementAdminService = async (isActive, page, limit) => {
+    try {
+        const response = await getEventAdmin(isActive, page, limit);
+        console.log(response, 'res')
+        return response;
+    } catch (error) {
+        console.log(error, 'error')
+        return Promise.reject(error);
+    }
+};
+
+export const addEventService = async (userData) => {
+    try {
+        const response = await createEventAdmin(userData);
+        console.log(response, 'res')
+        return response;
+    } catch (error) {
+        console.log(error, 'error')
+        return Promise.reject(error);
+    }
+};
+
+export const adminEventUpdateService = async (id, payload) => {
+    try {
+        const response = await UpdateEventAdmin(id, payload);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to update payment status' };
+    }
+};
+
+export const getAdminResdidentailsService = async () => {
+    try {
+        const response = await getresidentailsAdmin();
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to fetch profile.');
+    }
+};
+
+export const adminEventDeleteService = async (id) => {
+    try {
+        const response = await DeleteAdminEvent(id);
+        console.log(response, 'response++++++++++++++=')
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to update payment status' };
+    }
+};
+
+export const AdminMemeberRequestsService = async () => {
+    try {
+        const response = await getMemberList();
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to fetch profile.');
+    }
+};
+
+export const verifyMemberService = async (Id, status) => {
+    try {
+        const response = await memberVerifyPayment(Id, status);
+        console.log(response, 'response++++++++++++++=')
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to update payment status' };
+    }
+};
+
+export const societyAdminService = async (page, limit) => {
+    try {
+        const response = await getSocietyAdmin(page, limit);
+        console.log(response, 'res')
+        return response;
+    } catch (error) {
+        console.log(error, 'error')
+        return Promise.reject(error);
+    }
+};
+
+export const societyUpdateService = async (id, payload) => {
+    try {
+        const response = await updateSocietyAdmin(id, payload);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to update payment status' };
+    }
+};
+
+export const ContactusService = async (message) => {
+    try {
+        const response = await ContactUs(message);
+        return response.data
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to update payment status' };
+    }
+}
+
+export const UserContactUsSerivce = async (payload) => {
+    try {
+        const response = await ContactUsUser(payload);
+        console.log(response, 'response++++')
+        return response.data
+    } catch (error) {
+        console.log(error.response?.data, 'error')
+        throw error.response?.data || { message: 'Failed to update payment status' };
+    }
+}

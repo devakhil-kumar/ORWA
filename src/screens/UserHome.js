@@ -34,21 +34,33 @@ const UserHome = () => {
     dispatch(fetchProfile())
   }, [dispatch])
 
+  const handleGohistory = () => {
+    navigation.navigate('UserHistoryPayments')
+  }
+
+  const handleContactUs = () => {
+    navigation.navigate('ContactUs')
+  }
+
+  const handelAnnoucment = () => {
+    navigation.navigate('UserAnnouncements')
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F0B90B" />
       <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: '#F9FAFB80', padding: 16 }}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.profileSection} onPress={onHandleProfile}>
-            {user?.profileImage ? 
-            <View style={styles.avatar}>
-              <Image
-                source={user?.residentialId?.applicantPhoto}
-                style={styles.avatarImage}
-              />
-            </View> : <View style={styles.avatar}>
-              <Text style={styles.avatarText}>S</Text>
-            </View> }
+            {user?.profileImage ?
+              <View style={styles.avatar}>
+                <Image
+                  source={user?.residentialId?.applicantPhoto}
+                  style={styles.avatarImage}
+                />
+              </View> : <View style={styles.avatar}>
+                <Text style={styles.avatarText}>S</Text>
+              </View>}
             <View>
               <Text style={styles.welcomeText}>Welcome Back</Text>
               <Text style={styles.userName}>{user?.name}</Text>
@@ -65,7 +77,7 @@ const UserHome = () => {
               {/* <Text style={styles.societyName}>Society Name</Text> */}
             </View>
             <TouchableOpacity style={styles.qrButton}>
-              <Image source={imagePath.building}  style={{width:30, height:30}}/>
+              <Image source={imagePath.building} style={{ width: 30, height: 30 }} />
             </TouchableOpacity>
           </View>
         </View>
@@ -74,7 +86,7 @@ const UserHome = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Announcements</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handelAnnoucment}>
               <Text style={styles.viewAllText}>View all</Text>
             </TouchableOpacity>
           </View>
@@ -100,15 +112,15 @@ const UserHome = () => {
 
           <View style={styles.quickActionsGrid}>
             {/* Row 1 */}
-            <TouchableOpacity style={styles.actionButton}>
+            {/* <TouchableOpacity style={styles.actionButton}>
               <View style={[styles.actionIconContainer, { backgroundColor: '#E3F2FD' }]}>
                 <MaterialIcons name="payment" size={35} color="#2196F3" />
               </View>
               <Text style={styles.actionText}>Pay Dues</Text>
               <Text style={styles.actionSubText}>Pending:₹0</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={styles.actionButton} onPress={handleGohistory}>
               <View style={[styles.actionIconContainer, { backgroundColor: '#F3E5F5' }]}>
                 <MaterialIcons name="update" size={40} color="#9C27B0" />
               </View>
@@ -117,15 +129,15 @@ const UserHome = () => {
             </TouchableOpacity>
 
             {/* Row 2 */}
-            <TouchableOpacity style={styles.actionButton}>
+            {/* <TouchableOpacity style={styles.actionButton}>
               <View style={[styles.actionIconContainer, { backgroundColor: '#E8F5E9' }]}>
                 <FontAwesome name="users" size={30} color="#4CAF50" />
               </View>
               <Text style={styles.actionText}>Membership</Text>
               <Text style={styles.actionSubText}>Family & pets</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={styles.actionButton} onPress={handleContactUs}>
               <View style={[styles.actionIconContainer, { backgroundColor: '#FFEBEE' }]}>
                 <MaterialIcons name="headset-mic" size={35} color="#F44336" />
               </View>

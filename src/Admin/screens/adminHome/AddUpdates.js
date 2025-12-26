@@ -10,24 +10,32 @@ import {
     StatusBar,
     Image,
     Dimensions,
+    Alert,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { moderateScale } from 'react-native-size-matters';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import CustomInput from '../../../components/CustomInput';
 import ImageCropPicker from 'react-native-image-crop-picker';
+import { useDispatch, useSelector } from 'react-redux';
+import { addEvent } from '../../../app/features/eventAdminSlice';
+import { showMessage } from '../../../app/features/messageSlice';
 const { width, height } = Dimensions.get('window');
 
 
 
 const AddUpdates = ({ navigation }) => {
     const [societyName, setSocietyName] = useState('');
+    const [societyDescription, setSocietyDescription] = useState('');
     const [addressProof, setAddressProof] = useState(null);
+    const dispatch = useDispatch();
+    const { addloading } = useSelector((state) => state.eventAdmin)
 
     const pickAndCrop = async (setter, options = {}) => {
         try {
             const image = await ImageCropPicker.openPicker({
-                width: options.width || 800,
+                width: options.width || 1000,
                 height: options.height || 800,
                 cropping: true,
                 cropperCircleOverlay: options.circle || false,
@@ -48,6 +56,50 @@ const AddUpdates = ({ navigation }) => {
         }
     };
 
+    const handleSubmit = async () => {
+        if (!societyName.trim()) {
+            Alert.alert('Validation Error', 'Please enter a title');
+            return;
+        }
+        if (!societyDescription.trim()) {
+            Alert.alert('Validation Error', 'Please enter a description');
+            return;
+        }
+        if (!addressProof) {
+            Alert.alert('Validation Error', 'Please select an image');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('title', societyName.trim());
+        formData.append('description', societyDescription.trim());
+        formData.append('image', {
+            uri: addressProof.uri,
+            type: addressProof.type,
+            name: addressProof.name,
+        });
+        console.log(formData, 'formdata+++++++++++++')
+        try {
+            const result = await dispatch(addEvent(formData)).unwrap();
+            console.log('Event added successfully:', result);
+            dispatch(
+                showMessage({
+                    type: 'success',
+                    text: result?.message || 'Announcements Add successful!',
+                })
+            );
+            setAddressProof(null)
+            setSocietyName('')
+            setSocietyDescription('')
+        } catch (error) {
+            dispatch(
+                showMessage({
+                    type: 'error',
+                    text: error?.message || 'Add Announcements failed ',
+                })
+            );
+        }
+    };
+
     const UploadBox = ({ title, file, onPress, hint }) => (
         <TouchableOpacity style={styles.uploadBox} onPress={onPress}>
             {file ? (
@@ -65,7 +117,7 @@ const AddUpdates = ({ navigation }) => {
 
 
     return (
-        <SafeAreaView style={styles.container} edges={['top', '0']}>
+        <SafeAreaView style={styles.container} edges={['top','bottom']}>
             <StatusBar barStyle="dark-content" backgroundColor="#fff" />
             <View style={styles.header}>
                 <TouchableOpacity
@@ -74,12 +126,12 @@ const AddUpdates = ({ navigation }) => {
                 >
                     <Ionicons name="arrow-back" size={28} color="#519377" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Add Updates</Text>
+                <Text style={styles.headerTitle}>Add Announcement</Text>
                 <View style={styles.placeholder} />
             </View>
             <View>
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Write Description</Text>
+                    <Text style={styles.label}>Add Title</Text>
                     <CustomInput
                         value={societyName}
                         onChangeText={setSocietyName}
@@ -93,8 +145,8 @@ const AddUpdates = ({ navigation }) => {
                 <View style={styles.inputGroup}>
                     <Text style={styles.label}>Write Description</Text>
                     <CustomInput
-                        value={societyName}
-                        onChangeText={setSocietyName}
+                        value={societyDescription}
+                        onChangeText={setSocietyDescription}
                         keyboardType="email-address"
                         style={styles.input}
                         placeholder="Write here"
@@ -103,7 +155,7 @@ const AddUpdates = ({ navigation }) => {
                     />
                 </View>
                 <View>
-                    <Text style={styles.label}>Address Proof *</Text>
+                    <Text style={styles.label}>Announcement Image *</Text>
                     <UploadBox title="Address Proof" file={addressProof} onPress={() => pickAndCrop(setAddressProof)} />
                 </View>
 
@@ -111,8 +163,13 @@ const AddUpdates = ({ navigation }) => {
                     <TouchableOpacity
                         style={styles.updateButton}
                         activeOpacity={0.8}
+                        onPress={handleSubmit}
                     >
-                        <Text style={styles.updateButtonText}>Submit</Text>
+                        {addloading ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <Text style={styles.updateButtonText}>Submit</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>
@@ -256,7 +313,7 @@ const styles = StyleSheet.create({
     },
     inputGroup: {
         marginBottom: moderateScale(15),
-        marginTop: moderateScale(20)
+        marginTop: moderateScale(5)
     },
     label: {
         fontSize: moderateScale(16),
@@ -265,11 +322,10 @@ const styles = StyleSheet.create({
         marginBottom: moderateScale(0),
     },
     input: {
-        height: 180,
+        height: 100,
         borderWidth: 1,
         borderColor: '#CFCFCF',
         borderRadius: 16,
-        padding: 16,
         fontSize: 16,
         color: '#000',
         backgroundColor: '#fff',
@@ -279,7 +335,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#CFCFCF',
         borderRadius: 16,
-        paddingTop: 10,
+        // paddingTop: 10,
         fontSize: 16,
         color: '#000',
         backgroundColor: '#fff',
@@ -305,8 +361,8 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#fff',
     },
-    uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding: 30, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed' },
-    uploadedImage: { width: 120, height: 120, borderRadius: 12, marginBottom: 10 },
+    uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding:25, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed', marginTop:5 },
+    uploadedImage: { width: 200, height: 120, borderRadius: 12, marginBottom: 10 },
     uploadText: { fontSize: 14, color: '#666' },
     fileName: { color: '#0066CC', fontSize: 12, marginTop: 8 },
     hint: { fontSize: 12, color: '#999', marginTop: 10 },

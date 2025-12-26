@@ -131,61 +131,14 @@ const PaymentHistory = () => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', '0']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleGoback}>
           <Ionicons name="arrow-back" size={28} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Payment History</Text>
+        <View style={{width:'20%'}}/>
       </View>
-      {/* <ScrollView
-        showsVerticalScrollIndicator={false}
-        style={{ flex: 1, backgroundColor: '#F9FAFB80' }}
-      > */}
-      {/* <View style={styles.paymentStatusCategoryContainer}>
-        <FlatList
-          data={paymentStatus}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item, index) => index.toString()}
-          contentContainerStyle={styles.paymentStatusCategoryList}
-          renderItem={({ item }) => {
-            const isSelected = item === selectedPaymentStatus;
-
-            return (
-              <TouchableOpacity
-                onPress={() => setSelectedPaymentStatus(item)}
-                style={[
-                  styles.paymentStatusItem,
-                  isSelected
-                    ? styles.activePaymentStatus
-                    : styles.inactivePaymentStatus,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.paymentStatusText,
-                    isSelected
-                      ? styles.paymentStatusActiveText
-                      : styles.paymentStatusInactiveText,
-                  ]}
-                >
-                  {item}
-                </Text>
-              </TouchableOpacity>
-            );
-          }}
-        />
-      </View> */}
-      
-
-      {/* <FlatList
-        data={data}
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item, index) => index.toString()}
-        contentContainerStyle={styles.paymentStatusCategoryList}
-        renderItem={({ item }) => <SectionItem item={item} />}
-      /> */}
       {/* </ScrollView> */}
       <View style={styles.container}>
       {/* Filter Tabs */}
@@ -246,6 +199,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(15),
     paddingTop: moderateScale(10),
     paddingBottom: moderateScale(15),
+    justifyContent:"space-between"
   },
   headerText: {
     fontSize: moderateScale(20),

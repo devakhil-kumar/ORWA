@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,39 +8,18 @@ import {
     ScrollView,
     Dimensions,
     Image,
+    ActivityIndicator,
 } from 'react-native';
-import Icon from '@react-native-vector-icons/material-design-icons';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
-import FontAwesome from '@react-native-vector-icons/fontawesome';
-import Ionicons from '@react-native-vector-icons/ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Feather from '@react-native-vector-icons/feather';
 import imagePath from '../../../contests/imagePath';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAdminProfile } from '../../../app/features/getprofileSlice';
+import { fetchEventsAdmin } from '../../../app/features/eventAdminSlice';
 const { width, height } = Dimensions.get('window');
-
-const announcements = [
-    {
-        id: '1',
-        title: 'Annual Maintenance',
-        description: 'Scheduled elevator maintenance',
-        date: 'Today',
-    },
-    {
-        id: '2',
-        title: 'New Screenshot Uploaded',
-        description: 'Scheduled elevator maintenance',
-        date: 'Today',
-    },
-    {
-        id: '3',
-        title: 'New Resident Added',
-        description: 'Scheduled elevator maintenance',
-        date: 'Today',
-    },
-];
+import { formatNotificationDate } from '../../../screens/Profile/Notification';
 
 const AdminHome = () => {
     const navigation = useNavigation();
@@ -51,8 +30,10 @@ const AdminHome = () => {
     }
 
     const handleViewAll = () => {
-        navigation.navigate('Announcements')
-    }
+        navigation.navigate('Announcements', {
+            events: events,
+        });
+    };
 
     const hnadleAddResidents = () => {
         navigation.navigate('AddMember')
@@ -62,25 +43,35 @@ const AdminHome = () => {
         navigation.navigate('AddUpdates')
     }
 
+    const handleUserList = () => {
+        navigation.navigate('Users')
+    }
+
+    const handleRejectedList = () => {
+        navigation.navigate('Payments', {
+            screen: 'PaymentHistory',
+            params: { rejected: true }
+        });
+    };
+
     const { admin, adminLoading } = useSelector((state) => state.profile);
-    console.log(admin, adminLoading, 'loading++++++++++++++++++++++')
+    const { events, loading } = useSelector((state) => state.eventAdmin);
 
     useEffect(() => {
         dispatch((fetchAdminProfile()))
     }, [dispatch])
 
+    useFocusEffect(
+        useCallback(() => {
+            dispatch(fetchEventsAdmin({ isActive: true, page: 1, limit: 20 }))
+        }, [dispatch])
+    );
 
     return (
-        <SafeAreaView style={{ flex: 1 }} edges={['top', '0']}>
+        <SafeAreaView style={{ flex: 1, paddingBottom: 5 }} edges={['top', '0']}>
             <StatusBar barStyle="dark-content" backgroundColor="#F0B90B" />
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
-                    {/* <TouchableOpacity
-                        onPress={() => navigation.openDrawer()}
-                        style={styles.menuButton}
-                    >
-                        <Ionicons name="menu-outline" size={32} color="#000" />
-                    </TouchableOpacity> */}
                     <TouchableOpacity style={styles.profileSection} onPress={onHandleProfile}>
                         <View style={styles.avatar}>
                             <Text style={styles.avatarText}>S</Text>
@@ -91,11 +82,17 @@ const AdminHome = () => {
                         </View>
                     </TouchableOpacity>
                     <View>
-                        <Text style={styles.DateText} >
-                            06 July 2025
-                        </Text >
                         <Text style={styles.DateText}>
-                            Wednesday
+                            {new Date().toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric',
+                            })}
+                        </Text>
+                        <Text style={styles.DateText}>
+                            {new Date().toLocaleDateString('en-US', {
+                                weekday: 'long',
+                            })}
                         </Text>
                     </View>
                 </View>
@@ -112,59 +109,65 @@ const AdminHome = () => {
                     </View>
 
                     <Text style={styles.sectionTitle}>Quick Actions</Text>
-                    <View style={styles.quickActionsGrid}>
-                        <TouchableOpacity style={styles.actionButton}>
-                            <View style={[styles.actionIconContainer, { backgroundColor: '#E3F2FD' }]}>
-                                <Image source={imagePath.cardImage} style={{ width: width / 12, height: height / 30 }} />
-                            </View>
-                            <Text style={styles.actionText}>Pending Payments</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.actionButton}>
-                            <View style={[styles.actionIconContainer, { backgroundColor: '#F3E5F5' }]}>
-                                <MaterialIcons name='update' color={'#9333EA'} size={35} />
-                            </View>
-                            <Text style={styles.actionText}>Payments Received This mounth</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.actionButton}>
+                    <View style={styles.quickActionsGrid} >
+                        <TouchableOpacity style={styles.actionButton} onPress={handleUserList}>
                             <View style={[styles.actionIconContainer, { backgroundColor: '#F0FDF4' }]}>
                                 <Image source={imagePath.usersImage} style={{ width: width / 12, height: height / 30 }} />
                             </View>
-                            <Text style={styles.actionText}>Total Residents</Text>
+                            <Text style={styles.actionText}>Members</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.actionButton}>
+                        <TouchableOpacity style={styles.actionButton} onPress={handleRejectedList}>
                             <View style={[styles.actionIconContainer, { backgroundColor: '#FFF1F2' }]}>
-                                <Feather name='headphones' color={'#E11D48'} size={30} />
+                                <MaterialIcons name="highlight-off" size={24} color="red" />
                             </View>
-                            <Text style={styles.actionText}>New Payment Slips</Text>
+                            <Text style={styles.actionText}>Rejected Pyaments</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Announcements</Text>
-                        <TouchableOpacity onPress={handleViewAll}>
-                            <Text style={styles.viewAllText}>View all</Text>
-                        </TouchableOpacity>
+                        {events?.length > 0 && (
+                            <TouchableOpacity onPress={handleViewAll}>
+                                <Text style={styles.viewAllText}>View all</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
-                    {announcements.map((item) => (
-                        <View key={item.id} style={styles.card}>
-                            <View style={styles.iconWrapper}>
-                                <Image source={imagePath.speakerImage} style={{ width: width * 0.1 / 2, height: height * 0.1 / 5 }} />
-                            </View>
-
-                            <View style={styles.textContainer}>
-                                <Text style={styles.title}>{item.title}</Text>
-                                <Text style={styles.subtitle}>{item.description}</Text>
-                            </View>
-
-                            <View style={styles.dateWrapper}>
-                                <Text style={styles.dateText}>{item.date}</Text>
-                            </View>
+                    {loading ? (
+                        <View style={{ height: 100, justifyContent: 'center' }}>
+                            <ActivityIndicator size="small" color="#519377" style={{ marginTop: 0 }} />
                         </View>
-                    ))}
+                    ) : events?.length === 0 ? (
+                        <View style={{ height: 100, justifyContent: 'center' }}>
+                            <Text style={styles.noDataText}>No events available</Text>
+                        </View>
+                    ) : (
+                        events.slice(0, 4).map((item, index) => (
+                            <View
+                                key={`${item?._id ?? 'event'}-${index}`}
+                                style={styles.card}
+                            >
+                                <View style={styles.iconWrapper}>
+                                    <Image
+                                        source={imagePath.speakerImage}
+                                        style={{ width: width * 0.1 / 2.2, height: height * 0.1 / 5 }}
+                                    />
+                                </View>
+
+                                <View style={styles.textContainer}>
+                                    <Text style={styles.title}>{item.title}</Text>
+                                    <Text style={styles.subtitle}>{item.description}</Text>
+                                </View>
+
+                                <View style={styles.dateWrapper}>
+                                    <Text style={styles.dateText}>
+                                        {formatNotificationDate(item.createdAt)}
+                                    </Text>
+                                </View>
+                            </View>
+                        ))
+                    )}
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -407,11 +410,15 @@ const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
+        paddingVertical: 10,
+        backgroundColor: "#fff",
+        borderRadius: 10,
+        paddingHorizontal: 6,
+        marginTop: 8
     },
     iconWrapper: {
-        width: 40,
-        height: 40,
+        width: 36,
+        height: 36,
         borderRadius: 15,
         backgroundColor: '#FCE8DC',
         justifyContent: 'center',
@@ -422,12 +429,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '500',
         color: '#000000',
     },
     subtitle: {
-        fontSize: 12,
+        fontSize: 11,
         color: '#6B7280',
         marginTop: 2,
     },
@@ -442,6 +449,12 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#6B7280',
         fontWeight: '600',
+    },
+    noDataText: {
+        textAlign: 'center',
+        marginTop: 20,
+        color: '#6B7280',
+        fontSize: 14,
     },
 });
 

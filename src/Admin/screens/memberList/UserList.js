@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View, PermissionsAndroid, Platform, Alert, Linking, Image } from 'react-native';
 import Feather from "@react-native-vector-icons/feather";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { moderateScale } from "react-native-size-matters";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchMemberRequests } from "../../../app/features/adminMemberRequestsSlice";
+import { formatNotificationDate } from "../../../screens/Profile/Notification";
 
 
 const residents = [
@@ -41,6 +44,7 @@ const residents = [
 
 const UserList = () => {
     const navigation = useNavigation();
+    const dispatch = useDispatch();
 
     const onHandleProfile = () => {
         navigation.navigate('Profile')
@@ -50,24 +54,55 @@ const UserList = () => {
         navigation.navigate('AddMember')
     }
 
+    const { memberRequests, loading } = useSelector((state) => state.memberList);
+    console.log(memberRequests, 'memberREques+++++=')
+
+    useFocusEffect(
+        useCallback(() => {
+          dispatch(fetchMemberRequests());
+        }, [dispatch])
+      );
+
+    const renderEmpty = () => {
+        if (loading) return null;
+        return (
+            <View style={{ marginTop: 50, alignItems: 'center' }}>
+                <Text style={{ color: '#999', fontSize: 16 }}>No Member yet</Text>
+            </View>
+        );
+    };
+
     const renderItem = ({ item }) => {
+        console.log(item, 'item+++=')
 
         const handleMember = () => {
-           navigation.navigate('MembersDetailsScreens')
-        }
+            navigation.navigate('MembersDetailsScreens', {
+                member: item,
+            });
+        };
 
         return (
             <View style={style.card}>
-                <Image source={{ uri: item.image }} style={style.avatar} />
+                {/* <Image source={{ uri: item.profileImage }} style={style.avatar} /> */}
+                {item?.profileImage ? (
+                    <Image
+                        source={{ uri: item?.profileImage }}
+                        style={style.avatar}
+                    />
+                ) : (
+                    <View style={{ alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                        <Ionicons name="person" size={30} color="#519377" />
+                    </View>
+                )}
                 <View style={style.textContainer}>
-                    <Text style={style.name}>{item.name}</Text>
-                    <Text style={style.address}>{item.address}</Text>
+                    <Text style={style.name}>{item?.name}</Text>
+                    <Text style={style.address}>{item?.address || item?.membershipStatus}</Text>
                 </View>
 
                 <View style={style.rightContainer}>
                     <View style={style.iconRow}>
                         <TouchableOpacity onPress={handleMember}>
-                        <Feather name="eye" size={15} color="#000" />
+                            <Feather name="eye" size={15} color="#000" />
                         </TouchableOpacity>
                         <MaterialIcons
                             name="delete"
@@ -77,7 +112,7 @@ const UserList = () => {
                         />
                     </View>
 
-                    <Text style={style.date}>{item.date}</Text>
+                    <Text style={style.date}>{formatNotificationDate(item.createdAt)}</Text>
                 </View>
             </View>
         );
@@ -86,8 +121,7 @@ const UserList = () => {
     return (
         <SafeAreaView style={style.container} edges={['top']}>
             <View style={style.main}>
-                <View style={style.innerCantainer}>
-                    <View style={style.header}>
+            <View style={style.header}>
                         <TouchableOpacity
                             style={style.backButton}
                             onPress={() => navigation.goBack()}
@@ -97,14 +131,34 @@ const UserList = () => {
                         <Text style={style.headerTitle}>Membership Requests</Text>
                         <View style={style.placeholder} />
                     </View>
+                <View style={style.innerCantainer}>
+                    {/* <View style={style.header}>
+                        <TouchableOpacity
+                            style={style.backButton}
+                            onPress={() => navigation.goBack()}
+                        >
+                            <Ionicons name="arrow-back" size={28} color="#519377" />
+                        </TouchableOpacity>
+                        <Text style={style.headerTitle}>Membership Requests</Text>
+                        <View style={style.placeholder} />
+                    </View> */}
                     <View style={style.listWrapper}>
-                        <FlatList
-                            data={residents}
-                            keyExtractor={(item) => item.id}
-                            renderItem={renderItem}
-                            showsVerticalScrollIndicator={false}
-                            contentContainerStyle={{ paddingBottom: 20 }}
-                        />
+                        {loading ?
+                            <View style={style.loaderOverlay}>
+                                <ActivityIndicator size="large" color="#519377" />
+                            </View>
+                            : <FlatList
+                                data={memberRequests}
+                                keyExtractor={(item, index) =>
+                                    item?.id ? item.id.toString() : index.toString()
+                                }
+                                renderItem={renderItem}
+                                showsVerticalScrollIndicator={false}
+                                contentContainerStyle={{ paddingBottom: 20 }}
+                                ListEmptyComponent={renderEmpty}
+                            />
+
+                        }
                     </View>
                 </View>
             </View>
@@ -245,8 +299,8 @@ const style = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: moderateScale(0),
-        paddingVertical: moderateScale(0),
+        paddingHorizontal: moderateScale(14),
+        paddingVertical: moderateScale(5),
     },
     backButton: {
         marginTop: 2
@@ -259,6 +313,12 @@ const style = StyleSheet.create({
         textAlign: 'center',
     },
     placeholder: {
-        width: moderateScale(34),
+        width: moderateScale(25),
+    },
+    loaderOverlay: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        flex: 1,
+        marginTop: 50
     },
 });

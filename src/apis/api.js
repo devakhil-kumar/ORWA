@@ -2,7 +2,7 @@ import axios from "axios";
 import { API_ROUTES } from "./constant";
 import { getUserData } from "../units/asyncStorageManager";
 
-const BASE_URL = "http://77.42.18.162:5001/api/";
+const BASE_URL = "http://77.42.18.162:2424/api/";
 
 const axiosInstance = axios.create({
     baseURL: BASE_URL,
@@ -34,17 +34,37 @@ export const loginAPIAdmin = userData => {
     return axiosInstance.post(API_ROUTES.LOGINADMIN, userData);
 }
 
+// export const addMemberAPI = async (formData) => {
+//     const { token } = await getUserData();
+//     console.log('API URL:', `${BASE_URL}${API_ROUTES.ADD_MEMBERS}`);
+//     return axios.post(`${BASE_URL}${API_ROUTES.ADD_MEMBERS}`, formData, {
+//         headers: {
+//             'Content-Type': 'multipart/form-data',
+//             'x-request-source': 'mobile',
+//             Authorization: `Bearer ${token}`,
+//         },
+//     });
+// };
+
 export const addMemberAPI = async (formData) => {
     const { token } = await getUserData();
-    console.log('API URL:', `${BASE_URL}${API_ROUTES.ADD_MEMBERS}`);
-    return axios.post(`${BASE_URL}${API_ROUTES.ADD_MEMBERS}`, formData, {
+
+    const response = await fetch(`${BASE_URL}${API_ROUTES.ADD_MEMBERS}`, {
+        method: 'POST',
         headers: {
-            'Content-Type': 'multipart/form-data',
             'x-request-source': 'mobile',
             Authorization: `Bearer ${token}`,
         },
+        body: formData,
     });
+
+    if (!response.ok) {
+        throw new Error('Add member API failed');
+    }
+
+    return response.json();
 };
+
 
 export const PaymentUpload = async (userData) => {
     const { token } = await getUserData();
@@ -85,4 +105,59 @@ export const getAdminProfile = () => {
 
 export const getAdminNotification = (page, limit) => {
     return axiosInstance.get(`${API_ROUTES.ADMIN_NOTIFICATION}?page=${page}&limit=${limit}`)
+}
+
+export const getEventAdmin = (isActive, page, limit) => {
+    return axiosInstance.get(`${API_ROUTES.GETALL_ANNOUNCEMENT}?isActive=${isActive}&page=${page}&limit=${limit}`)
+}
+
+export const createEventAdmin = async (formData) => {
+    const { token } = await getUserData();
+    return axios.post(`${BASE_URL}${API_ROUTES.ADD_EVENT}`, formData, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+}
+
+export const UpdateEventAdmin = async (id, payload) => {
+    return axiosInstance.patch(API_ROUTES.UPDATE_EVENT(id), payload,
+        {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+}
+
+export const getresidentailsAdmin = () => {
+    return axiosInstance.get(API_ROUTES.GET_ALL_RESIDENTAILS)
+}
+
+export const DeleteAdminEvent = async (id) => {
+    return axiosInstance.delete(API_ROUTES.DELETE_EVENT(id));
+}
+
+export const getMemberList = () => {
+    return axiosInstance.get(API_ROUTES.MEMBERLIST)
+}
+
+export const memberVerifyPayment = (Id, status) => {
+    return axiosInstance.put(API_ROUTES.MEMEBERLIST_APPROVE(Id), { status });
+};
+
+export const getSocietyAdmin = (page, limit) => {
+    return axiosInstance.get(`${API_ROUTES.SOCIETYGET}?page=${page}&limit=${limit}`)
+}
+
+export const updateSocietyAdmin = (id, payload) => {
+    return axiosInstance.put(API_ROUTES.UPDATESOCIETY(id), payload)
+}
+
+export const ContactUs = (message) => {
+    return axiosInstance.post(API_ROUTES.CONTACT_US, message)
+}
+
+export const ContactUsUser = (payload) => {
+return axiosInstance.post(API_ROUTES.USERCONTACT_US,payload)
 }

@@ -23,8 +23,8 @@ const { width, height } = Dimensions.get('window');
 
 const SocietyHeadScreen = ({ navigation }) => {
 
-  const dispatch = useDispatch();
-  const { admin, adminLoading } = useSelector((state) => state.profile);
+    const dispatch = useDispatch();
+    const { admin, adminLoading } = useSelector((state) => state.profile);
 
     const generalMenuItems = [
         {
@@ -55,7 +55,8 @@ const SocietyHeadScreen = ({ navigation }) => {
             id: 5,
             icon: 'log-out-outline',
             title: 'Logout',
-            onPress: () => { dispatch(logout())
+            onPress: () => {
+                dispatch(logout())
             },
         },
     ];
@@ -87,34 +88,34 @@ const SocietyHeadScreen = ({ navigation }) => {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['0','0']} >
+        <SafeAreaView style={styles.container} edges={['0', '0']} >
             <StatusBar barStyle="light-content" backgroundColor="#519377" />
             <ImageBackground source={imagePath.profileBackground} style={styles.header}>
-            <Text style={styles.headerTitle}>Society Head</Text>
+                <Text style={styles.headerTitle}>Society Head</Text>
             </ImageBackground>
             <View style={styles.profileCard}>
-                    <View style={styles.profileContent}>
-                        {admin.hasPhoto ? (
-                            <Image 
-                                source={imagePath.dammyImage} 
-                                style={styles.avatar} 
-                            />
-                        ) : (
-                            <View style={styles.avatarPlaceholder}>
-                                <Ionicons name="person" size={40} color="#519377" />
-                            </View>
-                        )}
-                        <View style={styles.profileInfo}>
-                            <Text style={styles.adminName}>{admin.name}</Text>
-                            <Text style={styles.adminEmail}>{admin.email}</Text>
-                            <Text style={styles.adminPhone}>{admin.phone}</Text>
+                <View style={styles.profileContent}>
+                    {admin?.profileImage ? (
+                        <Image
+                            source={{ uri: admin?.profileImage }}
+                            style={styles.avatar}
+                        />
+                    ) : (
+                        <View style={styles.avatarPlaceholder}>
+                            <Ionicons name="person" size={40} color="#519377" />
                         </View>
-                        <TouchableOpacity style={styles.editIconButton}>
-                            {/* <Ionicons name="create-outline" size={24} color="#333" /> */}
-                        </TouchableOpacity>
+                    )}
+                    <View style={styles.profileInfo}>
+                        <Text style={styles.adminName}>{admin.name}</Text>
+                        <Text style={styles.adminEmail}>{admin.email}</Text>
+                        <Text style={styles.adminPhone}>{admin.phone}</Text>
                     </View>
+                    <TouchableOpacity style={styles.editIconButton}>
+                        {/* <Ionicons name="create-outline" size={24} color="#333" /> */}
+                    </TouchableOpacity>
                 </View>
-            <ScrollView 
+            </View>
+            <ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
             >
@@ -148,9 +149,9 @@ const styles = StyleSheet.create({
     header: {
         backgroundColor: '#115543',
         paddingHorizontal: moderateScale(20),
-        height:height/6,
-        position:'relative',
-        justifyContent:'center'
+        height: height / 6,
+        position: 'relative',
+        justifyContent: 'center'
     },
     headerTitle: {
         fontSize: moderateScale(28),
@@ -159,12 +160,12 @@ const styles = StyleSheet.create({
     },
     scrollView: {
         flex: 1,
-        marginTop:Platform.OS === 'android' ? 75 : 60
+        marginTop: Platform.OS === 'android' ? 75 : 60
     },
     profileCard: {
         backgroundColor: '#fff',
         marginHorizontal: moderateScale(16),
-        height:height/8,
+        height: height / 8,
         borderRadius: moderateScale(16),
         padding: moderateScale(18),
         elevation: 4,
@@ -172,11 +173,11 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 8,
-        position:'absolute',
-        top:100,
-        bottom:0,
-        right:0,
-        left:0,
+        position: 'absolute',
+        top: 100,
+        bottom: 0,
+        right: 0,
+        left: 0,
     },
     profileContent: {
         flexDirection: 'row',
@@ -231,8 +232,8 @@ const styles = StyleSheet.create({
     menuContainer: {
         borderRadius: moderateScale(12),
         overflow: 'hidden',
-        paddingHorizontal:8,
-        paddingVertical:6
+        paddingHorizontal: 8,
+        paddingVertical: 6
     },
     menuItem: {
         flexDirection: 'row',
@@ -240,10 +241,10 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingVertical: moderateScale(5),
         paddingHorizontal: moderateScale(16),
-        backgroundColor:'#fff',
-        borderRadius:10,
-        marginTop:10,
-        elevation:2
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        marginTop: 10,
+        elevation: 2
     },
     menuItemLeft: {
         flexDirection: 'row',

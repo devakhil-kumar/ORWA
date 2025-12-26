@@ -1,29 +1,157 @@
 // SocietyInfoScreen.js
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
-    TextInput,
     ScrollView,
     StatusBar,
+    ActivityIndicator,
+    TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { moderateScale } from 'react-native-size-matters';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import CustomInput from '../../components/CustomInput';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchSocietyAdmin, updateSocietyAdmin } from '../../app/features/societySlice';
+import { showMessage } from '../../app/features/messageSlice';
+
+
+
+
+const CustomInput = ({
+    value,
+    onChangeText,
+    placeholder,
+    multiline = false,
+    editable = true,
+    style,
+    ...otherProps
+}) => {
+    return (
+        <View style={styles.containerText}>
+            <TextInput
+                style={[styles.input, multiline && styles.multiline, style]}
+                value={value}
+                onChangeText={onChangeText}
+                placeholder={placeholder}
+                placeholderTextColor="#999"
+                multiline={multiline}
+                numberOfLines={multiline ? 4 : 1}
+                editable={editable}
+                {...otherProps}
+            />
+        </View>
+    );
+};
 
 const SocietyInfoScreen = ({ navigation }) => {
-    const [societyName, setSocietyName] = useState('Silver Birch');
-    const [blockSector, setBlockSector] = useState('Silver Birch, Omaxe Township, 140901');
-    const [address, setAddress] = useState('Silver Birch, Omaxe Township, 140901');
-    const [gstNumber, setGstNumber] = useState('562ADD5155DFVDVD');
+    const dispatch = useDispatch();
 
-    const handleUpdate = () => {
-        console.log('Update pressed');
+    const { societyData, loading, updateLoading } = useSelector(
+        (state) => state.society
+    );
+    console.log(societyData, 'spccdlhbv')
+
+    const [societyName, setSocietyName] = useState('');
+    const [blockSector, setBlockSector] = useState('');
+    const [address, setAddress] = useState('');
+    const [gstNumber, setGstNumber] = useState('');
+
+
+    useEffect(() => {
+        dispatch(fetchSocietyAdmin({ page: 1, limit: 10 }));
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (societyData && Array.isArray(societyData) && societyData.length > 0) {
+            const society = societyData[0];
+            setSocietyName(society.societyName || '');
+            setBlockSector(society.block || society.blockSector || '');
+            setAddress(society.address || '');
+            setGstNumber(society.gstNumber || '');
+        }
+    }, [societyData]);
+
+
+    const handleUpdate = async () => {
+
+        try {
+            // Validation
+            if (!societyName.trim()) {
+                dispatch(
+                    showMessage({
+                        type: 'error',
+                        text: 'Society name is required',
+                    })
+                );
+                return;
+            }
+
+            if (!address.trim()) {
+                dispatch(
+                    showMessage({
+                        type: 'error',
+                        text: 'Address is required',
+                    })
+                );
+                return;
+            }
+
+            const societyId = societyData[0]?._id;
+            if (!societyId) {
+                dispatch(
+                    showMessage({
+                        type: 'error',
+                        text: 'Society ID not found',
+                    })
+                );
+                return;
+            }
+
+            const payload = {
+                societyName: societyName.trim(),
+                block: blockSector.trim(),
+                address: address.trim(),
+                gstNumber: gstNumber.trim(),
+                isActive: true
+            };
+
+            console.log(societyId, payload, 'payload+++++')
+            const response = await dispatch(updateSocietyAdmin({ id: societyId, payload })).unwrap();
+
+            dispatch(
+                showMessage({
+                    type: 'success',
+                    text: response?.message || 'Society information updated successfully',
+                })
+            );
+            setTimeout(() => {
+                navigation.goBack();
+            }, 1000);
+
+        } catch (error) {
+            dispatch(
+                showMessage({
+                    type: 'error',
+                    text: error?.message || 'Failed to update society information',
+                })
+            );
+        }
     };
+
+    // if (loading) {
+    //     return (
+    //         <SafeAreaView style={styles.container}>
+    //             <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    //             <View style={styles.loadingContainer}>
+    //                 <ActivityIndicator size="large" color="#519377" />
+    //             </View>
+    //         </SafeAreaView>
+    //     );
+    // }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -40,63 +168,70 @@ const SocietyInfoScreen = ({ navigation }) => {
                 <Text style={styles.headerTitle}>Society Info</Text>
                 <View style={styles.placeholder} />
             </View>
-
-            <ScrollView
-                style={styles.scrollView}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                {/* Society Name */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Society Name</Text>
-                    <CustomInput
-                        value={societyName}
-                        onChangeText={setSocietyName}
-                        keyboardType="email-address"
-                    />
+            {loading ?
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#519377" />
                 </View>
-
-                {/* Block / Sector */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Block / Sector</Text>
-                    <CustomInput
-                        value={blockSector}
-                        onChangeText={setBlockSector}
-                        keyboardType="email-address"
-                    />
-                </View>
-
-                {/* Address */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Address</Text>
-                     <CustomInput
-                        value={address}
-                        onChangeText={setAddress}
-                        keyboardType="email-address"
-                    />
-                </View>
-
-                {/* GST/Registration Number */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>GST/Registration Number</Text>
-                     <CustomInput
-                        value={gstNumber}
-                        onChangeText={setGstNumber}
-                        keyboardType="email-address"
-                    />
-                </View>
-                <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                    style={styles.updateButton}
-                    onPress={handleUpdate}
-                    activeOpacity={0.8}
+                : <ScrollView
+                    style={styles.scrollView}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollContent}
                 >
-                    <Text style={styles.updateButtonText}>Update</Text>
-                </TouchableOpacity>
-            </View>
-            </ScrollView>
-
-           
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Society Name</Text>
+                        <CustomInput
+                            value={societyName}
+                            onChangeText={setSocietyName}
+                            placeholder="Enter society name"
+                            editable={!updateLoading}
+                        />
+                    </View>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Block / Sector</Text>
+                        <CustomInput
+                            value={blockSector}
+                            onChangeText={setBlockSector}
+                            placeholder="Enter block/sector"
+                            editable={!updateLoading}
+                        />
+                    </View>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Address</Text>
+                        <CustomInput
+                            value={address}
+                            onChangeText={setAddress}
+                            placeholder="Enter address"
+                            multiline
+                            editable={!updateLoading}
+                        />
+                    </View>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>GST/Registration Number</Text>
+                        <CustomInput
+                            value={gstNumber}
+                            onChangeText={setGstNumber}
+                            placeholder="Enter GST/Registration number"
+                            editable={!updateLoading}
+                        />
+                    </View>
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity
+                            style={[
+                                styles.updateButton,
+                                updateLoading && styles.updateButtonDisabled,
+                            ]}
+                            onPress={handleUpdate}
+                            activeOpacity={0.8}
+                            disabled={updateLoading}
+                        >
+                            {updateLoading ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                                <Text style={styles.updateButtonText}>Update</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>}
         </SafeAreaView>
     );
 };
@@ -108,6 +243,16 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
     },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: moderateScale(16),
+        fontSize: moderateScale(16),
+        color: '#666',
+    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -117,7 +262,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     backButton: {
-        marginTop:2
+        marginTop: 2,
     },
     headerTitle: {
         fontSize: moderateScale(20),
@@ -146,19 +291,6 @@ const styles = StyleSheet.create({
         color: '#000',
         marginBottom: moderateScale(5),
     },
-    inputContainer: {
-        borderWidth: 1,
-        borderColor: '#D0D0D0',
-        borderRadius: moderateScale(12),
-        backgroundColor: '#fff',
-    },
-    input: {
-        fontSize: moderateScale(16),
-        color: '#333',
-        paddingHorizontal: moderateScale(16),
-        paddingVertical: moderateScale(16),
-        fontWeight: '400',
-    },
     buttonContainer: {
         paddingHorizontal: moderateScale(10),
         paddingVertical: moderateScale(20),
@@ -176,9 +308,28 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
     },
+    updateButtonDisabled: {
+        backgroundColor: '#A5C9B8',
+    },
     updateButtonText: {
         fontSize: moderateScale(16),
         fontWeight: '600',
         color: '#fff',
+    },
+    containerText: {
+        backgroundColor: '#F5F5F5',
+        borderRadius: moderateScale(12),
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    input: {
+        paddingHorizontal: moderateScale(14),
+        paddingVertical: moderateScale(12),
+        fontSize: moderateScale(15),
+        color: '#000',
+    },
+    multiline: {
+        minHeight: moderateScale(100),
+        textAlignVertical: 'top',
     },
 });

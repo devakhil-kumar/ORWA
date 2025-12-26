@@ -1,6 +1,6 @@
 import Ionicons from '@react-native-vector-icons/ionicons';
-import { useNavigation } from '@react-navigation/native';
-import React from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,56 +8,110 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { moderateScale } from 'react-native-size-matters';
+import { useDispatch, useSelector } from 'react-redux';
+import { verifyMemberPayment } from '../../../app/features/adminMemberRequestsSlice';
+import { showMessage } from '../../../app/features/messageSlice';
 
 const MemberDetailScreen = () => {
-
   const navigation = useNavigation();
+  const route = useRoute();
+  const { member } = route.params;
+  const [processing, setProcessing] = useState(null);
+  const dispatch = useDispatch();
 
+  const { verifyLoading, verifyError, verifySuccess } = useSelector(
+    (state) => state.memberList
+  );
+
+  const fullName = `${member.firstName || ''} ${member.middleName || ''} ${member.lastName || ''}`.trim();
+  const relationFullName = `${member.relationName || ''} ${member.relationMiddleName || ''} ${member.relationLastName || ''}`.trim();
+
+  const formatDate = (date) => {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString('en-GB');
+  };
+
+  const handleVerify = async (status) => {
+    const action = status ? 'approve' : 'deny';
+    if (processing) return;
+    setProcessing(action);
+    console.log(status, 'status')
+    try {
+      const resultAction = await dispatch(
+        verifyMemberPayment({ id: member?._id, status })
+      ).unwrap();
+      const responseMessage =
+        resultAction?.message ||
+        `Membership request has been ${status ? 'approved' : 'denied'} successfully!`;
+
+      dispatch(
+        showMessage({
+          type: 'success',
+          text: responseMessage || 'Approve successful!',
+        })
+      );
+      setTimeout(() => {
+        navigation.goBack();
+      }, 800);
+
+    } catch (error) {
+      const errorMessage =
+        error?.message ||
+        error?.error ||
+        'Failed to process request. Please try again.';
+      dispatch(
+        showMessage({
+          type: 'error',
+          text: String(errorMessage),
+        })
+      );
+    } finally {
+      setProcessing(null);
+    }
+  };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top','bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={28} color="#519377" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Membership Details</Text>
         <View style={styles.placeholder} />
       </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Full Name */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Full Name</Text>
-          <TextInput
-            style={styles.input}
-            value="Aarav"
-            editable={false}
-          />
+          <TextInput style={styles.input} value={fullName} editable={false} />
         </View>
+
+        {/* Relation Name */}
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Father/Husband/Mother/Wife's Name</Text>
-          <TextInput
-            style={styles.input}
-            value="Jagjeet Singh"
-            editable={false}
-          />
+          <Text style={styles.label}>Father / Husband / Mother / Wife's Name</Text>
+          <TextInput style={styles.input} value={relationFullName} editable={false} />
         </View>
+
+        {/* Living Here */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Are you living here?</Text>
           <View style={styles.radioContainer}>
             <View style={styles.radioOption}>
               <View style={styles.radioOuter}>
-                <View style={styles.radioInner} />
+                {member?.livingHere && <View style={styles.radioInner} />}
               </View>
-              <Text style={styles.radioText}>Yes</Text>
+              <Text style={styles.radioText}>{member?.livingHere ? 'Yes' : 'No'}</Text>
             </View>
           </View>
         </View>
@@ -65,214 +119,156 @@ const MemberDetailScreen = () => {
         {/* Date of Birth */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Date of Birth</Text>
-          <TextInput
-            style={styles.input}
-            value="12-09-1998"
-            editable={false}
-          />
+          <TextInput style={styles.input} value={formatDate(member?.dateOfBirth)} editable={false} />
         </View>
 
         {/* Occupation */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Occupation</Text>
-          <TextInput
-            style={styles.input}
-            value="Veteran Doctor"
-            editable={false}
-          />
+          <TextInput style={styles.input} value={member?.occupation || ''} editable={false} />
         </View>
 
         {/* Email */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value="Sunitawillaims@gmail.com"
-            editable={false}
-            keyboardType="email-address"
-          />
+          <TextInput style={styles.input} value={member?.email || ''} editable={false} />
         </View>
 
-        {/* Phone Number */}
+        {/* Phone */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Phone Number</Text>
-          <TextInput
-            style={styles.input}
-            value="0000000000"
-            editable={false}
-            keyboardType="phone-pad"
-          />
+          <TextInput style={styles.input} value={member?.phone || ''} editable={false} />
         </View>
 
-        {/* Flat/Villa/Plot Number */}
+        {/* Flat Number */}
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Flat/Villa/Plot Number</Text>
+          <Text style={styles.label}>Flat / Villa / Plot Number</Text>
           <TextInput
             style={styles.input}
-            value="1264"
+            value={member.flatNumber || member?.chosenFlatVilla || ''}
             editable={false}
           />
         </View>
 
-        {/* Floor (if applicable) */}
+        {/* Floor */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Floor (if applicable)</Text>
-          <TextInput
-            style={styles.input}
-            value="2nd Floor"
-            editable={false}
-          />
+          <TextInput style={styles.input} value={member?.floor || ''} editable={false} />
         </View>
 
-        {/* Scheme (if applicable) */}
+        {/* Scheme */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Scheme (if applicable)</Text>
-          <TextInput
-            style={styles.input}
-            value="Scheme no.5"
-            editable={false}
-          />
+          <TextInput style={styles.input} value={member?.scheme || ''} editable={false} />
         </View>
 
-        {/* Correspondence Address */}
+        {/* Address */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Correspondence Address</Text>
-          <TextInput
-            style={styles.input}
-            value="Random address"
-            editable={false}
-          />
+          <TextInput style={styles.input} value={member?.correspondenceAddress || ''} editable={false} />
           <TextInput
             style={[styles.input, styles.inputSpacing]}
-            value="Random address in line"
+            value={member?.address || ''}
             editable={false}
           />
         </View>
 
-        {/* City and State */}
+        {/* City & State */}
         <View style={styles.rowContainer}>
           <View style={styles.halfField}>
             <Text style={styles.label}>City</Text>
-            <TextInput
-              style={styles.input}
-              value="Mohali"
-              editable={false}
-            />
+            <TextInput style={styles.input} value={member?.city || ''} editable={false} />
           </View>
           <View style={[styles.halfField, styles.halfFieldRight]}>
             <Text style={styles.label}>State</Text>
-            <TextInput
-              style={styles.input}
-              value="Punjab"
-              editable={false}
-            />
+            <TextInput style={styles.input} value={member?.state || ''} editable={false} />
           </View>
         </View>
 
-        {/* Country and Postal Code */}
+        {/* Country & Postal Code */}
         <View style={styles.rowContainer}>
           <View style={styles.halfField}>
             <Text style={styles.label}>Country</Text>
-            <TextInput
-              style={styles.input}
-              value="India"
-              editable={false}
-            />
+            <TextInput style={styles.input} value={member?.country || ''} editable={false} />
           </View>
           <View style={[styles.halfField, styles.halfFieldRight]}>
             <Text style={styles.label}>Postal Code</Text>
-            <TextInput
-              style={styles.input}
-              value="160035"
-              editable={false}
-              keyboardType="number-pad"
-            />
+            <TextInput style={styles.input} value={member?.postalCode || ''} editable={false} />
           </View>
         </View>
 
-        {/* No. of family members including children */}
+        {/* Family Members */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>No. of family members including children</Text>
           <TextInput
             style={styles.input}
-            value="6"
+            value={String(member?.familyMembersCount || '')}
             editable={false}
-            keyboardType="number-pad"
           />
         </View>
 
-        {/* Hobbies & Skills */}
+        {/* Hobbies */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Hobbies & Skills</Text>
-          <TextInput
-            style={styles.input}
-            value="Playing Cricket, Reading Books"
-            editable={false}
-          />
+          <TextInput style={styles.input} value={member?.hobbiesAndSkills || ''} editable={false} />
         </View>
 
-        {/* Identity Proof */}
+        {/* Proofs */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Identity Proof</Text>
-          <TextInput
-            style={styles.input}
-            value="Aadhar Card"
-            editable={false}
-          />
+          <TextInput style={styles.input} value={member?.identityProofType || ''} editable={false} />
         </View>
 
-        {/* Address Proof */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Address Proof</Text>
-          <TextInput
-            style={styles.input}
-            value="Voter ID"
-            editable={false}
-          />
+          <TextInput style={styles.input} value={member?.addressProofType || ''} editable={false} />
         </View>
 
-        {/* Ownership Proof */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Ownership Proof</Text>
-          <TextInput
-            style={styles.input}
-            value="Possession Letter"
-            editable={false}
-          />
+          <TextInput style={styles.input} value={member?.ownershipProofType || ''} editable={false} />
         </View>
 
         {/* Signature */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Signature</Text>
           <View style={styles.signatureBox}>
-            <Text style={styles.signatureText}>Aarav Singh</Text>
+            {member?.signature ? (
+              <Image
+                source={{ uri: member.signature }}
+                style={styles.signatureImage}
+                resizeMode="contain"
+              />
+            ) : (
+              <Text style={styles.signatureText}>{fullName}</Text>
+            )}
           </View>
         </View>
-
-        {/* Bottom spacing for buttons */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Fixed Bottom Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.approveButton}
-          onPress={() => console.log('Approved')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>Approve</Text>
+        <TouchableOpacity style={[
+          styles.approveButton,
+          processing === 'approve' && styles.disabledButton,
+        ]} onPress={() => handleVerify(true)} disabled={!!processing} >
+
+          <Text style={styles.buttonText}>{processing === 'approve' ? 'Processing...' : 'Approve'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.denyButton}
-          onPress={() => console.log('Denied')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>Deny</Text>
+
+        <TouchableOpacity style={[
+          styles.denyButton,
+          processing === 'deny' && styles.disabledButton, ,
+        ]} onPress={() => handleVerify(false)} disabled={!!processing}>
+
+          <Text style={styles.buttonText}>{processing === 'deny' ? 'Processing...' : 'Deny'}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
+
+// export default MemberDetailScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -418,7 +414,14 @@ const styles = StyleSheet.create({
   placeholder: {
     width: moderateScale(34),
   },
-
+  signatureImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
 });
 
 export default MemberDetailScreen;

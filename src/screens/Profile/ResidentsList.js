@@ -6,6 +6,8 @@ import { moderateScale } from "react-native-size-matters";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAdminResidentials } from "../../app/features/getResidentails";
 
 
 const residents = [
@@ -50,15 +52,41 @@ const ResidentsList = () => {
         navigation.navigate('AddMember')
     }
 
+    const dispatch = useDispatch();
+
+    const { residentials, loading } = useSelector((state) => state.residential)
+    console.log(residentials, loading, 'loading, resdi+++++++++++')
+
+    useEffect(() => {
+        dispatch(fetchAdminResidentials())
+    }, [dispatch])
+
+    const renderEmpty = () => {
+        if (loading) return null;
+        return (
+            <View style={{ marginTop: 50, alignItems: 'center' }}>
+                <Text style={{ color: '#999', fontSize: 16 }}>No Residents yet</Text>
+            </View>
+        );
+    };
+
     const renderItem = ({ item }) => {
         return (
             <View style={style.card}>
-                <Image source={{ uri: item.image }} style={style.avatar} />
+                {residentials.profileImage ? (
+                    <Image
+                        source={{ uri: residentials.profileImage }}
+                        style={style.avatar}
+                    />
+                ) : (
+                    <View style={style.avatarPlaceholder}>
+                        <Ionicons name="person" size={30} color="#519377" />
+                    </View>
+                )}
                 <View style={style.textContainer}>
                     <Text style={style.name}>{item.name}</Text>
-                    <Text style={style.address}>{item.address}</Text>
+                    <Text style={style.address}>{item.address || "not declare"}</Text>
                 </View>
-
                 <View style={style.rightContainer}>
                     <View style={style.iconRow}>
                         <Feather name="edit" size={15} color="#000" />
@@ -69,8 +97,6 @@ const ResidentsList = () => {
                             style={{ marginLeft: 14 }}
                         />
                     </View>
-
-                    <Text style={style.date}>{item.date}</Text>
                 </View>
             </View>
         );
@@ -90,15 +116,23 @@ const ResidentsList = () => {
                         <Text style={style.headerTitle}>List of Residents</Text>
                         <View style={style.placeholder} />
                     </View>
-                    <View style={style.listWrapper}>
-                        <FlatList
-                            data={residents}
-                            keyExtractor={(item) => item.id}
-                            renderItem={renderItem}
-                            showsVerticalScrollIndicator={false}
-                            contentContainerStyle={{ paddingBottom: 20 }}
-                        />
-                    </View>
+                    {loading ?
+                        <View style={style.loaderOverlay}>
+                            <ActivityIndicator size="large" color="#519377" />
+                        </View>
+                        : <View style={style.listWrapper}>
+                            <FlatList
+                                data={residentials}
+                                // keyExtractor={(item) => item.id}
+                                keyExtractor={(item, index) =>
+                                    item?.id ? item.id.toString() : index.toString()
+                                }
+                                renderItem={renderItem}
+                                showsVerticalScrollIndicator={false}
+                                contentContainerStyle={{ paddingBottom: 20 }}
+                                ListEmptyComponent={renderEmpty}
+                            />
+                        </View>}
                 </View>
             </View>
         </SafeAreaView>
@@ -117,7 +151,7 @@ const style = StyleSheet.create({
     exportText: { fontSize: moderateScale(14), marginLeft: 8 },
     addUserBtn: { flexDirection: 'row', backgroundColor: '#519377', borderRadius: 8, alignItems: "center", padding: 12, marginLeft: 8 },
     addUserText: { fontSize: moderateScale(14), marginLeft: 8, lineHeight: moderateScale(15), color: '#fff' },
-    listWrapper: { marginTop: 40, marginBottom: 10 * 3.8 },
+    listWrapper: { marginTop: 20, marginBottom: 10 * 3.8 },
     listContent: { paddingBottom: 10 },
     fab: {
         position: 'absolute',
@@ -242,7 +276,7 @@ const style = StyleSheet.create({
         paddingVertical: moderateScale(0),
     },
     backButton: {
-        marginTop:2
+        marginTop: 2
     },
     headerTitle: {
         fontSize: moderateScale(20),
@@ -250,5 +284,19 @@ const style = StyleSheet.create({
         color: '#000',
         flex: 1,
         textAlign: 'center',
+    },
+    avatarPlaceholder: {
+        width: moderateScale(50),
+        height: moderateScale(50),
+        borderRadius: moderateScale(35),
+        backgroundColor: '#FFD54F',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10
+    },
+    loaderOverlay: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        flex: 1
     },
 });

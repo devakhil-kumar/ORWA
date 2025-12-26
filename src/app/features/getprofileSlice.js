@@ -20,7 +20,6 @@ export const fetchAdminProfile = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const data = await getAdminProfileService();
-            console.log(data, 'data+++++++++')
             saveProfileData(data?.data)
             return data?.data || {};
         } catch {
@@ -65,12 +64,10 @@ const getprofileSlice = createSlice({
             .addCase(fetchAdminProfile.fulfilled, (state, action) => {
                 state.adminLoading = false;
                 state.admin = action.payload;
-                console.log(action.payload, 'payload++++=')
             })
             .addCase(fetchAdminProfile.rejected, (state, action) => {
                 state.adminLoading = false;
                 state.adminerror = action.payload;
-                console.log(action.payload, 'payload')
             })
     }
 });

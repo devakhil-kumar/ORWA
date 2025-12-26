@@ -49,6 +49,7 @@ export const AdminNavigator = () => {
             <Stack.Screen name='Announcements' component={Announcements} />
             <Stack.Screen name='AddMember' component={AddMemeber} />
             <Stack.Screen name='AddUpdates' component={AddUpdates} />
+            <Stack.Screen name="UserList" component={UserList} />
         </Stack.Navigator>
     )
 }
@@ -139,6 +140,15 @@ const AdminBottomTabs = () => {
             <Tab.Screen
                 name="Payments"
                 component={PaymentNavigator}
+                listeners={({ navigation }) => ({
+                    tabPress: (e) => {
+                      e.preventDefault(); 
+                      navigation.navigate('Payments', {
+                        screen: 'PaymentHistory',
+                        params: { rejected: false }
+                      });
+                    },
+                  })}
                 options={({ route }) => ({
                     tabBarIcon: ({ focused }) => (
                         <Ionicons name='wallet' size={24} color={focused ? '#519377' : '#000'} />

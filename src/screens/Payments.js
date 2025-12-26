@@ -1,226 +1,344 @@
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View, Image, Dimensions } from 'react-native';
-import Ionicons from "@react-native-vector-icons/ionicons";
-import { moderateScale } from "react-native-size-matters";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import { fetchAdminNotifications } from "../../app/features/adminNotificationSlice";
-import { useDispatch, useSelector } from "react-redux";
-import imagePath from "../contests/imagePath";
-const { width, height } = Dimensions.get('window');
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+    View,
+    Text,
+    Image,
+    TouchableOpacity,
+    ScrollView,
+    ActivityIndicator,
+    StyleSheet,
+    Dimensions,
+} from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchResidentialPaymentsThunk } from '../app/features/residentialPaymentsSlice';
+import Ionicons from '@react-native-vector-icons/ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 
-const Notification = () => {
-    const navigation = useNavigation();
+const { width } = Dimensions.get('window');
+
+const PaymentHistoryScreen = () => {
     const dispatch = useDispatch();
-    const [currentPage, setCurrentPage] = useState(1);
-    const [allNotifications, setAllNotifications] = useState([]);
+    const navigation = useNavigation();
+    const [isRejected, setIsRejected] = useState(false);
+    const { data, loading, error } = useSelector((state) => state.residentialpayment);
+    const route = useRoute();
 
-    const { notifications, loading, totalPages, page } = useSelector((state) => state.adminNotification);
+    useFocusEffect(
+        useCallback(() => {
+          setIsRejected(route.params?.rejected === true);
+        }, [route.params?.rejected])
+      );
 
-    // Load initial data
-    useEffect(() => {
-        dispatch(fetchAdminNotifications({ page: 1, limit: 20 }));
-    }, [dispatch]);
+    const filteredData = isRejected
+        ? data?.filter(item => item?.status === 'rejected')
+        : data;
 
-    // Update all notifications when new data arrives
-    useEffect(() => {
-        if (notifications && notifications.length > 0) {
-            if (page === 1) {
-                // First page - replace all data
-                setAllNotifications(notifications);
-            } else {
-                // Subsequent pages - append data
-                setAllNotifications(prev => [...prev, ...notifications]);
-            }
-        }
-    }, [notifications, page]);
 
-    const formatNotificationDate = (dateString) => {
-        const notificationDate = new Date(dateString);
-        const today = new Date();
-        
-        today.setHours(0, 0, 0, 0);
-        const notifDate = new Date(notificationDate);
-        notifDate.setHours(0, 0, 0, 0);
-        
-        const diffTime = today - notifDate;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 0) {
-            return 'Today';
-        } else if (diffDays === 1) {
-            return 'Yesterday';
-        } else {
-            const day = notificationDate.getDate();
-            const month = notificationDate.getMonth() + 1;
-            return `${day}/${month}`;
+    useFocusEffect(
+        useCallback(() => {
+            dispatch(fetchResidentialPaymentsThunk('all'));
+        }, [dispatch])
+    );
+
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'verified':
+                return '#4CAF50';
+            case 'rejected':
+                return '#F44336';
+            case 'pending':
+                return '#FF9800';
+            default:
+                return '#757575';
         }
     };
 
-    // Load more data when reaching end of list
-    const handleLoadMore = () => {
-        if (!loading && currentPage < totalPages) {
-            const nextPage = currentPage + 1;
-            setCurrentPage(nextPage);
-            dispatch(fetchAdminNotifications({ page: nextPage, limit: 20 }));
+    const getStatusBgColor = (status) => {
+        switch (status) {
+            case 'verified':
+                return '#E8F5E9';
+            case 'rejected':
+                return '#FFEBEE';
+            case 'pending':
+                return '#FFF3E0';
+            default:
+                return '#F5F5F5';
         }
     };
 
-    // Refresh data (pull to refresh)
-    const handleRefresh = () => {
-        setCurrentPage(1);
-        setAllNotifications([]);
-        dispatch(fetchAdminNotifications({ page: 1, limit: 20 }));
-    };
+    const renderPaymentCard = (item) => {
+        console.log(item?.residentialPhoto, 'item')
 
-    const renderItem = ({ item }) => {
+        const handleNavigation = () => {
+            navigation.navigate('PaymentDetails', { payment: item })
+        }
+
         return (
-            <View style={style.card}>
-                <View style={style.iconWrapper}>
-                    <Image source={imagePath.speakerImage} style={{ width: width * 0.1 / 2, height: height * 0.1 / 5 }} />
+            <TouchableOpacity key={item._id} style={styles.paymentCard} onPress={handleNavigation}>
+                <View style={styles.cardContent}>
+                    <Image
+                        source={{ uri: item?.residentialPhoto }}
+                        style={styles.avatar}
+                    />
+                    <View style={styles.infoContainer}>
+                        <Text style={styles.nameText}>{item?.residentialName}</Text>
+                        <Text style={styles.addressText}>{item?.residentialAddress}</Text>
+                        <View
+                            style={[
+                                styles.statusBadge,
+                                { backgroundColor: getStatusBgColor(item.status) },
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    styles.statusText,
+                                    { color: getStatusColor(item.status) },
+                                ]}
+                            >
+                                {item.status.toUpperCase()}
+                            </Text>
+                        </View>
+                    </View>
                 </View>
 
-                <View style={style.textContainer}>
-                    <Text style={style.title}>{item?.title}</Text>
-                    <Text style={style.subtitle}>{item?.message}</Text>
-                </View>
-
-                <View style={style.dateWrapper}>
-                    <Text style={style.dateText}>{formatNotificationDate(item.createdAt)}</Text>
-                </View>
-            </View>
-        );
-    };
-
-    // Footer component showing loading indicator
-    const renderFooter = () => {
-        if (!loading) return null;
-        return (
-            <View style={{ paddingVertical: 20 }}>
-                <ActivityIndicator size="small" color="#519377" />
-            </View>
-        );
-    };
-
-    // Empty component
-    const renderEmpty = () => {
-        if (loading) return null;
-        return (
-            <View style={{ marginTop: 50, alignItems: 'center' }}>
-                <Text style={{ color: '#999', fontSize: 16 }}>No notifications yet</Text>
-            </View>
-        );
+                <TouchableOpacity>
+                    <Image
+                        source={{ uri: item?.paymentScreenshot }}
+                        style={styles.paymentScreenshot}
+                    />
+                </TouchableOpacity>
+            </TouchableOpacity>
+        )
     };
 
     return (
-        <SafeAreaView style={style.container} edges={['top']}>
-            <View style={style.main}>
-                <View style={style.innerCantainer}>
-                    <View style={style.header}>
+        <SafeAreaView style={{ flex: 1 }} edges={['top', "0"]}>
+            <View style={styles.container}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <View style={styles.headerTop}>
                         <TouchableOpacity
-                            style={style.backButton}
+                            style={styles.backButton}
                             onPress={() => navigation.goBack()}
                         >
-                            <Ionicons name="chevron-back" size={28} color="#519377" />
+                            <Ionicons name="arrow-back" size={28} color="#519377" />
                         </TouchableOpacity>
-                        <Text style={style.headerTitle}>Notifications</Text>
-                        <View style={style.placeholder} />
-                    </View>
-                    <View style={style.listWrapper}>
-                        <FlatList
-                            data={allNotifications}
-                            keyExtractor={(item, index) => item._id || index.toString()}
-                            renderItem={renderItem}
-                            showsVerticalScrollIndicator={false}
-                            contentContainerStyle={{ paddingBottom: 20 }}
-                            onEndReached={handleLoadMore}
-                            onEndReachedThreshold={0.5}
-                            ListFooterComponent={renderFooter}
-                            ListEmptyComponent={renderEmpty}
-                            refreshing={loading && currentPage === 1}
-                            onRefresh={handleRefresh}
-                        />
+                        <Text style={styles.headerTitle}>Payment History</Text>
+                        <View style={{ width: 50 }} />
                     </View>
                 </View>
+
+                {/* Content */}
+                {/* <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                    {loading ? (
+                        <View style={styles.centerContainer}>
+                            <ActivityIndicator size="large" color="#9E9E9E" />
+                        </View>
+                    ) : error ? (
+                        <View style={styles.centerContainer}>
+                            <Text style={styles.errorText}>{error}</Text>
+                        </View>
+                    ) : data && data.length > 0 ? (
+                        <>
+                            <Text style={styles.sectionTitle}>Today</Text>
+                            {data.slice(0).map(renderPaymentCard)}
+
+                            <Text style={styles.sectionTitle}>Last Month</Text>
+                            {data.slice(0).map(renderPaymentCard)}
+                        </>
+                    ) : (
+                        <View style={styles.centerContainer}>
+                            <Text style={styles.emptyText}>No payments found</Text>
+                        </View>
+                    )}
+                </ScrollView> */}
+                <ScrollView
+                    style={styles.content}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {loading ? (
+                        <View style={styles.centerContainer}>
+                            <ActivityIndicator
+                                size="large"
+                                color="#9E9E9E"
+                            />
+                        </View>
+                    ) : error ? (
+                        <View style={styles.centerContainer}>
+                            <Text style={styles.errorText}>{error}</Text>
+                        </View>
+                    ) : filteredData && filteredData.length > 0 ? (
+                        <>
+                            {!isRejected && (
+                                <Text style={styles.sectionTitle}>Today</Text>
+                            )}
+
+                            {(isRejected
+                                ? filteredData
+                                : filteredData.slice(0, 3)
+                            ).map(renderPaymentCard)}
+
+                            {!isRejected && filteredData.length > 3 && (
+                                <>
+                                    <Text style={styles.sectionTitle}>
+                                        Last Month
+                                    </Text>
+                                    {filteredData
+                                        .slice(3)
+                                        .map(renderPaymentCard)}
+                                </>
+                            )}
+                        </>
+                    ) : (
+                        <View style={styles.centerContainer}>
+                            <Text style={styles.emptyText}>
+                                {isRejected
+                                    ? 'No rejected payments found'
+                                    : 'No payments found'}
+                            </Text>
+                        </View>
+                    )}
+                </ScrollView>
             </View>
         </SafeAreaView>
     );
 };
 
-export default Notification;
-
-const style = StyleSheet.create({
-    main: { flex: 1 },
-    innerCantainer: { flex: 1, padding: 16 },
-    listWrapper: { marginTop: 20, marginBottom: 10 * 3.8 },
+const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#F8F9FA',
     },
     header: {
+        paddingHorizontal: 20,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+    },
+    headerTop: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 5,
+        marginBottom: 10,
+        justifyContent: 'space-between'
+    },
+    backButton: {
+        fontSize: 24,
+        marginRight: 16,
+        color: '#000000',
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#000000',
+    },
+    monthFilters: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    monthButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 25,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    monthButtonActive: {
+        backgroundColor: '#9E9E9E',
+        borderWidth: 0,
+    },
+    monthText: {
+        fontSize: 14,
+        color: '#757575',
+        fontWeight: '400',
+    },
+    monthTextActive: {
+        color: '#FFFFFF',
+        fontWeight: '600',
+    },
+    content: {
+        flex: 1,
+        paddingBottom: 20,
+        paddingHorizontal: 16
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#000000',
+        marginBottom: 16,
+    },
+    paymentCard: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: moderateScale(0),
-        paddingVertical: moderateScale(0),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 2,
     },
-    backButton: {
-        marginTop: 2
-    },
-    headerTitle: {
-        fontSize: moderateScale(20),
-        fontWeight: '600',
-        color: '#000',
-        flex: 1,
-        textAlign: 'center',
-    },
-    placeholder: {
-        width: 28,
-    },
-    title: {
-        fontSize: 15,
-        fontWeight: '500',
-        color: '#000000',
-    },
-    subtitle: {
-        fontSize: 10,
-        color: '#6B7280',
-        marginTop: 2,
-    },
-    dateWrapper: {
-        backgroundColor: '#F3F4F6',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-    },
-    dateText: {
-        fontSize: 12,
-        color: '#6B7280',
-        fontWeight: '600',
-    },
-    card: {
+    cardContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
-        backgroundColor:'#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 6,
-        borderRadius:10,
-        paddingHorizontal:8,
-        elevation:6,
-        marginBottom: 10,
-    },
-    iconWrapper: {
-        width: 40,
-        height: 40,
-        borderRadius: 15,
-        backgroundColor: '#FCE8DC',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    textContainer: {
         flex: 1,
     },
+    avatar: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: '#E0E0E0',
+        marginRight: 12,
+    },
+    infoContainer: {
+        flex: 1,
+    },
+    nameText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#000000',
+        marginBottom: 4,
+    },
+    addressText: {
+        fontSize: 14,
+        color: '#757575',
+        marginBottom: 6,
+    },
+    statusBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        alignSelf: 'flex-start',
+    },
+    statusText: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    paymentScreenshot: {
+        width: 60,
+        height: 80,
+        borderRadius: 8,
+        backgroundColor: '#F5F5F5',
+    },
+    centerContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: 50,
+    },
+    errorText: {
+        fontSize: 16,
+        color: '#F44336',
+    },
+    emptyText: {
+        fontSize: 16,
+        color: '#757575',
+    },
 });
+
+export default PaymentHistoryScreen;
