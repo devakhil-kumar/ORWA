@@ -69,7 +69,7 @@ const AdminHome = () => {
 
     return (
         <SafeAreaView style={{ flex: 1, paddingBottom: 5 }} edges={['top', '0']}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F0B90B" />
+            <StatusBar barStyle="dark-content" backgroundColor="#519377" />
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
                     <TouchableOpacity style={styles.profileSection} onPress={onHandleProfile}>

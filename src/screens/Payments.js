@@ -125,7 +125,7 @@ const PaymentHistoryScreen = () => {
                         >
                             <Ionicons name="arrow-back" size={28} color="#519377" />
                         </TouchableOpacity>
-                        <Text style={styles.headerTitle}>Payment History</Text>
+                        <Text style={styles.headerTitle}>{isRejected ? "Rejected payments" : "Payement History"}</Text>
                         <View style={{ width: 50 }} />
                     </View>
                 </View>

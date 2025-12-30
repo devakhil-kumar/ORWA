@@ -48,7 +48,7 @@ const UserHome = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F0B90B" />
+      <StatusBar barStyle="dark-content" backgroundColor="#519377" />
       <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: '#F9FAFB80', padding: 16 }}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.profileSection} onPress={onHandleProfile}>

@@ -71,6 +71,7 @@ export const PaymentUpload = async (userData) => {
     return axios.post(`${BASE_URL}${API_ROUTES.UPLOAD_PAYMENT}`, userData, {
         headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
         },
     });
 }

@@ -118,7 +118,7 @@ const AddUpdates = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top','bottom']}>
-            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+            <StatusBar barStyle="dark-content" backgroundColor="#519377" />
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.backButton}

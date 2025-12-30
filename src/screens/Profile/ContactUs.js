@@ -82,7 +82,7 @@ const ContactUs = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+            <StatusBar barStyle="dark-content" backgroundColor="#519377" />
 
             {/* Header */}
             <View style={styles.header}>
