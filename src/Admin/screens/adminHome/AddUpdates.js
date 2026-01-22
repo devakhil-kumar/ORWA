@@ -117,33 +117,33 @@ const AddUpdates = ({ navigation }) => {
 
 
     return (
-        <SafeAreaView style={styles.container} edges={['top','bottom']}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
             <StatusBar barStyle="dark-content" backgroundColor="#519377" />
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.backButton}
                     onPress={() => navigation.goBack()}
                 >
-                    <Ionicons name="arrow-back" size={28} color="#519377" />
+                    <Ionicons name="chevron-back" size={28} color="#519377" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Add Announcement</Text>
                 <View style={styles.placeholder} />
             </View>
             <View>
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Add Title</Text>
+                    <Text style={styles.label}>Add Title *</Text>
                     <CustomInput
                         value={societyName}
                         onChangeText={setSocietyName}
                         keyboardType="email-address"
                         style={styles.normalInput}
-                        placeholder="Titles Goes here"
+                        placeholder="Title goes here"
                         textAlignVertical={"top"}
                         multiline
                     />
                 </View>
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Write Description</Text>
+                    <Text style={styles.label}>Write Description *</Text>
                     <CustomInput
                         value={societyDescription}
                         onChangeText={setSocietyDescription}
@@ -156,7 +156,7 @@ const AddUpdates = ({ navigation }) => {
                 </View>
                 <View>
                     <Text style={styles.label}>Announcement Image *</Text>
-                    <UploadBox title="Address Proof" file={addressProof} onPress={() => pickAndCrop(setAddressProof)} />
+                    <UploadBox title="Upload Image" file={addressProof} onPress={() => pickAndCrop(setAddressProof)} />
                 </View>
 
                 <View style={styles.buttonContainer}>
@@ -182,7 +182,7 @@ export default AddUpdates;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#F9FAFB',
         paddingHorizontal: 16
     },
     header: {
@@ -322,6 +322,7 @@ const styles = StyleSheet.create({
         marginBottom: moderateScale(0),
     },
     input: {
+        width: '100%',
         height: 100,
         borderWidth: 1,
         borderColor: '#CFCFCF',
@@ -331,6 +332,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     normalInput: {
+        width: '100%',
         height: 50,
         borderWidth: 1,
         borderColor: '#CFCFCF',
@@ -361,7 +363,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#fff',
     },
-    uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding:25, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed', marginTop:5 },
+    uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding: 25, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed', marginTop: 5 },
     uploadedImage: { width: 200, height: 120, borderRadius: 12, marginBottom: 10 },
     uploadText: { fontSize: 14, color: '#666' },
     fileName: { color: '#0066CC', fontSize: 12, marginTop: 8 },

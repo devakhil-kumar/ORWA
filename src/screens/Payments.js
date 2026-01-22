@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, } from 'react';
 import {
     View,
     Text,
@@ -13,7 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchResidentialPaymentsThunk } from '../app/features/residentialPaymentsSlice';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute, } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
@@ -23,16 +23,31 @@ const PaymentHistoryScreen = () => {
     const [isRejected, setIsRejected] = useState(false);
     const { data, loading, error } = useSelector((state) => state.residentialpayment);
     const route = useRoute();
+    const userId = route?.params?.userId;
+
+
+    useEffect(() => {
+        console.log("UserID", userId)
+    }, [userId]);
 
     useFocusEffect(
         useCallback(() => {
-          setIsRejected(route.params?.rejected === true);
+            setIsRejected(route.params?.rejected === true);
         }, [route.params?.rejected])
-      );
+    );
 
-    const filteredData = isRejected
-        ? data?.filter(item => item?.status === 'rejected')
-        : data;
+    const filteredData = userId
+        ? isRejected
+            ? data?.filter(item => item?.residentialId === userId && item?.status === 'rejected')
+            : data?.filter(item => item?.residentialId === userId)
+        : isRejected
+            ? data?.filter(item => item?.status === 'rejected')
+            : data;
+
+
+    // const filteredData = isRejected
+    //     ? data?.filter(item => item?.status === 'rejected')
+    //     : data;
 
 
     useFocusEffect(
@@ -123,7 +138,7 @@ const PaymentHistoryScreen = () => {
                             style={styles.backButton}
                             onPress={() => navigation.goBack()}
                         >
-                            <Ionicons name="arrow-back" size={28} color="#519377" />
+                            <Ionicons name="chevron-back" size={28} color="#519377" />
                         </TouchableOpacity>
                         <Text style={styles.headerTitle}>{isRejected ? "Rejected payments" : "Payement History"}</Text>
                         <View style={{ width: 50 }} />
@@ -209,10 +224,11 @@ const PaymentHistoryScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: '#F9FAFB',
     },
     header: {
         paddingHorizontal: 20,
+        paddingVertical: 8,
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
     },

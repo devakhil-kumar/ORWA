@@ -19,97 +19,118 @@ import CustomInput from '../components/CustomInput';
 import imagePath from '../contests/imagePath';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginAdmin, LoginUser } from '../app/features/authSlice';
+import { resetPassword } from '../app/features/authSlice';
 import { showMessage } from '../app/features/messageSlice';
 const { width, height } = Dimensions.get('window');
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import Ionicons from '@react-native-vector-icons/ionicons';
 
-const schemes = [
-    { label: 'Admin', value: 'admin' },
-    { label: 'User', value: 'user' },
-];
-
-const LoginScreen = () => {
-     const navigation = useNavigation();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [openScheme, setOpenScheme] = useState(false);
-    const [scheme, setScheme] = useState('admin');
+const ResetPasswordScreen = () => {
+    const navigation = useNavigation();
     const dispatch = useDispatch();
-    const [hasAttemptedLogin, setHasAttemptedLogin] = useState(false);
-    const [errors, setErrors] = useState({ email: '', password: '' });
+
+    const route = useRoute();
+    const data = route?.params?.Data;
+
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
     const { loading, user, mesg } = useSelector((state) => state.auth);
+    const [hasAttemptedResetPassword, setHasAttemptedResetPassword] = useState(false);
+    const [errors, setErrors] = useState({ newPassword: '', confirmPassword: '', samePasswordError: '' });
 
-    const validateEmail = (text) => {
+    var validateNewPassword = (text, field) => {
         if (!text.trim()) {
-            return 'Email is required';
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(text)) {
-            return 'Please enter a valid email address';
-        }
-        return '';
-    };
-
-    const validatePassword = (text) => {
-        if (!text.trim()) {
-            return 'Password is required';
+            return `New Password is required`;
         }
         if (text.length < 6) {
-            return 'Password must be at least 6 characters';
+            return `New Password must be at least 6 characters`;
         }
         return '';
     };
 
-    const handleEmailChange = (text) => {
-        setEmail(text);
-        if (hasAttemptedLogin) {
-            setErrors(prev => ({ ...prev, email: validateEmail(text) }));
+    var validateConfirmPassword = (text, field) => {
+        if (!text.trim()) {
+            return `Confirm Password is required`;
+        }
+        if (text.length < 6) {
+            return `Confirm Password must be at least 6 characters`;
+        }
+        return '';
+    };
+
+    const handleNewPasswordChange = (text) => {
+        setNewPassword(text);
+        if (hasAttemptedResetPassword) {
+            setErrors(prev => ({
+                ...prev,
+                newPassword: validateNewPassword(text, "New Password"),
+                samePasswordError: confirmPassword !== text
+                    ? "New Password and Confirm Password should be same."
+                    : ""
+            }));
         }
     };
 
-    const handlePasswordChange = (text) => {
-        setPassword(text);
-        if (hasAttemptedLogin) {
-            setErrors(prev => ({ ...prev, password: validatePassword(text) }));
+    const handleConfirmPasswordChange = (text) => {
+        setConfirmPassword(text);
+        if (hasAttemptedResetPassword) {
+            setErrors(prev => ({
+                ...prev,
+                confirmPassword: validateConfirmPassword(text, "Confirm Password"),
+                samePasswordError: newPassword !== text
+                    ? "New Password and Confirm Password should be same."
+                    : ""
+            }));
         }
     };
 
-    const handleSignIn = async () => {
-        setHasAttemptedLogin(true);
-        const emailError = validateEmail(email);
-        const passwordError = validatePassword(password);
+    const handleResetPassword = async () => {
+        setHasAttemptedResetPassword(true);
+
+        const newPasswordError = validateNewPassword(newPassword);
+        const confirmPasswordError = validateConfirmPassword(confirmPassword);
+
+        const samePasswordError =
+            newPassword !== confirmPassword ? "New Password and Confirm Password should be same." : "";
+
         setErrors({
-            email: emailError,
-            password: passwordError,
+            newPassword: newPasswordError,
+            confirmPassword: confirmPasswordError,
+            samePasswordError: samePasswordError,
         });
-        if (emailError || passwordError) {
+
+        if (newPasswordError || confirmPasswordError || samePasswordError) {
             return;
         }
+        console.log("data from reset password:", data);
         const userData = {
-            email: email.trim(),
-            password: password.trim(),
+            userType: data.userType,
+            resetToken: data.resetToken,
+            newPassword: newPassword.trim(),
         };
         try {
-            let response;
-            if (scheme === 'admin') {
-                response = await dispatch(loginAdmin(userData)).unwrap();
-            } else {
-                response = await dispatch(LoginUser(userData)).unwrap();
-            }
+            // let response;
+            // if (scheme === 'admin') {
+            //     response = await dispatch(forgotPasswordAdmin(userData)).unwrap();
+            // } else {
+            const response = await dispatch(resetPassword(userData)).unwrap();
+            // }
             dispatch(
                 showMessage({
                     type: 'success',
-                    text: response?.message || 'Login successful!',
+                    text: response?.message || 'Reset Password Successfully.',
                 })
             );
+
+            navigation.navigate('Login');
+
         } catch (err) {
-            console.log('Login error:', err?.message);
+            console.log('Reset Password error:', err?.message);
             const errorMessage =
                 err?.response?.data?.message ||
                 err?.message ||
                 err?.error ||
-                'Login Failed';
+                'Reset Password Failed';
             dispatch(
                 showMessage({
                     type: 'error',
@@ -119,15 +140,6 @@ const LoginScreen = () => {
         }
     };
 
-    const handleForgotPasword = () => { 
-         navigation.navigate('ForgotPassword');
-    }
-
-    if (loading) {
-        return <View style={styles.loaderOverlay}>
-            <ActivityIndicator size="large" color="#519377" />
-        </View>
-    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -144,6 +156,17 @@ const LoginScreen = () => {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
+                    <View style={styles.header}>
+                        <View style={styles.headerTop}>
+                            <TouchableOpacity
+                                style={styles.backButton}
+                                onPress={() => navigation.goBack()}
+                            >
+                                <Ionicons name="chevron-back" size={28} color="#519377" />
+                            </TouchableOpacity>
+
+                        </View>
+                    </View>
                     <View style={{ marginTop: 40 }}>
                         <Image
                             source={imagePath.loginImage}
@@ -155,71 +178,56 @@ const LoginScreen = () => {
                             }}
                         />
 
-                        <Text style={styles.subtitle}>Sign In</Text>
+                        <Text style={styles.subtitle}>Reset Password</Text>
 
                         <View style={{ marginTop: 40 }}>
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Choose the role</Text>
-                                <DropDownPicker
-                                    open={openScheme}
-                                    value={scheme}
-                                    items={schemes}
-                                    setOpen={setOpenScheme}
-                                    setValue={setScheme}
-                                    style={styles.dropdown}
-                                    dropDownContainerStyle={styles.dropdownList}
-                                    listMode="SCROLLVIEW"
-                                />
-                            </View>
 
                             <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Enter Email</Text>
+                                <Text style={styles.label}>New Password</Text>
                                 <CustomInput
-                                    placeholder="Enter your email address"
-                                    value={email}
-                                    onChangeText={handleEmailChange}
-                                    keyboardType="email-address"
-                                />
-                                {errors.email && (
-                                    <Text style={styles.errorText}>{errors.email}</Text>
-                                )}
-                            </View>
-
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Password</Text>
-                                <CustomInput
-                                    placeholder="Enter your password"
-                                    value={password}
-                                    onChangeText={handlePasswordChange}
+                                    placeholder="New Password"
+                                    value={newPassword}
+                                    onChangeText={handleNewPasswordChange}
                                     secureTextEntry
                                 />
-                                {errors.password && (
-                                    <Text style={styles.errorText}>{errors.password}</Text>
+                                {errors.newPassword && (
+                                    <Text style={styles.errorText}>{errors.newPassword}</Text>
                                 )}
                             </View>
 
-                            <View style={[styles.inputContainer, { alignItems: 'flex-end' }]}>
-                                <TouchableOpacity
-                                    onPress={handleForgotPasword}
-                                >
-                                    <Text style={[styles.label,{color:"#666"}]}>Forgot Password?</Text>
-                                </TouchableOpacity>
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Confirm Password</Text>
+                                <CustomInput
+                                    placeholder="Confirm Password"
+                                    value={confirmPassword}
+                                    onChangeText={handleConfirmPasswordChange}
+                                    secureTextEntry
+                                />
+                                {errors.confirmPassword && (
+                                    <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+                                )}
+                                {errors.samePasswordError && (
+                                    <Text style={styles.errorText}>{errors.samePasswordError}</Text>
+                                )}
                             </View>
+
                         </View>
+
                     </View>
 
                     <TouchableOpacity
                         style={styles.signInButton}
-                        onPress={handleSignIn}
+                        onPress={handleResetPassword}
                     >
-                        <Text style={styles.signInButtonText}>Sign in</Text>
+                        <Text style={styles.signInButtonText}>Submit</Text>
                     </TouchableOpacity>
 
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
-}
+};
+
 
 const styles = StyleSheet.create({
     container: {
@@ -379,4 +387,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default LoginScreen;
+export default ResetPasswordScreen;

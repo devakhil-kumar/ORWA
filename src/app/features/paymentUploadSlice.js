@@ -5,6 +5,7 @@ export const uploadPaymentThunk = createAsyncThunk(
     'payment/uploadPayment',
     async (userData, { rejectWithValue }) => {
         try {
+            console.log('UserData : ', userData);
             const response = await UploadPaymentService(userData);
             console.log(response.data, 'response===========')
             return response.data;

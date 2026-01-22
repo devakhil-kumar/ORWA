@@ -3,9 +3,9 @@ import { UserContactUsSerivce } from '../../apis/service';
 
 export const submitUserContactUs = createAsyncThunk(
   'contact/submitContactUs',
-  async (payload, { rejectWithValue }) => {
+  async (formData, { rejectWithValue }) => {
     try {
-      const response = await UserContactUsSerivce(payload);
+      const response = await UserContactUsSerivce(formData);
       return response; 
     } catch (error) {
       return rejectWithValue(

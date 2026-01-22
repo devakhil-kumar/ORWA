@@ -1,7 +1,12 @@
 export const API_ROUTES = {
     LOGINADMIN: 'admin/login',
     LOGINUSER: 'residential/login',
+    FORGOTPASSWORD: 'auth/forgot-password',
+    VERIFYOTP: 'auth/verify-forgot-otp',
+    RESETPASSWORD: 'auth/reset-password',
     ADD_MEMBERS: 'admin/residential',
+    UPDATE_MEMBER: (id) => `admin/residential/${id}`,
+    DELETE_MEMBER: (id) => `admin/residential/${id}`,
     UPLOAD_PAYMENT: 'payment/upload',
     PAYMENT_HISTORY: '/payment/history',
     RESIDENTIAL_PAYMENTS: 'admin/residential/payments',
@@ -14,11 +19,12 @@ export const API_ROUTES = {
     ADD_EVENT: 'events/admin',
     UPDATE_EVENT: (id) => `events/admin/${id}`,
     GET_ALL_RESIDENTAILS: 'admin/residential',
+    // GET_RESIDENTAIL : (id) =>`admin/residential/${id}` ,
     DELETE_EVENT: (id) => `events/admin/${id}`,
     MEMBERLIST: 'admin/residential/member-listing',
     MEMEBERLIST_APPROVE: (id) => `admin/residential/verify-member/${id}`,
-    SOCIETYGET:'society',
-    UPDATESOCIETY:(id) => `society/${id}`,
-    CONTACT_US:'admin/post-contact',
-    USERCONTACT_US:'contact-us'
+    SOCIETYGET: 'society',
+    UPDATESOCIETY: (id) => `society/${id}`,
+    CONTACT_US: 'admin/post-contact',
+    USERCONTACT_US: 'contact-us'
 }

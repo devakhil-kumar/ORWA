@@ -34,6 +34,18 @@ export const loginAPIAdmin = userData => {
     return axiosInstance.post(API_ROUTES.LOGINADMIN, userData);
 }
 
+export const forgotPasswordAPI = userData => {
+    return axiosInstance.post(API_ROUTES.FORGOTPASSWORD, userData);
+}
+
+export const verifyOtpAPI = userData => {
+    return axiosInstance.post(API_ROUTES.VERIFYOTP, userData);
+}
+
+export const resetPasswordAPI = userData => {
+    return axiosInstance.post(API_ROUTES.RESETPASSWORD, userData);
+}
+
 // export const addMemberAPI = async (formData) => {
 //     const { token } = await getUserData();
 //     console.log('API URL:', `${BASE_URL}${API_ROUTES.ADD_MEMBERS}`);
@@ -65,6 +77,30 @@ export const addMemberAPI = async (formData) => {
     return response.json();
 };
 
+export const updateMemberAPI = async (formData, id) => {
+    const { token } = await getUserData();
+    console.log("ID : from api", id)
+    console.log("token", token)
+    const response = await fetch(`${BASE_URL}${API_ROUTES.UPDATE_MEMBER(id)}`, {
+        method: 'PUT',
+        headers: {
+            'x-request-source': 'mobile',
+            Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+    });
+
+    if (!response.ok) {
+        throw new Error(response.body?.message || 'Update member API failed');
+    }
+
+    return response.json();
+};
+
+export const DeleteMemberAPI = async (id) => {
+        console.log("ID : from api", id)
+    return axiosInstance.delete(API_ROUTES.DELETE_MEMBER(id));
+}
 
 export const PaymentUpload = async (userData) => {
     const { token } = await getUserData();
@@ -82,7 +118,7 @@ export const PaymentHistory = (year, page, limit) => {
 
 
 export const fetchResidentialPayments = (type = 'all') => {
-    return axiosInstance.get(`${API_ROUTES.RESIDENTIAL_PAYMENTS}?type=${type}`);
+    return axiosInstance.get(`${API_ROUTES.RESIDENTIAL_PAYMENTS}?type=${type}&page=${1}&limit=${30}`);
 };
 
 
@@ -135,6 +171,10 @@ export const getresidentailsAdmin = () => {
     return axiosInstance.get(API_ROUTES.GET_ALL_RESIDENTAILS)
 }
 
+// export const getresidentailByIdAdmin = (id) => {
+//     return axiosInstance.get(API_ROUTES.GET_RESIDENTAIL(id))
+// }
+
 export const DeleteAdminEvent = async (id) => {
     return axiosInstance.delete(API_ROUTES.DELETE_EVENT(id));
 }
@@ -159,6 +199,13 @@ export const ContactUs = (message) => {
     return axiosInstance.post(API_ROUTES.CONTACT_US, message)
 }
 
-export const ContactUsUser = (payload) => {
-return axiosInstance.post(API_ROUTES.USERCONTACT_US,payload)
+export const ContactUsUser = async (formData) => {console.log("jhgjhgjhvjhvjhvjhvjghvjhg",formData);
+    const { token } = await getUserData();
+    return axios.post(`${BASE_URL}${API_ROUTES.USERCONTACT_US}`, formData, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+    // return axiosInstance.post(API_ROUTES.USERCONTACT_US, fromData)
 }

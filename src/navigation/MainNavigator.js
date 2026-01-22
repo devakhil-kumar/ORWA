@@ -44,9 +44,10 @@ import UserHome from '../screens/UserHome.js';
 import UserAnnouncements from '../screens/UserAnnoucements.js';
 import UserSubmitPayment from '../screens/UserSubmitPayments.js';
 import UserHistoryPayments from '../screens/UserHistoryPayments.js';
+import UserHistoryPaymentsDetails from '../screens/UserHistoryPaymentsDetails.js';
 import UserProfile from '../screens/UserProfile.js';
 import imagePath from '../contests/imagePath.jsx';
-import  ContactUs  from '../screens/Profile/ContactUs.js';
+import ContactUs from '../screens/Profile/ContactUs.js';
 const { width, height } = Dimensions.get('window');
 
 
@@ -58,10 +59,11 @@ const Stack = createNativeStackNavigator();
 
 export const UserHomeDashboard = () => {
     return (
-        <Stack.Navigator screenOptions={{headerShown: false}} initialRouteName='UserHome'>
+        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName='UserHome'>
             <Stack.Screen name='UserHome' component={UserHome} />
             <Stack.Screen name='UserAnnouncements' component={UserAnnouncements} />
             <Stack.Screen name="UserHistoryPayments" component={UserHistoryPayments} />
+            <Stack.Screen name="UserHistoryPaymentsDetails" component={UserHistoryPaymentsDetails} />
             <Stack.Screen name='ContactUs' component={ContactUs} />
         </Stack.Navigator>
     )
@@ -70,9 +72,10 @@ export const UserHomeDashboard = () => {
 
 export const PaymentNavigator = () => {
     return (
-        <Stack.Navigator screenOptions={{headerShown: false}} initialRouteName='UserSubmitPayment'>
-             <Stack.Screen name="UserSubmitPayment" component={UserSubmitPayment} />
-             <Stack.Screen name="UserHistoryPayments" component={UserHistoryPayments} />
+        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName='UserSubmitPayment'>
+            <Stack.Screen name="UserSubmitPayment" component={UserSubmitPayment} />
+            <Stack.Screen name="UserHistoryPayments" component={UserHistoryPayments} />
+            <Stack.Screen name="UserHistoryPaymentsDetails" component={UserHistoryPaymentsDetails} />
         </Stack.Navigator>
     )
 }
@@ -81,11 +84,15 @@ const UserBottomTabs = () => {
     const insets = useSafeAreaInsets();
     const bottomInset = Platform.OS === 'android' ? insets.bottom : 10;
     const defaultTabBarStyle = {
+    
         borderTopWidth: 0,
         height: 65 + bottomInset,
         paddingBottom: bottomInset,
         paddingTop: 8,
-
+        borderTopLeftRadius: 40,
+        borderTopRightRadius:40,
+        overflow: "hidden",
+      
     }
 
     return (
@@ -93,7 +100,7 @@ const UserBottomTabs = () => {
             initialRouteName="UserHome"
             screenOptions={{
                 headerShown: false,
-                tabBarStyle:defaultTabBarStyle,
+                tabBarStyle: defaultTabBarStyle,
                 tabBarShowLabel: true,
                 tabBarLabelStyle: {
                     fontSize: 12,
@@ -106,15 +113,15 @@ const UserBottomTabs = () => {
                 name="UserHome"
                 component={UserHomeDashboard}
                 options={({ route }) => ({
-                    tabBarIcon: ({focused}) => (
+                    tabBarIcon: ({ focused }) => (
                         <Feather name='home' color={focused ? '#519377' : '#000'} size={28} />
                     ),
-                      tabBarLabel: ({ focused }) => (
-                        <Text style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Dashboard</Text>
+                    tabBarLabel: ({ focused }) => (
+                        <Text style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Home</Text>
                     ),
                     tabBarStyle: (() => {
                         const routeName = getFocusedRouteNameFromRoute(route) ?? 'Profile';
-                        if ( routeName === 'ContactUs' || routeName === "UserHistoryPayments") {
+                        if (routeName === 'ContactUs' || routeName === "UserHistoryPayments" || routeName === 'UserHistoryPaymentsDetails') {
                             return { display: 'none' };
                         }
                         return defaultTabBarStyle;
@@ -125,14 +132,14 @@ const UserBottomTabs = () => {
                 name="UserAnnouncements"
                 component={UserAnnouncements}
                 options={({ route }) => ({
-                    tabBarIcon: ({focused}) => (
-                        <Image source={focused ? imagePath.Updates : imagePath.InActiveUpdates} style={{width:width/15, height:height/36}} />
+                    tabBarIcon: ({ focused }) => (
+                        <Image source={focused ? imagePath.Updates : imagePath.InActiveUpdates} style={{ width: 22, height: 20}} />
                     ),
-                      tabBarLabel: ({ focused }) => (
-                        <Text style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Updates</Text>
+                    tabBarLabel: ({ focused }) => (
+                        <Text style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Notifications</Text>
                     ),
                     tabBarStyle: (() => {
-                        const routeName = getFocusedRouteNameFromRoute(route) ?? 'User';    
+                        const routeName = getFocusedRouteNameFromRoute(route) ?? 'User';
                         if (routeName === '') {
                             return { display: 'none' };
                         }
@@ -144,15 +151,15 @@ const UserBottomTabs = () => {
                 name="Payments"
                 component={PaymentNavigator}
                 options={({ route }) => ({
-                    tabBarIcon: ({focused}) => (
-                       <Ionicons name='wallet' size={24} color={focused ? '#519377' : '#000'} />
+                    tabBarIcon: ({ focused }) => (
+                        <Ionicons name='wallet' size={24} color={focused ? '#519377' : '#000'} />
                     ),
-                      tabBarLabel: ({ focused }) => (
+                    tabBarLabel: ({ focused }) => (
                         <Text style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Payments</Text>
                     ),
                     tabBarStyle: (() => {
-                        const routeName = getFocusedRouteNameFromRoute(route) ?? 'User';    
-                        if (routeName === 'UserHistoryPayments') {
+                        const routeName = getFocusedRouteNameFromRoute(route) ?? 'User';
+                        if (routeName === 'UserHistoryPayments' || routeName === 'UserHistoryPaymentsDetails') {
                             return { display: 'none' };
                         }
                         return defaultTabBarStyle;
@@ -163,10 +170,10 @@ const UserBottomTabs = () => {
                 name="Profile"
                 component={UserProfile}
                 options={({ route }) => ({
-                    tabBarIcon: ({focused}) => (
-                        <Image source={focused ? imagePath.Profile : imagePath.InactiveProfile} style={{width:width/14, height:height/34}}/>
+                    tabBarIcon: ({ focused }) => (
+                        <Image source={focused ? imagePath.Profile : imagePath.InactiveProfile} style={{ width: width / 14, height: height / 34 }} />
                     ),
-                      tabBarLabel: ({ focused }) => (
+                    tabBarLabel: ({ focused }) => (
                         <Text style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Profile</Text>
                     ),
                     tabBarStyle: (() => {

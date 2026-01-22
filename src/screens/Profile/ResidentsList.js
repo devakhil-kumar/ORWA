@@ -1,14 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View, PermissionsAndroid, Platform, Alert, Linking, Image } from 'react-native';
+import React, { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View, PermissionsAndroid, Platform, Alert, Linking, Image, Modal, ScrollView, Dimensions, } from 'react-native';
 import Feather from "@react-native-vector-icons/feather";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { moderateScale } from "react-native-size-matters";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchAdminResidentials } from "../../app/features/getResidentails";
-
+import { useDispatch, useSelector, } from "react-redux";
+import { fetchAdminResidentialById, fetchAdminResidentials, deleteMember } from "../../app/features/getResidentails";
+import { showMessage } from "../../app/features/messageSlice";
+import { processInset } from "react-native-reanimated/lib/typescript/common";
+import RNFS from "react-native-fs";
+import Share from "react-native-share";
+const { width, height } = Dimensions.get('window');
 
 const residents = [
     {
@@ -44,6 +48,7 @@ const residents = [
 const ResidentsList = () => {
     const navigation = useNavigation();
 
+
     const onHandleProfile = () => {
         navigation.navigate('Profile')
     }
@@ -57,9 +62,11 @@ const ResidentsList = () => {
     const { residentials, loading } = useSelector((state) => state.residential)
     console.log(residentials, loading, 'loading, resdi+++++++++++')
 
-    useEffect(() => {
-        dispatch(fetchAdminResidentials())
-    }, [dispatch])
+    useFocusEffect(
+        useCallback(() => {
+            dispatch(fetchAdminResidentials());
+        }, [dispatch])
+    );
 
     const renderEmpty = () => {
         if (loading) return null;
@@ -70,38 +77,171 @@ const ResidentsList = () => {
         );
     };
 
+    // modal 
+
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
+
+    const handleEditMember = (member) => {
+        // dispatch(fetchAdminResidentialById(id));
+        navigation.navigate('AddMember', {
+            isEdit: true,
+            member: member,
+        });
+
+    };
+
+    const handleDeleteMember = (item) => {
+        setSelectedItem(item);
+        setDeleteModalVisible(true);
+    };
+
+    const closeDeleteModal = () => {
+        setDeleteModalVisible(false);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            console.log("Selected item :", selectedItem);
+            const result = await dispatch(
+                deleteMember(selectedItem || selectedItem)
+            ).unwrap();
+            dispatch(fetchAdminResidentials());
+
+            closeDeleteModal();
+            dispatch(
+                showMessage({
+                    type: 'success',
+                    text: result?.message || 'Member deleted successfully!',
+                })
+            );
+        } catch (error) {
+            console.log('Delete error:', error);
+            dispatch(
+                showMessage({
+                    type: 'error',
+                    text: error?.message || 'Failed to delete member.',
+                })
+            );
+        }
+    };
+
+    const handleOnItemTap = (id) => {
+        console.log("id from fun:", id);
+        navigation.navigate('PaymentHistory', {
+            userId: id
+        });
+    };
+
+    const [selectedList, setSelectedList] = useState([]);
     const renderItem = ({ item }) => {
+        const isItemSelected = selectedList.includes(item._id);
         return (
-            <View style={style.card}>
-                {residentials.profileImage ? (
-                    <Image
-                        source={{ uri: residentials.profileImage }}
-                        style={style.avatar}
-                    />
-                ) : (
-                    <View style={style.avatarPlaceholder}>
-                        <Ionicons name="person" size={30} color="#519377" />
+            <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => handleOnItemTap(item._id)}
+            >
+
+                <View style={[style.card, isItemSelected && style.selectedCard]}>
+                    <TouchableOpacity onPress={() => {
+                        setSelectedList(prev =>
+                            prev.includes(item._id)
+                                ? prev.filter(id => id !== item._id)
+                                : [...prev, item._id]
+                        );
+                    }}>
+                        {residentials.profileImage ? (
+                            <Image
+                                source={{ uri: residentials.profileImage }}
+                                style={style.avatar}
+                            />
+                        ) : (
+                            <View style={style.avatarPlaceholder}>
+                                <Ionicons name="person" size={30} color="#519377" />
+                            </View>
+                        )}
+                    </TouchableOpacity>
+                    <View style={style.textContainer}>
+                        <Text style={style.name}>{item.name}</Text>
+                        <Text style={style.address}>{item.address || "not declare"}</Text>
                     </View>
-                )}
-                <View style={style.textContainer}>
-                    <Text style={style.name}>{item.name}</Text>
-                    <Text style={style.address}>{item.address || "not declare"}</Text>
-                </View>
-                <View style={style.rightContainer}>
-                    <View style={style.iconRow}>
-                        <Feather name="edit" size={15} color="#000" />
-                        <MaterialIcons
-                            name="delete"
-                            size={18}
-                            color="#D32F2F"
-                            style={{ marginLeft: 14 }}
-                        />
+                    <View style={style.rightContainer}>
+                        <View style={style.iconRow}>
+                            <TouchableOpacity onPress={() => handleEditMember(item)}>
+                                <Feather name="edit" size={15} color="#000" />
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => handleDeleteMember(item._id)} >
+                                <MaterialIcons
+                                    name="delete"
+                                    size={18}
+                                    color="#D32F2F"
+                                    style={{ marginLeft: 14 }}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                        <Text style={style.date}>{new Date(item.createdAt)
+                            .toLocaleDateString("en-GB")
+                            .replaceAll("/", "-")}
+                        </Text>
                     </View>
                 </View>
-            </View>
+            </TouchableOpacity>
         );
     };
 
+
+    const handleSelectAll = (items) => {
+        if (selectedList.length === items.length) {
+            setSelectedList([]); // unselect all
+        } else {
+            setSelectedList(items.map(item => item._id)); // select all
+        }
+    };
+
+
+    const handleExport = async () => {
+        try {
+            const selectedItems = residentials.filter(item =>
+                selectedList.includes(item._id)
+            );
+            if (selectedItems.length === 0) return;
+
+            const header = Object.keys(selectedItems[0]).join(",") + "\n";
+            const rows = selectedItems
+                .map(item =>
+                    Object.values(item)
+                        .map(v => `"${String(v).replace(/"/g, '""')}"`)
+                        .join(",")
+                )
+                .join("\n");
+
+            const csvData = header + rows;
+
+            // ANDROID SAFE PATH → Downloads folder
+            const path =
+                Platform.OS === "android"
+                    ? `${RNFS.DownloadDirectoryPath}/export.csv`
+                    : `${RNFS.DocumentDirectoryPath}/export.csv`;
+
+            await RNFS.writeFile(path, csvData, "utf8");
+
+            console.log("CSV saved at:", path);
+
+            const fileUrl =
+                Platform.OS === "android" ? `file://${path}` : path;
+
+            console.log("Sharing URL:", fileUrl);
+
+            await Share.open({
+                title: "Export CSV",
+                url: fileUrl,
+                type: "text/csv",
+                failOnCancel: false,
+            });
+        } catch (error) {
+            console.log("CSV Export Error:", error);
+        }
+    };
     return (
         <SafeAreaView style={style.container} edges={['top']}>
             <View style={style.main}>
@@ -111,10 +251,34 @@ const ResidentsList = () => {
                             style={style.backButton}
                             onPress={() => navigation.goBack()}
                         >
-                            <Ionicons name="chevron-back" size={28} color="#519377" />
+                            {selectedList.length === 0 && <Ionicons name="chevron-back" size={28} color="#519377" />}
+                            {selectedList.length > 0 && (
+                                <TouchableOpacity
+                                    style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}
+                                    onPress={() => handleSelectAll(residentials)}
+                                >
+                                    <Ionicons
+                                        name={
+                                            selectedList.length === residentials.length
+                                                ? "checkbox"
+                                                : "checkbox-outline"
+                                        }
+                                        size={24}
+                                        color="#519377"
+                                    />
+
+                                </TouchableOpacity>
+                            )}
                         </TouchableOpacity>
-                        <Text style={style.headerTitle}>List of Residents</Text>
-                        <View style={style.placeholder} />
+                        <Text style={style.headerTitle}>List of Members</Text>
+                        {selectedList.length > 0 && (
+                            <TouchableOpacity
+                                style={{ marginLeft: 12 }}
+                                onPress={handleExport}
+                            >
+                                <Ionicons name="share-outline" size={28} color="#519377" />
+                            </TouchableOpacity>
+                        )}
                     </View>
                     {loading ?
                         <View style={style.loaderOverlay}>
@@ -135,6 +299,45 @@ const ResidentsList = () => {
                         </View>}
                 </View>
             </View>
+
+            {/* resident delete modal */}
+            <Modal
+                visible={deleteModalVisible}
+                animationType="fade"
+                transparent={true}
+                onRequestClose={closeDeleteModal}
+            >
+                <View style={style.deleteModalOverlay}>
+                    <View style={style.deleteModalContent}>
+                        <View style={style.deleteIconWrapper}>
+                            <MaterialIcons name="delete-outline" size={50} color="#D32F2F" />
+                        </View>
+
+                        <Text style={style.deleteTitle}>Delete Member?</Text>
+                        <Text style={style.deleteMessage}>
+                            Are you sure you want to delete this Member? This action cannot be undone.
+                        </Text>
+
+                        <View style={style.deleteButtonsContainer}>
+                            <TouchableOpacity
+                                style={[style.deleteModalButton, style.cancelButton]}
+                                onPress={closeDeleteModal}
+
+                            >
+                                <Text style={style.cancelButtonText}>No, Cancel</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[style.deleteModalButton, style.confirmDeleteButton]}
+                                onPress={confirmDelete}
+
+                            >
+                                <Text style={style.confirmDeleteButtonText}>Yes, Delete</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 };
@@ -142,7 +345,7 @@ const ResidentsList = () => {
 export default ResidentsList;
 
 const style = StyleSheet.create({
-    main: { flex: 1 },
+    main: { flex: 1, backgroundColor: '#F9FAFB', },
     innerCantainer: { flex: 1, padding: 16 },
     topButtonsRow: { flexDirection: "row", marginTop: 15, alignItems: 'center', alignSelf: 'center', width: '100%', justifyContent: 'space-between' },
     filterBtn: { flexDirection: 'row', padding: 4 },
@@ -151,7 +354,7 @@ const style = StyleSheet.create({
     exportText: { fontSize: moderateScale(14), marginLeft: 8 },
     addUserBtn: { flexDirection: 'row', backgroundColor: '#519377', borderRadius: 8, alignItems: "center", padding: 12, marginLeft: 8 },
     addUserText: { fontSize: moderateScale(14), marginLeft: 8, lineHeight: moderateScale(15), color: '#fff' },
-    listWrapper: { marginTop: 20, marginBottom: 10 * 3.8 },
+    listWrapper: { marginTop: 20,marginBottom:40 },
     listContent: { paddingBottom: 10 },
     fab: {
         position: 'absolute',
@@ -174,6 +377,7 @@ const style = StyleSheet.create({
     },
     container: {
         flex: 1,
+        backgroundColor: '#F9FAFB',
     },
     profileSection: {
         flexDirection: 'row',
@@ -216,6 +420,20 @@ const style = StyleSheet.create({
         color: '#111827',
     },
 
+    selectedCard: {
+        flexDirection: 'row',
+        backgroundColor: '#85caeaff',
+        borderRadius: 14,
+        padding: 14,
+        marginBottom: 16,
+
+        shadowColor: '#000',
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
+    },
+
     card: {
         flexDirection: 'row',
         backgroundColor: '#FFFFFF',
@@ -255,7 +473,7 @@ const style = StyleSheet.create({
 
     rightContainer: {
         alignItems: 'flex-end',
-        justifyContent: 'space-between',
+        justifyContent: 'center'
     },
 
     iconRow: {
@@ -266,7 +484,7 @@ const style = StyleSheet.create({
     date: {
         fontSize: 12,
         color: '#2E7D32',
-        marginTop: 12,
+        marginTop: 8
     },
     header: {
         flexDirection: 'row',
@@ -298,5 +516,79 @@ const style = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         flex: 1
+    },
+    //delete modal style 
+    deleteModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    deleteModalContent: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 24,
+        width: '100%',
+        maxWidth: 400,
+        alignItems: 'center',
+    },
+    deleteIconWrapper: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#FFEBEE',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    deleteTitle: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#000',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    deleteMessage: {
+        fontSize: 15,
+        color: '#6B7280',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    deleteButtonsContainer: {
+        flexDirection: 'row',
+        gap: 12,
+        width: '100%',
+    },
+    deleteModalButton: {
+        flex: 1,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 50,
+    },
+    cancelButton: {
+        backgroundColor: '#F5F5F5',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    cancelButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#000',
+    },
+    confirmDeleteButton: {
+        backgroundColor: '#D32F2F',
+    },
+    deleteButtonDisabled: {
+        backgroundColor: '#FFCDD2',
+        opacity: 0.7,
+    },
+    confirmDeleteButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#fff',
     },
 });

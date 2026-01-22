@@ -90,6 +90,26 @@ const SocietyInfoScreen = ({ navigation }) => {
                 return;
             }
 
+              if (!blockSector.trim()) {
+                dispatch(
+                    showMessage({
+                        type: 'error',
+                        text: 'Block/Sector is required',
+                    })
+                );
+                return;
+            }
+
+              if (!gstNumber.trim()) {
+                dispatch(
+                    showMessage({
+                        type: 'error',
+                        text: 'GST number is required',
+                    })
+                );
+                return;
+            }
+
             if (!address.trim()) {
                 dispatch(
                     showMessage({
@@ -241,7 +261,7 @@ export default SocietyInfoScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+      backgroundColor: '#F9FAFB',
     },
     loadingContainer: {
         flex: 1,
@@ -259,7 +279,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: moderateScale(16),
         paddingVertical: moderateScale(12),
-        backgroundColor: '#fff',
+       backgroundColor: '#F9FAFB',
+
     },
     backButton: {
         marginTop: 2,
@@ -294,7 +315,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         paddingHorizontal: moderateScale(10),
         paddingVertical: moderateScale(20),
-        backgroundColor: '#fff',
+         backgroundColor: '#F9FAFB',
+
     },
     updateButton: {
         backgroundColor: '#519377',

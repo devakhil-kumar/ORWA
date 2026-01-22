@@ -48,7 +48,7 @@ const SocietyHeadScreen = ({ navigation }) => {
         {
             id: 4,
             icon: 'lock-closed-outline',
-            title: 'Residents List',
+            title: 'Members',
             onPress: () => navigation.navigate('ResdentsList'),
         },
         {
@@ -110,9 +110,9 @@ const SocietyHeadScreen = ({ navigation }) => {
                         <Text style={styles.adminEmail}>{admin.email}</Text>
                         <Text style={styles.adminPhone}>{admin.phone}</Text>
                     </View>
-                    <TouchableOpacity style={styles.editIconButton}>
-                        {/* <Ionicons name="create-outline" size={24} color="#333" /> */}
-                    </TouchableOpacity>
+                    {/* <TouchableOpacity style={styles.editIconButton}>
+                        <Ionicons name="create-outline" size={24} color="#333" />
+                    </TouchableOpacity> */}
                 </View>
             </View>
             <ScrollView
@@ -144,7 +144,7 @@ export default SocietyHeadScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
+         backgroundColor: '#F9FAFB',
     },
     header: {
         backgroundColor: '#115543',
@@ -163,6 +163,8 @@ const styles = StyleSheet.create({
         marginTop: Platform.OS === 'android' ? 75 : 60
     },
     profileCard: {
+      justifyContent:'center',
+        alignItems: 'center',
         backgroundColor: '#fff',
         marginHorizontal: moderateScale(16),
         height: height / 8,
@@ -184,14 +186,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     avatar: {
-        width: moderateScale(70),
-        height: moderateScale(70),
+        width: moderateScale(48),
+        height: moderateScale(48),
         borderRadius: moderateScale(35),
         backgroundColor: '#FFD54F',
     },
     avatarPlaceholder: {
-        width: moderateScale(70),
-        height: moderateScale(70),
+        width: moderateScale(48),
+        height: moderateScale(48),
         borderRadius: moderateScale(35),
         backgroundColor: '#FFD54F',
         justifyContent: 'center',

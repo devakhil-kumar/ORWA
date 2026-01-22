@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -17,50 +17,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { verifyPaymentThunk, resetVerifyState } from '../app/features/paymentVerifySlice';
 import { showMessage } from '../app/features/messageSlice';
 
-const PaymentDetails = () => {
+const UserHistoryPaymentsDetails = () => {
     const route = useRoute();
     const navigation = useNavigation();
     const dispatch = useDispatch();
 
-    const { payment } = route.params;
-    console.log(payment, 'payment++++++')
-    const { loading, success, error } = useSelector((state) => state.paymentApprove);
-    const [verifyingStatus, setVerifyingStatus] = useState(null);
-
-    const handleVerify = async (status) => {
-        setVerifyingStatus(status); // Show loading only on this button
-
-        const result = await dispatch(verifyPaymentThunk({
-            paymentId: payment._id,
-            status
-        }));
-
-        console.log(result.payload.message, 'resulev hlfdvbldfh')
-
-        if (verifyPaymentThunk.fulfilled.match(result)) {
-            dispatch(
-                showMessage({
-                    type: 'success',
-                    text: result.payload.message || 'Payment Approved!',
-                })
-            );
-            navigation.goBack();
-            // Alert.alert('Success', `Payment ${status === 'verified' ? 'Approved' : 'Rejected'}!`, [
-            //     { text: 'OK', onPress: () => navigation.goBack() }
-            // ]);
-        } else {
-            dispatch(
-                showMessage({
-                    type: 'error',
-                    text: 'Payment Deny!',
-                })
-            );
-        }
-
-        setVerifyingStatus(null); // Hide loading
-        dispatch(resetVerifyState());
-    };
-
+    const payment = route.params;
+    useEffect(() => {
+        console.log("Print Data: ", payment)
+    }, [payment]);
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
@@ -74,9 +39,9 @@ const PaymentDetails = () => {
             {/* Resident Card */}
             <View style={styles.card}>
                 <View style={styles.cardLeft}>
-                    {payment.residentialPhoto ? (
+                    {payment.residentialId.applicantPhoto ? (
                         <Image
-                            source={{ uri: payment.residentialPhoto }}
+                            source={{ uri: payment.residentialId.applicantPhoto }}
                             style={styles.avatarImage}
                         />
                     ) : (
@@ -84,29 +49,12 @@ const PaymentDetails = () => {
                             <Ionicons name="person" size={30} color="#519377" />
                         </View>
                     )}
-                    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: "flex-start", }}>
-                        <View style={styles.cardInfo}>
-                            <Text style={styles.residentName}>{payment.residentialName}</Text>
-                            <Text style={styles.residentAddress}>{payment.residentialAddress}</Text>
-                        </View>
-                        <View
-                            style={{
-                                borderWidth: 1,
-                                borderColor: '#E5E7EB',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: 15,
-                                paddingHorizontal: 12,
-                                paddingVertical: 4
-                            }}
-                        >
-                            <Text style={styles.monthText}>
-                                {new Date(payment.createdAt).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    year: "numeric",
-                                })}
-                            </Text>
-                        </View>
+                    <View style={styles.cardInfo}>
+                        <Text style={styles.residentName}>{payment.residentialId.name}</Text>
+                        <Text style={styles.residentAddress}>{payment.residentialId.address}</Text>
+                        <Text style={styles.monthText}>
+                            {payment.month} {payment.year}
+                        </Text>
                     </View>
                 </View>
             </View>
@@ -115,36 +63,23 @@ const PaymentDetails = () => {
                 style={styles.paymentImage}
                 resizeMode="contain"
             />
-            <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                    style={styles.approveButton}
-                    onPress={() => handleVerify('verified')}
-                    disabled={verifyingStatus !== null} // Disable both while loading
-                >
-                    {verifyingStatus === 'verified' ? (
-                        <ActivityIndicator color="#FFF" />
-                    ) : (
-                        <Text style={styles.buttonText}>Approve</Text>
-                    )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.denyButton}
-                    onPress={() => handleVerify('rejected')}
-                    disabled={verifyingStatus !== null}
-                >
-                    {verifyingStatus === 'rejected' ? (
-                        <ActivityIndicator color="#FFF" />
-                    ) : (
-                        <Text style={styles.buttonText}>Deny</Text>
-                    )}
-                </TouchableOpacity>
+            <View
+                style={
+                    payment.status === "pending"
+                        ? styles.pendingButton
+                        : payment.status === "rejected"
+                            ? styles.rejectedButton
+                            : styles.approvedButton
+                }
+            >
+                <Text style={styles.buttonText}>{payment.status}</Text>
             </View>
+
         </SafeAreaView>
     );
 };
 
-export default PaymentDetails;
+export default UserHistoryPaymentsDetails;
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F9FAFB', paddingHorizontal: 16 },
@@ -185,7 +120,7 @@ const styles = StyleSheet.create({
     cardInfo: { marginLeft: moderateScale(16) },
     residentName: { fontSize: moderateScale(18), fontWeight: 'bold', color: '#000' },
     residentAddress: { fontSize: moderateScale(15), color: '#666', marginTop: 4 },
-    monthText: { fontSize: moderateScale(12), color: '#4B5563', fontWeight: '500' },
+    monthText: { fontSize: moderateScale(14), color: '#519377', marginTop: 8, fontWeight: '600' },
     paymentImage: {
         width: '100%',
         height: moderateScale(330),
@@ -200,20 +135,28 @@ const styles = StyleSheet.create({
         marginTop: 'auto',
         paddingBottom: moderateScale(30),
     },
-    approveButton: {
+    approvedButton: {
         backgroundColor: '#519377',
-        width: '45%',
+        width: '95%',
         paddingVertical: moderateScale(16),
         borderRadius: moderateScale(30),
         alignItems: 'center',
     },
-    denyButton: {
+    pendingButton: {
+        backgroundColor: '#FF9800',
+        width: '95%',
+        paddingVertical: moderateScale(16),
+        borderRadius: moderateScale(30),
+        alignItems: 'center',
+    },
+    rejectedButton: {
         backgroundColor: '#D32F2F',
-        width: '45%',
+        width: '95%',
         paddingVertical: moderateScale(16),
         borderRadius: moderateScale(30),
         alignItems: 'center',
     },
+
     buttonText: {
         color: '#FFFFFF',
         fontSize: moderateScale(16),

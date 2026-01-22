@@ -23,11 +23,9 @@ import MembersDetailsScreens from '../../Admin/screens/memberList/MembersDetails
 import PaymentHistoryScreen from '../../screens/Payments.js';
 import PaymentDetails from '../../screens/PaymentsDetails.js';
 import AddUpdates from '../../Admin/screens/adminHome/AddUpdates.js';
+import ResidentsList from '../../screens/Profile/ResidentsList.js';
 import imagePath from '../../contests/imagePath.jsx';
 const { width, height } = Dimensions.get('window');
-
-
-
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -37,7 +35,6 @@ export const Users = () => {
         <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="UserList">
             <Stack.Screen name="UserList" component={UserList} />
             <Stack.Screen name="MembersDetailsScreens" component={MembersDetailsScreens} />
-
         </Stack.Navigator>
     );
 };
@@ -49,7 +46,9 @@ export const AdminNavigator = () => {
             <Stack.Screen name='Announcements' component={Announcements} />
             <Stack.Screen name='AddMember' component={AddMemeber} />
             <Stack.Screen name='AddUpdates' component={AddUpdates} />
-            <Stack.Screen name="UserList" component={UserList} />
+            <Stack.Screen name="ResidentsList" component={ResidentsList} />
+            <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
+            <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
         </Stack.Navigator>
     )
 }
@@ -59,6 +58,7 @@ export const ProfileNavigator = () => {
         <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName='Profile'>
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="SocietyInfoScreen" component={SocietyInfoScreen} />
+            <Stack.Screen name='AddMember' component={AddMemeber} />
             <Stack.Screen name='ResdentsList' component={ResdentsList} />
             <Stack.Screen name='ContactUs' component={ContactUs} />
             <Stack.Screen name='Notification' component={Notification} />
@@ -75,14 +75,28 @@ export const PaymentNavigator = () => {
     )
 }
 
+export const AnnouncementNavigator = () => {
+    return (
+        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName='Announcements'>
+            <Stack.Screen name='Announcements' component={Announcements} />
+            <Stack.Screen name='AddUpdates' component={AddUpdates} />
+        </Stack.Navigator>
+    )
+}
+
 const AdminBottomTabs = () => {
     const insets = useSafeAreaInsets();
     const bottomInset = Platform.OS === 'android' ? insets.bottom : 10;
     const defaultTabBarStyle = {
+ 
         borderTopWidth: 0,
         height: 70 + bottomInset,
         paddingBottom: bottomInset,
         paddingTop: 8,
+        width: width,
+        borderTopLeftRadius: 40,
+        borderTopRightRadius: 40,
+        overflow: "hidden",
     }
 
     return (
@@ -96,7 +110,6 @@ const AdminBottomTabs = () => {
                     fontSize: 12,
                     color: '#fff',
                 },
-
             }}
         >
             <Tab.Screen
@@ -111,7 +124,7 @@ const AdminBottomTabs = () => {
                     ),
                     tabBarStyle: (() => {
                         const routeName = getFocusedRouteNameFromRoute(route) ?? 'Profile';
-                        if (routeName === 'Announcements' || routeName === 'AddMember' || routeName === 'AddUpdates') {
+                        if (routeName === 'Announcements' || routeName === 'AddMember' || routeName === 'AddUpdates' || routeName === 'ResidentsList' || routeName === 'PaymentHistory' || routeName === 'PaymentDetails') {
                             return { display: 'none' };
                         }
                         return defaultTabBarStyle;
@@ -142,13 +155,13 @@ const AdminBottomTabs = () => {
                 component={PaymentNavigator}
                 listeners={({ navigation }) => ({
                     tabPress: (e) => {
-                      e.preventDefault(); 
-                      navigation.navigate('Payments', {
-                        screen: 'PaymentHistory',
-                        params: { rejected: false }
-                      });
+                        e.preventDefault();
+                        navigation.navigate('Payments', {
+                            screen: 'PaymentHistory',
+                            params: { rejected: false }
+                        });
                     },
-                  })}
+                })}
                 options={({ route }) => ({
                     tabBarIcon: ({ focused }) => (
                         <Ionicons name='wallet' size={24} color={focused ? '#519377' : '#000'} />
@@ -167,23 +180,26 @@ const AdminBottomTabs = () => {
             />
             <Tab.Screen
                 name="Updates"
-                component={AddUpdates}
+                component={AnnouncementNavigator}
                 options={({ route }) => ({
                     tabBarIcon: ({ focused }) => (
-                        <Image source={focused ? imagePath.Updates : imagePath.InActiveUpdates} style={{ width: width / 15, height: height / 36 }} />
+                        <Image source={focused ? imagePath.Updates : imagePath.InActiveUpdates} style={{ width: width / 15.5
+                            , height: height /38 }} />
                     ),
                     tabBarLabel: ({ focused }) => (
-                        <Text style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Updates</Text>
+                        <Text numberOfLines={1} style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Announcements</Text>
                     ),
                     tabBarStyle: (() => {
-                        const routeName = getFocusedRouteNameFromRoute(route) ?? 'User';
-                        if (routeName === '') {
+                        const routeName = getFocusedRouteNameFromRoute(route) ?? 'AnnouncementNavigator'
+                        if (routeName === 'AddUpdates') {
                             return { display: 'none' };
                         }
                         return defaultTabBarStyle;
                     })(),
                 })}
             />
+
+
             <Tab.Screen
                 name="Profile"
                 component={ProfileNavigator}
@@ -197,7 +213,7 @@ const AdminBottomTabs = () => {
                     ),
                     tabBarStyle: (() => {
                         const routeName = getFocusedRouteNameFromRoute(route) ?? 'Profile';
-                        if (routeName === 'SocietyInfoScreen' || routeName === 'ResdentsList' || routeName === 'ContactUs' || routeName === 'Notification') {
+                        if (routeName === 'SocietyInfoScreen' || routeName === 'ResdentsList' || routeName === 'ContactUs' || routeName === 'Notification' || routeName === 'AddMember') {
                             return { display: 'none' };
                         }
                         return defaultTabBarStyle;

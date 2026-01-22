@@ -9,6 +9,7 @@ import {
     ScrollView,
     StatusBar,
     ActivityIndicator,
+    Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { moderateScale } from 'react-native-size-matters';
@@ -19,38 +20,63 @@ import { submitContactUs } from '../../app/features/contactSlice'; // path adjus
 import { showMessage } from '../../app/features/messageSlice';
 import { useNavigation } from '@react-navigation/native';
 import { submitUserContactUs } from '../../app/features/userContactSlice';
+import ImageCropPicker from 'react-native-image-crop-picker';
 
 const ContactUs = () => {
     const [message, setMessage] = useState('');
+    const [complaintType, setComplaintType] = useState('');
     const navigation = useNavigation();
 
     const dispatch = useDispatch();
 
     const { admin, adminLoading, user } = useSelector((state) => state.profile);
     const { loading: contactLoading } = useSelector((state) => state.contact);
+    const [complaintProof, setcomplaintProof] = useState(null);
 
     const handleSubmit = async () => {
+
+
         if (!message.trim()) {
             dispatch(
                 showMessage({
                     type: 'error',
-                    text: 'Please write your message',
+                    text: 'Please write your message.',
                 })
             );
             return;
         }
 
-        const paylaod = {
-            name: user?.name,
-            email: user?.email,
-            phone: user?.phone,
-            message: message
+        if (!complaintType.trim()) {
+            dispatch(
+                showMessage({
+                    type: 'error',
+                    text: 'Please write your complaint type.',
+                })
+            );
+            return;
         }
-        console.log(paylaod, 'payload')
+        const formData = new FormData();
+        formData.append('name', user?.name);
+        formData.append('email', user?.email);
+        formData.append('phone', user?.phone);
+        formData.append('message', message);
+        formData.append('complaintType', complaintType);
+        formData.append('complaintFile', complaintProof);
+
+        // const paylaod = {
+        //     name: user?.name,
+        //     email: user?.email,
+        //     phone: user?.phone,
+        //     message: message,
+        //     complaintType : complaintType,
+        //     complaintFile :complaintProof
+        // }
+        
+        console.log("vjhgvkjvkjhbv", formData, 'payload')
 
         try {
             if (user) {
-                const results = await dispatch(submitUserContactUs(paylaod)).unwrap();
+                const results = await dispatch(submitUserContactUs(formData)).unwrap();
                 console.log(results, 'cldhcjdscbc')
                 dispatch(
                     showMessage({
@@ -79,6 +105,43 @@ const ContactUs = () => {
             );
         }
     };
+    const pickAndCrop = async (setter, options = {}) => {
+        try {
+            const image = await ImageCropPicker.openPicker({
+                width: options.width || 800,
+                height: options.height || 800,
+                cropping: true,
+                cropperCircleOverlay: options.circle || false,
+                freeStyleCropEnabled: true,
+                compressImageQuality: 0.8,
+                includeBase64: false,
+            });
+            setter({
+                uri: image.path,
+                type: image.mime,
+                name: image.path.split('/').pop(),
+            });
+        } catch (err) {
+            if (err.code !== 'E_PICKER_CANCELLED') {
+                Alert.alert('Error', 'Could not select image');
+            }
+        }
+    };
+
+    const UploadBox = ({ title, file, onPress, hint }) => (
+        <TouchableOpacity style={styles.uploadBox} onPress={onPress}>
+            {file ? (
+                <Image source={{ uri: file.uri }} style={styles.uploadedImage} resizeMode="cover" />
+            ) : (
+                <>
+                    <Ionicons name='cloud-upload-outline' size={40} color={'#666'} />
+                    <Text style={styles.hint}>{hint || title}</Text>
+                    <Text style={styles.uploadText}>JPG,PNG or PDF (Max 5MB)</Text>
+                </>
+            )}
+            {file && <Text style={styles.fileName}>{file.name}</Text>}
+        </TouchableOpacity>
+    );
 
     return (
         <SafeAreaView style={styles.container}>
@@ -102,11 +165,11 @@ const ContactUs = () => {
                 contentContainerStyle={styles.scrollContent}
             >
                 {/* Contact Info */}
-                <View style={styles.contactInfo}>
+                {/* <View style={styles.contactInfo}>
                     <Text style={styles.contactTitle}>Contact us at:</Text>
                     <Text style={styles.contactText}>Call: +91 {admin?.phone || user?.phone}</Text>
                     <Text style={styles.contactText}>Email: {admin?.email || user?.email}</Text>
-                </View>
+                </View> */}
 
                 {/* Message Input */}
                 <View style={styles.inputGroup}>
@@ -121,6 +184,32 @@ const ContactUs = () => {
                         editable={!contactLoading}
                     />
                 </View>
+
+
+                {/* Complaint type */}
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Complaint Type</Text>
+                    <CustomInput
+                        value={complaintType}
+                        onChangeText={setComplaintType}
+                        placeholder="Enter your complaint type"
+                        style={styles.contentTypeInput}
+                        editable={!contactLoading}
+                    />
+                </View>
+                {/* Complaint screenshot */}
+
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                    }}
+                >
+                    <Text style={[styles.label, { fontSize: moderateScale(16) }]}>
+                        Complaint Screenshot
+                    </Text>
+                </View>
+                <UploadBox title="Tap to upload screenshot" file={complaintProof} onPress={() => pickAndCrop(setcomplaintProof)} />
 
                 {/* Submit Button */}
                 <View style={styles.buttonContainer}>
@@ -150,7 +239,7 @@ export default ContactUs;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#F9FAFB',
     },
     header: {
         flexDirection: 'row',
@@ -158,7 +247,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: moderateScale(16),
         paddingVertical: moderateScale(12),
-        backgroundColor: '#fff',
+        backgroundColor: '#F9FAFB',
+
     },
     backButton: {
         marginTop: 2,
@@ -185,15 +275,16 @@ const styles = StyleSheet.create({
         marginBottom: moderateScale(20),
     },
     contactTitle: {
-        fontSize: moderateScale(18),
+        fontSize: moderateScale(16),
         fontWeight: '600',
         color: '#000',
-        marginBottom: moderateScale(20),
+        marginBottom: moderateScale(16),
     },
     contactText: {
         fontSize: moderateScale(16),
-        color: '#333',
-        marginBottom: moderateScale(8),
+        fontWeight: 400,
+        color: '#000',
+
     },
     inputGroup: {
         marginBottom: moderateScale(15),
@@ -208,7 +299,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         paddingHorizontal: moderateScale(10),
         paddingVertical: moderateScale(20),
-        backgroundColor: '#fff',
+        backgroundColor: '#F9FAFB',
+
     },
     updateButton: {
         backgroundColor: '#519377',
@@ -231,6 +323,7 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
     input: {
+        width: "100%",
         height: 180,
         borderWidth: 1,
         borderColor: '#CFCFCF',
@@ -240,4 +333,19 @@ const styles = StyleSheet.create({
         color: '#000',
         backgroundColor: '#fff',
     },
+    contentTypeInput: {
+        width: "100%",
+        borderWidth: 1,
+        borderColor: '#CFCFCF',
+        borderRadius: 16,
+        padding: 5,
+        fontSize: 16,
+        color: '#000',
+        backgroundColor: '#fff',
+    },
+    uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding: 30, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed', marginTop: 12 },
+    uploadedImage: { width: 120, height: 120, borderRadius: 12, marginBottom: 10 },
+    hint: { fontSize: 14, color: '#000', marginTop: 10, fontWeight: 500 },
+    uploadText: { fontSize: 12, color: '#838383', fontWeight: 500 },
+
 });

@@ -159,7 +159,7 @@ const Announcements = () => {
     };
 
     const handlePostUpdate = () => {
-        navigation.navigate('AddUpdates')
+        navigation.navigate('AddUpdates');
     }
 
     const renderItem = ({ item }) => {
@@ -174,7 +174,10 @@ const Announcements = () => {
                 </View>
 
                 <View style={style.rightContainer}>
-                    <Text style={style.dateText}>{formatNotificationDate(item.createdAt)}</Text>
+                    <Text style={style.dateText}> {new Date(item.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                    })}</Text>
                     <View style={style.iconRow}>
                         <TouchableOpacity onPress={() => handleEditEvent(item)}>
                             <Feather name="edit" size={15} color="#000" />
@@ -206,18 +209,21 @@ const Announcements = () => {
                             <Ionicons name="chevron-back" size={28} color="#519377" />
                         </TouchableOpacity>
                         <Text style={style.headerTitle}>Announcements</Text>
+                        <TouchableOpacity style={style.topButns} onPress={handlePostUpdate}>
+                            <MaterialIcons name='add' color={'#519377'} size={20} />
+                        </TouchableOpacity>
                         <View style={style.placeholder} />
                     </View>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, marginBottom:15 }}>
-                        {/* <TouchableOpacity style={[style.topButns, { width: width / 2.9, backgroundColor: "#519377" }]}>
+                    {/* <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, marginBottom:15 }}> */}
+                    {/* <TouchableOpacity style={[style.topButns, { width: width / 2.9, backgroundColor: "#519377" }]}>
                             <Ionicons name='filter' color={'#fff'} size={20} />
                             <Text style={[style.topButnsText, { fontSize: 16, marginLeft: 8, color: '#fff' }]}>Filter</Text>
                         </TouchableOpacity> */}
-                        <TouchableOpacity style={style.topButns} onPress={handlePostUpdate}>
+                    {/* <TouchableOpacity style={style.topButns} onPress={handlePostUpdate}>
                             <MaterialIcons name='update' color={'#519377'} size={20} />
                             <Text style={style.topButnsText}>Post Update</Text>
                         </TouchableOpacity>
-                    </View>
+                    </View> */}
                     <View style={style.listWrapper}>
                         <FlatList
                             data={events}
@@ -369,7 +375,7 @@ const Announcements = () => {
 export default Announcements;
 
 const style = StyleSheet.create({
-    main: { flex: 1 },
+    main: { flex: 1, backgroundColor: '#F9FAFB', },
     innerCantainer: { flex: 1, padding: 16 },
     topButtonsRow: { flexDirection: "row", marginTop: 15, alignItems: 'center', alignSelf: 'center', width: '100%', justifyContent: 'space-between' },
     filterBtn: { flexDirection: 'row', padding: 4 },
@@ -378,7 +384,7 @@ const style = StyleSheet.create({
     exportText: { fontSize: moderateScale(14), marginLeft: 8 },
     addUserBtn: { flexDirection: 'row', backgroundColor: '#519377', borderRadius: 8, alignItems: "center", padding: 12, marginLeft: 8 },
     addUserText: { fontSize: moderateScale(14), marginLeft: 8, lineHeight: moderateScale(15), color: '#fff' },
-    listWrapper: { marginTop: 10, marginBottom: 10 * 3.8 },
+    listWrapper: { marginTop: 20, marginBottom: 10 * 3.8 },
     listContent: { paddingBottom: 10 },
     fab: {
         position: 'absolute',
@@ -401,6 +407,7 @@ const style = StyleSheet.create({
     },
     container: {
         flex: 1,
+        backgroundColor: '#F9FAFB',
     },
     profileSection: {
         flexDirection: 'row',
@@ -520,11 +527,21 @@ const style = StyleSheet.create({
         alignItems: 'center',
         marginRight: 12,
     },
+    // topButns: {
+    //     borderWidth: 1,
+    //     paddingVertical: 8,
+    //     width: width / 2.5,
+    //     borderRadius: 15,
+    //     borderColor: "#519377",
+    //     flexDirection: 'row',
+    //     justifyContent: 'center',
+    //     alignItems: 'center'
+    // },
     topButns: {
         borderWidth: 1,
         paddingVertical: 8,
-        width: width / 2.5,
-        borderRadius: 15,
+        paddingHorizontal: 8,
+        borderRadius: 8,
         borderColor: "#519377",
         flexDirection: 'row',
         justifyContent: 'center',

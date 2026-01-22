@@ -1,5 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { loginService, loginServiceAdmin } from "../../apis/service";
+import {
+    loginService, loginServiceAdmin, forgotPasswordService, forgotPasswordServiceAdmin,
+    verifyOtpService, verifyOtpServiceAdmin, resetPasswordService, resetPasswordServiceAdmin
+} from "../../apis/service";
 import { clearUserData, getUserData, saveUserData } from "../../units/asyncStorageManager";
 
 export const LoginUser = createAsyncThunk(
@@ -22,6 +25,45 @@ export const loginAdmin = createAsyncThunk(
         try {
             const response = await loginServiceAdmin(userData);
             saveUserData(response.data);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error?.response?.data)
+        }
+    }
+)
+
+export const forgotPassword = createAsyncThunk(
+    'auth/forgotPassword',
+    async (userData, { rejectWithValue }) => {
+        try {
+            const response = await forgotPasswordService(userData);
+            console.log(response, 'cbsdfbvdsfhvbdvbvh')
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error?.response?.data)
+        }
+    }
+)
+
+export const verifyOtp = createAsyncThunk(
+    'auth/verifyOtp',
+    async (userData, { rejectWithValue }) => {
+        try {
+            const response = await verifyOtpService(userData);
+            console.log(response, 'cbsdfbvdsfhvbdvbvh')
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error?.response?.data)
+        }
+    }
+)
+
+export const resetPassword = createAsyncThunk(
+    'auth/resetPassword',
+    async (userData, { rejectWithValue }) => {
+        try {
+            const response = await resetPasswordService(userData);
+            console.log(response, 'cbsdfbvdsfhvbdvbvh')
             return response.data;
         } catch (error) {
             return rejectWithValue(error?.response?.data)
@@ -56,7 +98,7 @@ const initialState = {
     loading: false,
     mainloading: false,
     error: null,
-    // mesg:null
+    message: null
 };
 
 const authSlice = createSlice({
@@ -73,7 +115,7 @@ const authSlice = createSlice({
         },
         resetAuthError: (state) => {
             state.error = null;
-            state.mesg = null;
+            state.message = null;
         },
     },
     extraReducers: (builder) => {
@@ -88,7 +130,7 @@ const authSlice = createSlice({
                 state.user = action.payload.data;
                 state.userRole = action.payload?.data?.role;
                 state.token = action.payload?.data?.token;
-                // state.mesg = action.payload?.message;
+                state.message = action.payload?.message;
                 console.log(action.payload, 'action')
             })
             .addCase(LoginUser.rejected, (state, action) => {
@@ -106,9 +148,9 @@ const authSlice = createSlice({
                 state.user = action.payload.data;
                 state.userRole = action.payload?.data?.role;
                 state.token = action.payload?.data?.token;
-                // state.mesg = action.payload?.message;
-                console.log(state.user,state.mesg, 'action')
-                
+                state.message = action.payload?.message;
+                console.log(state.user, state.mesg, 'action')
+
             })
             .addCase(loginAdmin.rejected, (state, action) => {
                 state.loading = false;
@@ -128,7 +170,54 @@ const authSlice = createSlice({
             .addCase(loadInitialState.rejected, (state) => {
                 state.mainloading = false;
                 state.isLoggedIn = false;
-            });
+            })
+
+            //forgot password admin
+            .addCase(forgotPassword.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(forgotPassword.fulfilled, (state, action) => {
+                state.loading = false;
+                state.isLoggedIn = true;
+                state.message = action.payload?.message;
+                console.log(" forgotPAssword : ", action.payload);
+            })
+            .addCase(forgotPassword.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            //verify otp user
+            .addCase(verifyOtp.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(verifyOtp.fulfilled, (state, action) => {
+                state.loading = false;
+                state.isLoggedIn = true;
+                state.message = action.payload?.message;
+                console.log(" verify otp : ", action.payload);
+            })
+            .addCase(verifyOtp.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
+            //reset password user
+            .addCase(resetPassword.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(resetPassword.fulfilled, (state, action) => {
+                state.loading = false;
+                state.isLoggedIn = true;
+                state.message = action.payload?.message;
+                console.log(" resetPAssword : ", action.payload);
+            })
+            .addCase(resetPassword.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
     },
 });
 

@@ -44,7 +44,7 @@ const AdminHome = () => {
     }
 
     const handleUserList = () => {
-        navigation.navigate('Users')
+        navigation.navigate('ResidentsList')
     }
 
     const handleRejectedList = () => {
@@ -68,13 +68,13 @@ const AdminHome = () => {
     );
 
     return (
-        <SafeAreaView style={{ flex: 1, paddingBottom: 5 }} edges={['top', '0']}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB', }} edges={['top', '0']}>
             <StatusBar barStyle="dark-content" backgroundColor="#519377" />
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
                     <TouchableOpacity style={styles.profileSection} onPress={onHandleProfile}>
                         <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>S</Text>
+                            <Text style={styles.avatarText}>{admin?.name?.charAt(0)?.toUpperCase()}</Text>
                         </View>
                         <View>
                             <Text style={styles.welcomeText}>Welcome Back</Text>
@@ -100,11 +100,11 @@ const AdminHome = () => {
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 15 }}>
                         <TouchableOpacity style={styles.topButns} onPress={hnadleAddResidents} >
                             <Feather name='plus' color={'#519377'} size={20} />
-                            <Text style={styles.topButnsText}>Add Residents</Text>
+                            <Text style={styles.topButnsText}>Add Member</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.topButns} onPress={handlePostUpdate}>
                             <MaterialIcons name='update' color={'#519377'} size={20} />
-                            <Text style={styles.topButnsText}>Post Update</Text>
+                            <Text style={styles.topButnsText}>Post Notice</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -143,7 +143,7 @@ const AdminHome = () => {
                             <Text style={styles.noDataText}>No events available</Text>
                         </View>
                     ) : (
-                        events.slice(0, 4).map((item, index) => (
+                        events.slice(0, 8).map((item, index) => (
                             <View
                                 key={`${item?._id ?? 'event'}-${index}`}
                                 style={styles.card}
@@ -162,7 +162,10 @@ const AdminHome = () => {
 
                                 <View style={styles.dateWrapper}>
                                     <Text style={styles.dateText}>
-                                        {formatNotificationDate(item.createdAt)}
+                                        {new Date(item.createdAt).toLocaleDateString("en-US", {
+                                            month: "short",
+                                            day: "numeric",
+                                        })}
                                     </Text>
                                 </View>
                             </View>
@@ -176,9 +179,10 @@ const AdminHome = () => {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1, backgroundColor: '#F9FAFB80', paddingHorizontal: 16
+        flex: 1, paddingHorizontal: 16
     },
     header: {
+        marginTop: 16,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between'
@@ -209,7 +213,7 @@ const styles = StyleSheet.create({
     welcomeText: {
         fontSize: 12,
         color: '#999',
-        textAlign: 'right'
+        textAlign: 'left'
     },
     DateText: {
         fontSize: 14,
@@ -414,7 +418,16 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
         borderRadius: 10,
         paddingHorizontal: 6,
-        marginTop: 8
+        marginTop: 8,
+        marginBottom: 8,
+        // iOS Shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.20,
+        shadowRadius: 6,
+
+        // Android Shadow
+        elevation: 5,
     },
     iconWrapper: {
         width: 36,

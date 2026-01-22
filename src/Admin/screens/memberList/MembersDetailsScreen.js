@@ -273,7 +273,7 @@ const MemberDetailScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+   backgroundColor: '#F9FAFB',
   },
   scrollView: {
     flex: 1,
@@ -367,7 +367,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
+         backgroundColor: '#F9FAFB',
+
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
   },

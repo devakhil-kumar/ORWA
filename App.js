@@ -39,21 +39,17 @@ const GlobalMessageWrapper = () => {
   );
 };
 
-
 function App() {
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider >
       <Provider store={store} >
-        <NavigationContainer>
+        <NavigationContainer style={{ backgroundColor: '#F9FAFB' }}>
           <GlobalMessageWrapper />
         </NavigationContainer>
       </Provider>
     </SafeAreaProvider>
   );
 }
-
-
-
 
 export default App;

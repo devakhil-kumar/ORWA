@@ -16,7 +16,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { fetchProfile } from '../app/features/getprofileSlice';
 import { useDispatch, useSelector } from 'react-redux';
+import { fetchAnnouncements } from '../app/features/announcementSliceUser';
 import imagePath from '../contests/imagePath';
+import LinearGradient from 'react-native-linear-gradient';
 
 const UserHome = () => {
 
@@ -32,6 +34,8 @@ const UserHome = () => {
 
   useEffect(() => {
     dispatch(fetchProfile())
+    dispatch(fetchAnnouncements())
+    console.log("Date: ", list[0]?.createdAt);
   }, [dispatch])
 
   const handleGohistory = () => {
@@ -46,6 +50,8 @@ const UserHome = () => {
     navigation.navigate('UserAnnouncements')
   }
 
+  const { list, listLoading, page } = useSelector((state) => state.userAnnouncement);
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#519377" />
@@ -59,7 +65,7 @@ const UserHome = () => {
                   style={styles.avatarImage}
                 />
               </View> : <View style={styles.avatar}>
-                <Text style={styles.avatarText}>S</Text>
+                <Text style={styles.avatarText}>{user?.name?.charAt(0)?.toUpperCase()}</Text>
               </View>}
             <View>
               <Text style={styles.welcomeText}>Welcome Back</Text>
@@ -69,44 +75,59 @@ const UserHome = () => {
         </View>
 
         {/* Residence Card */}
-        <View style={styles.residenceCard}>
+        <LinearGradient
+          colors={['#519377', '#AAE5CC']}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={styles.residenceCard}>
           <View style={styles.cardContent}>
             <View>
-              <Text style={styles.residenceLabel}>Residence</Text>
+              <Text style={styles.residenceLabel}>Member</Text>
               <Text style={styles.flatNumber}>Flat No {user?.flatNumber}</Text>
-              {/* <Text style={styles.societyName}>Society Name</Text> */}
+              <Text style={styles.societyName}>{user?.societyId?.societyName}</Text>
             </View>
-            <TouchableOpacity style={styles.qrButton}>
+            <View style={styles.qrButton}>
               <Image source={imagePath.building} style={{ width: 30, height: 30 }} />
-            </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* Announcements Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Announcements</Text>
-            <TouchableOpacity onPress={handelAnnoucment}>
-              <Text style={styles.viewAllText}>View all</Text>
-            </TouchableOpacity>
-          </View>
+        {list.find(item => item.type === 'event') && (
+          (() => {
+            const eventItem = list.find(item => item.type === 'event');
+            return (
+              <View style={[styles.section,]}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Announcements</Text>
+                  <TouchableOpacity onPress={handelAnnoucment}>
+                    <Text style={styles.viewAllText}>View all</Text>
+                  </TouchableOpacity>
+                </View>
 
-          <View style={styles.announcementCard}>
-            <View style={styles.announcementIcon}>
-              <Icon name="bullhorn" size={45} color="#FF6B35" />
-            </View>
-            <View style={styles.announcementContent}>
-              <View style={styles.announcementHeader}>
-                <Text style={styles.announcementTitle}>Annual Maintenance</Text>
-                <Text style={styles.announcementDate}>Today</Text>
+                <View style={styles.announcementCard}>
+                  <View style={styles.announcementIcon}>
+                    <Icon name="bullhorn" size={48} color="#FF6B35" />
+                  </View>
+                  <View style={styles.announcementContent}>
+                    <View style={styles.announcementHeader}>
+                      <Text style={styles.announcementTitle}>{eventItem?.title}</Text>
+
+                      <View style={styles.announcementDateCard}>
+                        <Text style={styles.announcementDate}>
+                          {new Date(eventItem?.createdAt).toLocaleDateString("en-GB")}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.announcementText}>
+                      {eventItem?.message}
+                    </Text>
+                  </View>
+                </View>
               </View>
-              <Text style={styles.announcementText}>
-                Scheduled elevator maintenance will occur on Tuesday from 10 A...
-              </Text>
-            </View>
-          </View>
-        </View>
-
+            );
+          })()
+        )}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
 
@@ -120,12 +141,18 @@ const UserHome = () => {
               <Text style={styles.actionSubText}>Pending:₹0</Text>
             </TouchableOpacity> */}
 
+            <TouchableOpacity style={styles.actionButton} onPress={handleContactUs}>
+              <View style={[styles.actionIconContainer, { borderRadius: 100, backgroundColor: '#FFF1F2' }]}>
+                <MaterialIcons name="headset-mic" size={35} color="#F44336" />
+              </View>
+              <Text style={styles.actionText}>Help Desk</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.actionButton} onPress={handleGohistory}>
               <View style={[styles.actionIconContainer, { backgroundColor: '#F3E5F5' }]}>
                 <MaterialIcons name="update" size={40} color="#9C27B0" />
               </View>
               <Text style={styles.actionText}>History</Text>
-              <Text style={styles.actionSubText}>View Past Bills</Text>
             </TouchableOpacity>
 
             {/* Row 2 */}
@@ -137,13 +164,7 @@ const UserHome = () => {
               <Text style={styles.actionSubText}>Family & pets</Text>
             </TouchableOpacity> */}
 
-            <TouchableOpacity style={styles.actionButton} onPress={handleContactUs}>
-              <View style={[styles.actionIconContainer, { backgroundColor: '#FFEBEE' }]}>
-                <MaterialIcons name="headset-mic" size={35} color="#F44336" />
-              </View>
-              <Text style={styles.actionText}>Help Desk</Text>
-              <Text style={styles.actionSubText}>Raise Ticket</Text>
-            </TouchableOpacity>
+
           </View>
         </View>
       </ScrollView>
@@ -154,7 +175,7 @@ const UserHome = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: '#F5F5F5',
+    backgroundColor: '#F9FAFB',
   },
   header: {
   },
@@ -178,12 +199,13 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 12,
-    color: '#999',
+    fontWeight:600,
+    color: '#787878',
   },
   userName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
+    color: '#1C1C1C',
     marginTop: 2,
   },
   residenceCard: {
@@ -200,13 +222,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   residenceLabel: {
-    fontSize: 14,
-    color: '#fff',
+    fontSize: 16,
+    fontWeight:600,
+    color: '#FBFBFB',
   },
   flatNumber: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#FBFBFB',
     marginBottom: 2,
   },
   societyName: {
@@ -218,8 +241,8 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 8,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center'
   },
   section: {
     marginTop: 24,
@@ -236,9 +259,9 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   viewAllText: {
-    fontSize: 12,
-    color: '#F0B90B',
-    fontWeight: '600'
+    fontSize: 14,
+    color: '#72B196',
+    fontWeight: '700'
   },
   announcementCard: {
     backgroundColor: '#fff',
@@ -249,8 +272,8 @@ const styles = StyleSheet.create({
     elevation: 7
   },
   announcementIcon: {
-    width: 50,
-    height: 50,
+    width: 56,
+    height: 56,
     borderRadius: 8,
     backgroundColor: '#FFE8E0',
     justifyContent: 'center',
@@ -269,18 +292,19 @@ const styles = StyleSheet.create({
   },
   announcementTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#000000',
   },
+  announcementDateCard: { paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#F3F4F6', borderRadius: 15 },
   announcementDate: {
     fontSize: 10,
-    color: '#999',
+    color: '#000',
   },
   announcementText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 14,
+    color: '#565656',
     lineHeight: 18,
-    fontWeight: '500'
+    fontWeight: '400'
   },
   quickActionsGrid: {
     flexDirection: 'row',
@@ -307,7 +331,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#000000',
     marginBottom: 2,
   },

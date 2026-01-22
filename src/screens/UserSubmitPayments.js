@@ -60,15 +60,15 @@ const UploadBox = ({ title, file, onPress, hint }) => (
         ) : (
             <>
                 <Ionicons name='cloud-upload-outline' size={40} color={'#666'} />
+                <Text style={styles.hint}>{hint || title}</Text>
                 <Text style={styles.uploadText}>JPG,PNG or PDF (Max 5MB)</Text>
             </>
         )}
         {file && <Text style={styles.fileName}>{file.name}</Text>}
-        <Text style={styles.hint}>{hint || title}</Text>
     </TouchableOpacity>
 );
 
-const CustomInput = ({ placeholder, type, style }) => {
+const CustomInput = ({ placeholder, type, style, isEditable = true }) => {
     const [text, setText] = useState('');
 
     return (
@@ -87,6 +87,7 @@ const CustomInput = ({ placeholder, type, style }) => {
                 <MaterialDesignIcons name="currency-rupee" size={28} color="#9CA3AF" />
             )}
             <TextInput
+                editable={isEditable}
                 value={text}
                 onChangeText={setText}
                 placeholder={placeholder}
@@ -153,17 +154,21 @@ const SubmitPayment = () => {
         navigation.navigate('UserHistoryPayments')
     }
 
+    const handlegoBack = () => {
+        navigation.goBack();
+    }
+
 
     return (
         <SafeAreaView style={styles.container} edges={['top', '0']}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => { }}>
-                    <Ionicons name="arrow-back" size={28} color="#000" />
+                <TouchableOpacity onPress={handlegoBack}>
+                    <Ionicons name="chevron-back" size={28} color="#519377" />
                 </TouchableOpacity>
                 <Text style={styles.headerText}>Submit Payment</Text>
                 {/* <View style={{ width: '10%' }} /> */}
                 <TouchableOpacity onPress={handleHistory}>
-                    <FontAwesome name="history" size={27} color='#000' />
+                    <FontAwesome name="history" size={27} color='#519377' />
                 </TouchableOpacity>
             </View>
             <ScrollView
@@ -175,12 +180,12 @@ const SubmitPayment = () => {
                         <View style={styles.iconCircle}>
                             {user?.profileImage ? (
                                 <Image
-                                    source={{uri: user.profileImage}}
+                                    source={{ uri: user.profileImage }}
                                     style={styles.avatar}
                                 />
                             ) : (
                                 <View style={styles.avatarPlaceholder}>
-                                    <Ionicons name="person" size={30} color="#519377" />
+                                    <Ionicons name="person" size={30} color="#000" />
                                 </View>
                             )}
                         </View>
@@ -202,7 +207,9 @@ const SubmitPayment = () => {
                         type={'person'}
                         style={{ marginTop: moderateScale(6) }}
                         value={user?.name}
-                        
+                        isEditable={false}
+                        pointerEvents="none"
+
                     />
                     <Text
                         style={[
@@ -213,9 +220,12 @@ const SubmitPayment = () => {
                         Email
                     </Text>
                     <CustomInput
+                        isEditable={false}
                         placeholder={user?.email}
                         type={'email'}
                         style={{ marginTop: moderateScale(6) }}
+
+                        pointerEvents="none"
                     />
                 </View>
                 <View
@@ -243,7 +253,7 @@ const SubmitPayment = () => {
                 </View>
                 <UploadBox title="Tap to upload screenshot" file={idProof} onPress={() => pickAndCrop(setIdProof)} />
                 <TouchableOpacity
-                    style={[styles.buttonStyle, { marginTop: moderateScale(16) }]}
+                    style={[styles.buttonStyle, { marginTop: moderateScale(24) }]}
                     onPress={handleSubmit}
                 >
                     <Text style={[styles.mediumText, { color: 'white' }]}>
@@ -307,12 +317,12 @@ const styles = StyleSheet.create({
         width: 45,
         height: 45,
         borderRadius: 100,
-        backgroundColor: '#000',
+        backgroundColor: '#D9D9D9',
         justifyContent: 'center',
         alignItems: 'center',
     },
     mediumText: {
-        fontSize: moderateScale(16),
+        fontSize: moderateScale(18),
         color: '#000',
         fontWeight: '600',
     },
@@ -418,7 +428,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: moderateScale(12),
-        
+
     },
     textInputLeftIcon: {
         width: 12,
@@ -436,11 +446,12 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: moderateScale(16),
         color: '#374151',
-        marginLeft:8
+        marginLeft: 8
     },
-    uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding: 30, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed' },
+    uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding: 30, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed', marginTop: 12 },
     uploadedImage: { width: 120, height: 120, borderRadius: 12, marginBottom: 10 },
-    uploadText: { fontSize: 14, color: '#666', marginTop: 10 },
+    hint: { fontSize: 14, color: '#000', marginTop: 10, fontWeight: 500 },
+    uploadText: { fontSize: 12, color: '#838383', fontWeight: 500 },
     loaderOverlay: {
         backgroundColor: 'rgba(0,0,0,0.5)',
         alignItems: 'center',

@@ -4,7 +4,7 @@ import { PaymentHistoryService } from '../../apis/service';
 // Async Thunk to fetch payment history
 export const fetchPaymentHistory = createAsyncThunk(
   'paymentHistory/fetchPaymentHistory',
-  async ({ year, page = 1, limit = 10 }, { rejectWithValue }) => {
+  async ({ year, page = 1, limit = 30 }, { rejectWithValue }) => {
     try {
       const response = await PaymentHistoryService(year, page, limit);
       return response.data; // { success, count, total, page, totalPages, data }

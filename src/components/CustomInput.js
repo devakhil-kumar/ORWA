@@ -1,22 +1,24 @@
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useState, useCallback, forwardRef } from 'react';
 import { StyleSheet, TextInput, View, TouchableOpacity, Dimensions } from 'react-native';
 import { moderateScale } from 'react-native-size-matters';
 import Ionicons from '@react-native-vector-icons/ionicons';
 const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
 
-const CustomInput = ({
-  value,
-  onChangeText,
-  placeholder,
-  secureTextEntry = false,
-  keyboardType = 'default',
-  style,
-  placeholderTextColor = '#999',
-  iconColor = '#000',
-  textInput,
-  textAlignVertical,
-  multiline
-}) => {
+const CustomInput = forwardRef((props, ref) => {
+  const {
+    value,
+    onChangeText,
+    placeholder,
+    secureTextEntry = false,
+    keyboardType = 'default',
+    style,
+    placeholderTextColor = '#999',
+    iconColor = '#000',
+    textInput,
+    textAlignVertical,
+    multiline = false,
+    maxLength
+  } = props;
   const [showPassword, setShowPassword] = useState(false);
 
   const isPasswordField = secureTextEntry;
@@ -28,6 +30,7 @@ const CustomInput = ({
   return (
     <View style={[styles.inputContainer, style]}>
       <TextInput
+        ref={ref}
         style={[styles.input, textInput]}
         placeholder={placeholder}
         placeholderTextColor={placeholderTextColor}
@@ -37,8 +40,10 @@ const CustomInput = ({
         keyboardType={keyboardType}
         textAlignVertical={textAlignVertical}
         multiline={multiline}
+        maxLength={maxLength}
+        autoCapitalize="none"
       />
-       {isPasswordField && (
+      {isPasswordField && (
         <TouchableOpacity onPress={handleTogglePassword}>
           <Ionicons
             name={showPassword ? 'eye' : 'eye-off'}
@@ -50,7 +55,7 @@ const CustomInput = ({
       )}
     </View>
   );
-};
+});
 
 export default memo(CustomInput);
 
@@ -63,16 +68,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: windowWidth * 0.02,
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop:5,
+    marginTop: 5,
     width: '95%',
-    alignSelf:'center'
+    alignSelf: 'center'
   },
   input: {
     color: '#000',
     fontSize: moderateScale(12),
     height: '100%',
     width: '90%',
-    paddingBottom: 6
   },
   icon: {
     padding: 5

@@ -15,30 +15,30 @@ const Drawer = createDrawerNavigator();
 
 
 const CustomDrawerContent = (props) => {
-//   const dispatch = useDispatch();
-//   const [user, setUser] = useState(null);
+  //   const dispatch = useDispatch();
+  //   const [user, setUser] = useState(null);
 
-//   useEffect(() => {
-//     const loadUser = async () => {
-//       const stored = await getUserData('user');
-//       console.log(stored, 'stroed++++++++++++')
-//       if (stored?.user) {
-//         setUser(stored?.user);
-//       }
-//     };
-//     loadUser();
-//   }, []);
+  //   useEffect(() => {
+  //     const loadUser = async () => {
+  //       const stored = await getUserData('user');
+  //       console.log(stored, 'stroed++++++++++++')
+  //       if (stored?.user) {
+  //         setUser(stored?.user);
+  //       }
+  //     };
+  //     loadUser();
+  //   }, []);
 
-//   const handleLogout = async () => {
-//     dispatch(logout());
-//   };
+  //   const handleLogout = async () => {
+  //     dispatch(logout());
+  //   };
 
   return (
     <SafeAreaView style={styles.drawerWrapper} edges={['top']} >
       <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
         <View style={styles.menuSection}>
           {props.state.routes
-            .filter(route => route.name !== 'AddMemeber' )
+            .filter(route => route.name !== 'AddMemeber')
             .map((route, index) => {
               const { drawerIcon, drawerLabel } =
                 props.descriptors[route.key].options;
@@ -64,7 +64,7 @@ const CustomDrawerContent = (props) => {
       <View style={styles.logoutSection}>
         <TouchableOpacity
           style={styles.logoutButton}
-        //   onPress={handleLogout}
+          //   onPress={handleLogout}
           activeOpacity={0.7}
         >
           {/* <Image
@@ -85,12 +85,13 @@ const AdminDrawer = () => {
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
-        headerShown:false,
+        headerShown: false,
         // header: ({ navigation }) => <CustomHeader navigation={navigation} />,
         drawerActiveTintColor: '#FAB713',
         drawerInactiveTintColor: '#ccc',
         drawerLabelStyle: { fontSize: 15 },
         drawerStyle: {
+
           paddingBottom: bottomInset,
           paddingTop: 20,
         }
@@ -101,7 +102,7 @@ const AdminDrawer = () => {
         component={AdminBottomTabs}
         options={{
           drawerIcon: ({ focused }) => (
-             <Feather name='home' color={focused ? '#519377' : '#9CA3AF'} size={28} />
+            <Feather name='home' color={focused ? '#519377' : '#9CA3AF'} size={28} />
           ),
         }}
       />
@@ -225,7 +226,7 @@ const AdminDrawer = () => {
 
 const AdminNavigator = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false }} >
       <Stack.Screen name="AdminDrawer" component={AdminDrawer} />
     </Stack.Navigator>
   );

@@ -1,4 +1,4 @@
-import { addMemberAPI, AnnouncementsHistroy, ContactUs, ContactUsUser, createEventAdmin, DeleteAdminEvent, fetchResidentialPayments, getAdminNotification, getAdminProfile, getEventAdmin, getMemberList, getProfile, getresidentailsAdmin, getSocietyAdmin, loginAPIAdmin, loginAPIUser, memberVerifyPayment, PaymentHistory, PaymentUpload, UpdateEventAdmin, updateSocietyAdmin, verifyPayment } from "./api";
+import { addMemberAPI, updateMemberAPI, AnnouncementsHistroy, ContactUs, ContactUsUser, createEventAdmin, DeleteAdminEvent, fetchResidentialPayments, getAdminNotification, getAdminProfile, getEventAdmin, getMemberList, getProfile, getresidentailByIdAdmin, getresidentailsAdmin, getSocietyAdmin, loginAPIAdmin, loginAPIUser, memberVerifyPayment, PaymentHistory, PaymentUpload, UpdateEventAdmin, updateSocietyAdmin, verifyPayment, DeleteMemberAPI, resetPasswordAPI, verifyOtpAPI, forgotPasswordAPI,  } from "./api";
 
 export const loginService = async userData => {
     try {
@@ -27,9 +27,64 @@ export const loginServiceAdmin = async userData => {
     }
 };
 
+export const forgotPasswordService = async userData => {
+    try {
+        const response = await forgotPasswordAPI(userData);
+        console.log(response, 'res')
+        return response;
+    } catch (error) {
+        // const errorMessage =
+        // error.response?.data?.message ||
+        // error.response?.data?.error;
+        console.log(error, 'error+++++')
+
+        return Promise.reject(error);
+    }
+};
+
+export const verifyOtpService = async userData => {
+    try {
+        const response = await verifyOtpAPI(userData);
+        console.log(response, 'res')
+        return response;
+    } catch (error) {
+        // const errorMessage =
+        // error.response?.data?.message ||
+        // error.response?.data?.error;
+        return Promise.reject(error);
+    }
+};
+
+export const resetPasswordService = async userData => {
+    try {
+        const response = await resetPasswordAPI(userData);
+        console.log(response, 'res')
+        return response;
+    } catch (error) {
+        // const errorMessage =
+        // error.response?.data?.message ||
+        // error.response?.data?.error;
+        return Promise.reject(error);
+    }
+};
+
 export const apiAddmemberService = async (formdata) => {
     try {
         const response = await addMemberAPI(formdata);
+        console.log(response, 'data++++++++')
+        return response
+    } catch (error) {
+        console.log(error, 'errorr++++++')
+        throw new Error(
+            error || "Failed to add profile"
+        );
+    }
+}
+
+export const apiUpdatememberService = async (formdata, id) => {
+    try {
+        console.log("id from service: ", id);
+        const response = await updateMemberAPI(formdata, id);
         console.log(response, 'data++++++++')
         return response
     } catch (error) {
@@ -39,6 +94,17 @@ export const apiAddmemberService = async (formdata) => {
         );
     }
 }
+export const apiDeletememberService = async (id) => {
+    try {
+        console.log("id from services :", id);
+        const response = await DeleteMemberAPI(id);
+        console.log(response, 'response++++++++++++++=')
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to delete member.' };
+    }
+};
+
 
 export const UploadPaymentService = async userData => {
     try {
@@ -169,6 +235,16 @@ export const getAdminResdidentailsService = async () => {
     }
 };
 
+// export const getAdminResdidentailByIdService = async (id) => {
+//     try {
+//         const response = await getresidentailByIdAdmin(id);
+//         return response.data;
+//     } catch (error) {
+//         console.log(error);
+//         throw new Error('Failed to fetch residential data by id.');
+//     }
+// };
+
 export const adminEventDeleteService = async (id) => {
     try {
         const response = await DeleteAdminEvent(id);
@@ -228,9 +304,9 @@ export const ContactusService = async (message) => {
     }
 }
 
-export const UserContactUsSerivce = async (payload) => {
+export const UserContactUsSerivce = async (formData) => {
     try {
-        const response = await ContactUsUser(payload);
+        const response = await ContactUsUser(formData);
         console.log(response, 'response++++')
         return response.data
     } catch (error) {

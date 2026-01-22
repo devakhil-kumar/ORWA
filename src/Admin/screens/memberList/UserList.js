@@ -59,9 +59,9 @@ const UserList = () => {
 
     useFocusEffect(
         useCallback(() => {
-          dispatch(fetchMemberRequests());
+            dispatch(fetchMemberRequests());
         }, [dispatch])
-      );
+    );
 
     const renderEmpty = () => {
         if (loading) return null;
@@ -82,25 +82,26 @@ const UserList = () => {
         };
 
         return (
-            <View style={style.card}>
-                {/* <Image source={{ uri: item.profileImage }} style={style.avatar} /> */}
-                {item?.profileImage ? (
-                    <Image
-                        source={{ uri: item?.profileImage }}
-                        style={style.avatar}
-                    />
-                ) : (
-                    <View style={{ alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-                        <Ionicons name="person" size={30} color="#519377" />
+            <TouchableOpacity style={{ borderRadius: 24 }} onPress={handleMember} activeOpacity={0.9} >
+                <View style={style.card}>
+                    {/* <Image source={{ uri: item.profileImage }} style={style.avatar} /> */}
+                    {item?.profileImage ? (
+                        <Image
+                            source={{ uri: item?.profileImage }}
+                            style={style.avatar}
+                        />
+                    ) : (
+                        <View style={{ alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                            <Ionicons name="person" size={30} color="#519377" />
+                        </View>
+                    )}
+                    <View style={style.textContainer}>
+                        <Text style={style.name}>{item?.name}</Text>
+                        <Text style={style.address}>{item?.address || item?.membershipStatus}</Text>
                     </View>
-                )}
-                <View style={style.textContainer}>
-                    <Text style={style.name}>{item?.name}</Text>
-                    <Text style={style.address}>{item?.address || item?.membershipStatus}</Text>
-                </View>
 
-                <View style={style.rightContainer}>
-                    <View style={style.iconRow}>
+                    <View style={style.rightContainer}>
+                        {/* <View style={style.iconRow}>
                         <TouchableOpacity onPress={handleMember}>
                             <Feather name="eye" size={15} color="#000" />
                         </TouchableOpacity>
@@ -110,27 +111,31 @@ const UserList = () => {
                             color="#D32F2F"
                             style={{ marginLeft: 14 }}
                         />
-                    </View>
+                    </View> */}
 
-                    <Text style={style.date}>{formatNotificationDate(item.createdAt)}</Text>
+                        <Text style={style.date}>{new Date(item.createdAt)
+                            .toLocaleDateString("en-GB")
+                            .replaceAll("/", "-")}
+                        </Text>
+                    </View>
                 </View>
-            </View>
+            </TouchableOpacity>
         );
     };
 
     return (
         <SafeAreaView style={style.container} edges={['top']}>
             <View style={style.main}>
-            <View style={style.header}>
-                        <TouchableOpacity
-                            style={style.backButton}
-                            onPress={() => navigation.goBack()}
-                        >
-                            <Ionicons name="arrow-back" size={28} color="#519377" />
-                        </TouchableOpacity>
-                        <Text style={style.headerTitle}>Membership Requests</Text>
-                        <View style={style.placeholder} />
-                    </View>
+                <View style={style.header}>
+                    <TouchableOpacity
+                        style={style.backButton}
+                        onPress={() => navigation.goBack()}
+                    >
+                        <Ionicons name="chevron-back" size={28} color="#519377" />
+                    </TouchableOpacity>
+                    <Text style={style.headerTitle}>Membership Requests</Text>
+                    <View style={style.placeholder} />
+                </View>
                 <View style={style.innerCantainer}>
                     {/* <View style={style.header}>
                         <TouchableOpacity
@@ -169,8 +174,8 @@ const UserList = () => {
 export default UserList;
 
 const style = StyleSheet.create({
-    main: { flex: 1 },
-    innerCantainer: { flex: 1, padding: 16 },
+    main: { flex: 1, backgroundColor: '#F9FAFB', },
+    innerCantainer: { flex: 1, paddingHorizontal: 16 },
     topButtonsRow: { flexDirection: "row", marginTop: 15, alignItems: 'center', alignSelf: 'center', width: '100%', justifyContent: 'space-between' },
     filterBtn: { flexDirection: 'row', padding: 4 },
     filterText: { fontSize: moderateScale(14), marginLeft: 8 },
@@ -178,7 +183,7 @@ const style = StyleSheet.create({
     exportText: { fontSize: moderateScale(14), marginLeft: 8 },
     addUserBtn: { flexDirection: 'row', backgroundColor: '#519377', borderRadius: 8, alignItems: "center", padding: 12, marginLeft: 8 },
     addUserText: { fontSize: moderateScale(14), marginLeft: 8, lineHeight: moderateScale(15), color: '#fff' },
-    listWrapper: { marginTop: 30, marginBottom: 10 * 3.8 },
+    listWrapper: { marginTop: 8 },
     listContent: { paddingBottom: 10 },
     fab: {
         position: 'absolute',
@@ -201,6 +206,7 @@ const style = StyleSheet.create({
     },
     container: {
         flex: 1,
+        backgroundColor: '#F9FAFB',
     },
     profileSection: {
         flexDirection: 'row',
@@ -300,7 +306,7 @@ const style = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: moderateScale(14),
-        paddingVertical: moderateScale(5),
+        paddingVertical: moderateScale(8),
     },
     backButton: {
         marginTop: 2

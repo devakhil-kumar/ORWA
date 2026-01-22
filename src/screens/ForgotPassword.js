@@ -2,43 +2,42 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
-    TextInput,
     TouchableOpacity,
     StyleSheet,
     StatusBar,
     Image,
     Dimensions,
-    ActivityIndicator,
-    Alert,
     ScrollView,
     Platform,
     KeyboardAvoidingView,
 } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomInput from '../components/CustomInput';
 import imagePath from '../contests/imagePath';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginAdmin, LoginUser } from '../app/features/authSlice';
+import { forgotPassword } from '../app/features/authSlice';
 import { showMessage } from '../app/features/messageSlice';
 const { width, height } = Dimensions.get('window');
 import { useNavigation } from '@react-navigation/native';
+import Ionicons from '@react-native-vector-icons/ionicons';
 
 const schemes = [
     { label: 'Admin', value: 'admin' },
-    { label: 'User', value: 'user' },
+    { label: 'User', value: 'residential' },
 ];
 
-const LoginScreen = () => {
-     const navigation = useNavigation();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+const ForgotPasswordScreen = () => {
+    const navigation = useNavigation();
+    const dispatch = useDispatch();
+
     const [openScheme, setOpenScheme] = useState(false);
     const [scheme, setScheme] = useState('admin');
-    const dispatch = useDispatch();
-    const [hasAttemptedLogin, setHasAttemptedLogin] = useState(false);
-    const [errors, setErrors] = useState({ email: '', password: '' });
-    const { loading, user, mesg } = useSelector((state) => state.auth);
+    const [email, setEmail] = useState('');
+    const [errors, setErrors] = useState({ email: '', });
+    const [hasAttemptedForgotPassword, setHasAttemptedForgotPassword] = useState(false);
+
 
     const validateEmail = (text) => {
         if (!text.trim()) {
@@ -51,65 +50,55 @@ const LoginScreen = () => {
         return '';
     };
 
-    const validatePassword = (text) => {
-        if (!text.trim()) {
-            return 'Password is required';
-        }
-        if (text.length < 6) {
-            return 'Password must be at least 6 characters';
-        }
-        return '';
-    };
-
     const handleEmailChange = (text) => {
         setEmail(text);
-        if (hasAttemptedLogin) {
+        if (hasAttemptedForgotPassword) {
             setErrors(prev => ({ ...prev, email: validateEmail(text) }));
         }
     };
 
-    const handlePasswordChange = (text) => {
-        setPassword(text);
-        if (hasAttemptedLogin) {
-            setErrors(prev => ({ ...prev, password: validatePassword(text) }));
-        }
-    };
 
-    const handleSignIn = async () => {
-        setHasAttemptedLogin(true);
+    const handleForgotPassword = async () => {
+        setHasAttemptedForgotPassword(true);
+
         const emailError = validateEmail(email);
-        const passwordError = validatePassword(password);
+
         setErrors({
-            email: emailError,
-            password: passwordError,
+            emailError: emailError,
         });
-        if (emailError || passwordError) {
+
+        if (emailError) {
             return;
         }
+
         const userData = {
             email: email.trim(),
-            password: password.trim(),
+            userType: scheme
         };
+
+
         try {
-            let response;
-            if (scheme === 'admin') {
-                response = await dispatch(loginAdmin(userData)).unwrap();
-            } else {
-                response = await dispatch(LoginUser(userData)).unwrap();
-            }
+            // let response;
+            // if (scheme === 'admin') {
+            //     response = await dispatch(forgotPasswordAdmin(userData)).unwrap();
+            // } else {
+            const response = await dispatch(forgotPassword(userData)).unwrap();
+            // }
             dispatch(
                 showMessage({
                     type: 'success',
-                    text: response?.message || 'Login successful!',
+                    text: response?.message || 'Reset Password Successfully.',
                 })
             );
+            navigation.navigate('OTPScreen', { userData });
+
         } catch (err) {
-            console.log('Login error:', err?.message);
+            console.log('Reset Password error:', err?.message);
             const errorMessage =
                 err?.response?.data?.message ||
                 err?.message ||
                 err?.error ||
-                'Login Failed';
+                'Reset Password Failed';
             dispatch(
                 showMessage({
                     type: 'error',
@@ -118,16 +107,6 @@ const LoginScreen = () => {
             );
         }
     };
-
-    const handleForgotPasword = () => { 
-         navigation.navigate('ForgotPassword');
-    }
-
-    if (loading) {
-        return <View style={styles.loaderOverlay}>
-            <ActivityIndicator size="large" color="#519377" />
-        </View>
-    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -144,6 +123,17 @@ const LoginScreen = () => {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
+                    <View style={styles.header}>
+                        <View style={styles.headerTop}>
+                            <TouchableOpacity
+                                style={styles.backButton}
+                                onPress={() => navigation.goBack()}
+                            >
+                                <Ionicons name="chevron-back" size={28} color="#519377" />
+                            </TouchableOpacity>
+
+                        </View>
+                    </View>
                     <View style={{ marginTop: 40 }}>
                         <Image
                             source={imagePath.loginImage}
@@ -155,7 +145,7 @@ const LoginScreen = () => {
                             }}
                         />
 
-                        <Text style={styles.subtitle}>Sign In</Text>
+                        <Text style={styles.subtitle}>Forgot Password</Text>
 
                         <View style={{ marginTop: 40 }}>
                             <View style={styles.inputContainer}>
@@ -171,11 +161,10 @@ const LoginScreen = () => {
                                     listMode="SCROLLVIEW"
                                 />
                             </View>
-
                             <View style={styles.inputContainer}>
                                 <Text style={styles.label}>Enter Email</Text>
                                 <CustomInput
-                                    placeholder="Enter your email address"
+                                    placeholder="Enter Your email Address"
                                     value={email}
                                     onChangeText={handleEmailChange}
                                     keyboardType="email-address"
@@ -185,41 +174,23 @@ const LoginScreen = () => {
                                 )}
                             </View>
 
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Password</Text>
-                                <CustomInput
-                                    placeholder="Enter your password"
-                                    value={password}
-                                    onChangeText={handlePasswordChange}
-                                    secureTextEntry
-                                />
-                                {errors.password && (
-                                    <Text style={styles.errorText}>{errors.password}</Text>
-                                )}
-                            </View>
-
-                            <View style={[styles.inputContainer, { alignItems: 'flex-end' }]}>
-                                <TouchableOpacity
-                                    onPress={handleForgotPasword}
-                                >
-                                    <Text style={[styles.label,{color:"#666"}]}>Forgot Password?</Text>
-                                </TouchableOpacity>
-                            </View>
                         </View>
+
                     </View>
 
                     <TouchableOpacity
                         style={styles.signInButton}
-                        onPress={handleSignIn}
+                        onPress={handleForgotPassword}
                     >
-                        <Text style={styles.signInButtonText}>Sign in</Text>
+                        <Text style={styles.signInButtonText}>Send Code</Text>
                     </TouchableOpacity>
 
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
-}
+};
+
 
 const styles = StyleSheet.create({
     container: {
@@ -379,4 +350,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default LoginScreen;
+export default ForgotPasswordScreen;

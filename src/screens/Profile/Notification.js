@@ -147,11 +147,12 @@ const Notification = () => {
 export default Notification;
 
 const style = StyleSheet.create({
-    main: { flex: 1 },
+    main: { flex: 1, backgroundColor: '#F9FAFB', },
     innerCantainer: { flex: 1, padding: 16 },
     listWrapper: { marginTop: 20, marginBottom: 10 * 3.8 },
     container: {
         flex: 1,
+        backgroundColor: '#F9FAFB',
     },
     header: {
         flexDirection: 'row',
@@ -197,16 +198,21 @@ const style = StyleSheet.create({
     card: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
+        paddingVertical: 16,
         backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
         shadowRadius: 6,
         borderRadius: 10,
         paddingHorizontal: 8,
-        elevation: 6,
         marginBottom: 10,
+
+        // iOS Shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.20,
+        shadowRadius: 6,
+
+        // Android Shadow
+        elevation: 5,
     },
     iconWrapper: {
         width: 40,

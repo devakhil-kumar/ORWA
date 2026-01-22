@@ -24,7 +24,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
-const announcementFilterType = ['All', 'System', 'Event'];
+const announcementFilterType = ['All', 'System', 'Announcements'];
 const announcementListData = [
     {
         id: '1',
@@ -134,7 +134,6 @@ const AnnouncementListItem = ({ item }) => {
                         },
                         item.type === 'System' && { backgroundColor: '#F0FDF4' },
                         item.type === 'event' && { backgroundColor: '#FFF7ED' },
-                        item.type === 'POLICY' && { backgroundColor: '#F3F4F6' },
                     ]}
                 >
                     <Text
@@ -146,7 +145,6 @@ const AnnouncementListItem = ({ item }) => {
                             },
                             item.type === 'System' && { color: '#16A34A' },
                             item.type === 'event' && { color: '#EA580C' },
-                            item.type === 'POLICY' && { color: '#4B5563' },
                         ]}
                     >
                         {item.type}
@@ -159,7 +157,11 @@ const AnnouncementListItem = ({ item }) => {
                         color: '#9CA3AF',
                     }}
                 >
-                    {new Date(item.createdAt).toLocaleString()}
+                    {new Date(item.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                    })}
                 </Text>
             </View>
             <View
@@ -268,7 +270,7 @@ const Announcement = () => {
             return item.type === 'system';
         }
 
-        if (selectedAnnouncementFilter === 'Event') {
+        if (selectedAnnouncementFilter === 'Announcements') {
             return item.type === 'event';
         }
 
@@ -298,11 +300,11 @@ const Announcement = () => {
             <View style={styles.header}>
                 <View style={{ flexDirection: 'row' }}>
                     <TouchableOpacity onPress={() => navigation.goBack()} >
-                        <Ionicons name="arrow-back" size={28} color="#000" />
+                        <Ionicons name="chevron-back" size={28} color="#519377" />
                     </TouchableOpacity>
                     {/* <Text style={styles.headerText}>Announcements</Text> */}
                 </View>
-                <Text style={styles.headerText}>Announcements</Text>
+                <Text style={styles.headerText}>Notifications</Text>
                 <View style={{ width: '10%' }} />
             </View>
             {/* <ScrollView
@@ -463,8 +465,8 @@ const styles = StyleSheet.create({
     },
 
     announcementFilterText: {
-        fontSize: moderateScale(16),
-        fontWeight: '600',
+        fontSize: moderateScale(12),
+        fontWeight: '500',
     },
 
     announcementFilterActiveText: {
@@ -546,14 +548,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 30,
-      },
-      
-      emptyText: {
+    },
+
+    emptyText: {
         marginTop: 12,
         fontSize: moderateScale(16),
         color: '#9CA3AF',
         textAlign: 'center',
         fontWeight: '500',
-      },
-      
+    },
+
 });

@@ -20,11 +20,11 @@ import Ionicons from '@react-native-vector-icons/ionicons';
 import FontAwesome from '@react-native-vector-icons/fontawesome';
 import imagePath from '../../contests/imagePath';
 import Signature from 'react-native-signature-canvas';
-import RNFS from 'react-native-fs'; 
+import RNFS from 'react-native-fs';
 import { useDispatch, useSelector } from 'react-redux';
-import { addMember, resetAddMemberState } from '../../app/features/addMemberSlice';
+import { addMember, resetAddMemberState, updateMember } from '../../app/features/addMemberSlice';
 import { showMessage } from '../../app/features/messageSlice';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -101,16 +101,19 @@ const generateCaptcha = () => {
 
 export default function MembershipForm() {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.addmember); 
+  const { loading } = useSelector((state) => state.addmember);
   const navigation = useNavigation();
+  const route = useRoute();
+  const { member, isEdit = false } = route.params || {};
 
   const [step, setStep] = useState(1);
   const [scrollEnabled, setScrollEnabled] = useState(true);
-  const scrollRef = useRef(null); 
+  const scrollRef = useRef(null);
   React.useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({ y: 0, animated: true });
     }
+
   }, [step]);
 
   // Form Fields
@@ -155,6 +158,50 @@ export default function MembershipForm() {
 
   const signatureRef = useRef(null);
   const captchaData = useMemo(() => generateCaptcha(), [step === 6]);
+
+  // set data 
+  React.useEffect(() => {
+    if (isEdit && member) {
+      console.log("MEmber:", member);
+      console.log("Data from edit : ", member._id)
+      console.log("Data from edit : ", member)
+      setFirstName(member.firstName);
+      setMiddleName(member.middleName);
+      setLastName(member.lastName);
+      setRelativeName(member.relationName);
+      setrelativeMiddleName(member.relationMiddleName);
+      setrelativeLastName(member.relationLastName);
+      setLivingHere(member.livingHere);
+      const dateOfBirth = new Date(member.dateOfBirth);
+      console.log(dateOfBirth.toDateString);
+      setDob(dateOfBirth);
+      setOccupation(member.occupation);
+      setPhone(member.phone);
+      setEmail(member.email);
+      setFlatNo(member.flatNumber);
+      setFloor(member.floor);
+      setBlockNumber(member.blockNumber);
+      setScheme(member.scheme);
+      const address = member.correspondenceAddress || "";
+      const [address1, ...rest] = address.split(" ");
+      setAddress1(address1);
+      setAddress2(rest.join(" "));
+      setCity(member.city);
+      setState(member.state);
+      setPostalCode(member.postalCode);
+      setCountry(member.country);
+      setFamilyMembers(member.familyMembersCount.toString());
+      setHobbies(member.hobbiesAndSkills);
+      setIdProof(member.identityProofDocument);
+      setAddressProof(member.addressProofDocument);
+      setOwnershipProof(member.ownershipProofDocument);
+      setPhoto(member.applicantPhoto);
+      setIdProofType(member.identityProofType);
+      setAddressProofType(member.addressProofType);
+      setOwnershipProofType(member.ownershipProofType);
+      setSignature(member.signature);
+    }
+  }, [isEdit, member]);
 
   const schemes = [
     { label: 'true', value: 'true' },
@@ -210,11 +257,24 @@ export default function MembershipForm() {
       }
     }
   };
+  const handleDateConfirm = (selectedDate) => {
+    const today = new Date();
+    const min18Date = new Date(
+      today.getFullYear() - 18,
+      today.getMonth(),
+      today.getDate()
+    );
 
-  const handleDateConfirm = (date) => {
-    setDob(date);
+    if (selectedDate > min18Date) {
+      Alert.alert('Age Restrictions', "You should be atleast 18 to register.");
+      setDatePickerVisible(false);
+      return;
+    }
+
+    setDob(selectedDate);
     setDatePickerVisible(false);
   };
+
 
   const nextStep = () => {
     let missing = [];
@@ -237,9 +297,14 @@ export default function MembershipForm() {
 
   const formatDate = (date) => {
     if (!date) return '';
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+
+    // Convert string to Date if it's not already
+    const d = typeof date === 'string' ? new Date(date) : date;
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+
     return `${year}-${month}-${day}`;
   };
 
@@ -252,12 +317,20 @@ export default function MembershipForm() {
     if (livingHere === null) missing.push('• Are you living here?');
     if (!dob) missing.push('• Date of Birth');
     if (!occupation.trim()) missing.push('• Occupation');
+    // Phone validation
     if (!phone.trim()) {
       missing.push('• Phone Number');
-    } else if (!/^\d{10}$/.test(phone.trim())) {
+    } else if (!/^[0-9]{10}$/.test(phone.trim())) {
       missing.push('• Phone Number: Must be exactly 10 digits');
     }
-    if (!email.trim()) missing.push('• Email');
+
+    // Email validation
+    if (!email.trim()) {
+      missing.push('• Email');
+    } else if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      missing.push('• Email: Invalid format');
+    }
+
     return missing;
   };
 
@@ -268,17 +341,21 @@ export default function MembershipForm() {
     if (!state.trim()) missing.push('• State');
     if (!postalCode.trim()) {
       missing.push('• Postal Code');
-    } else if (!/^\d+$/.test(postalCode.trim())) {
-      missing.push('• Postal Code: Only numbers allowed (e.g., 400001)');
+    } else if (!/^\d{6}$/.test(postalCode.trim())) {
+      missing.push('• Postal Code: Must be exactly 6 digits (e.g., 400001)');
     }
-  
+
+
     if (!familyMembers.trim()) {
       missing.push('• No. of Family Members');
     } else if (!/^\d+$/.test(familyMembers.trim())) {
       missing.push('• No. of Family Members: Only numbers allowed');
-    } else if (parseInt(familyMembers) === 0) {
+    } else if (parseInt(familyMembers.trim(), 10) === 0) {
       missing.push('• No. of Family Members: Must be at least 1');
+    } else if (parseInt(familyMembers.trim()) > 15) {
+      missing.push('• No. of Family Members: Must be minimum than 15');
     }
+
     return missing;
   };
 
@@ -323,7 +400,7 @@ export default function MembershipForm() {
       ...validateStep5(),
       ...validateStep6(),
     ];
- 
+
     if (allMissing.length > 0) {
       Alert.alert(
         'Cannot Submit',
@@ -374,7 +451,7 @@ export default function MembershipForm() {
         await RNFS.writeFile(filePath, base64Data, 'base64');
 
         formData.append('signature', {
-          uri: Platform.OS === 'android' ? `file://${filePath}`: `file://${filePath}`, 
+          uri: Platform.OS === 'android' ? `file://${filePath}` : `file://${filePath}`,
           type: 'image/png',
           name: 'signature.png',
         });
@@ -384,12 +461,22 @@ export default function MembershipForm() {
       }
     }
     try {
-      const response = await dispatch(addMember(formData)).unwrap();
+      let response;
+      if (isEdit) {
+        console.log("id from update member api call :", member._id)
+        response = await dispatch(updateMember({ id: member._id, formData })).unwrap();
+      } else {
+
+        response = await dispatch(addMember(formData)).unwrap();
+      }
+      // const response = await dispatch(addMember(formData)).unwrap();
       console.log(response, 'bivlnfdvfdnvh')
       dispatch(
         showMessage({
           type: 'success',
-          text: response?.message || 'Application Submit successful!',
+          text:
+            response?.message ||
+            (isEdit ? 'Member updated successfully!' : 'Member added successfully!'),
         })
       );
       dispatch(resetAddMemberState());
@@ -417,11 +504,12 @@ export default function MembershipForm() {
     <View style={styles.header}>
       <View style={{ flexDirection: 'row' }}>
         <TouchableOpacity onPress={handleBack}>
-          <FontAwesome name="angle-left" size={28} color={'#000'} />
+          <Ionicons name="chevron-back" size={28} color="#519377" />
+
         </TouchableOpacity>
         <View style={{ width: '95%', justifyContent: 'center', marginTop: 20 }}>
-          <Image source={imagePath.loginImage} style={{ height: height / 10, width: width / 5, alignSelf: 'center' }} />
-          <Text style={{ alignSelf: 'center', color: "#519377", fontSize: 20, fontWeight: '600', marginTop: 15 }}>Add Member</Text>
+          <Image source={imagePath.loginImage} style={{ height: height / 9, width: width / 5, alignSelf: 'center' }} />
+          <Text style={{ alignSelf: 'center', color: "#519377", fontSize: 20, fontWeight: '600', marginTop: 15 }}>{isEdit ? 'Update Member' : 'Add Member'}</Text>
         </View>
       </View>
       <View style={{ justifyContent: 'space-between', flexDirection: "row", marginTop: 15 }}>
@@ -441,7 +529,7 @@ export default function MembershipForm() {
   const UploadBox = ({ title, file, onPress, hint }) => (
     <TouchableOpacity style={styles.uploadBox} onPress={onPress}>
       {file ? (
-        <Image source={{ uri: file.uri }} style={styles.uploadedImage} resizeMode="cover" />
+        <Image source={{ uri: isEdit ? file : file.uri }} style={styles.uploadedImage} resizeMode="cover" />
       ) : (
         <>
           <Ionicons name='cloud-upload-outline' size={40} color={'#666'} />
@@ -465,12 +553,12 @@ export default function MembershipForm() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          <ScrollView 
-            style={styles.content} 
+          <ScrollView
+            style={styles.content}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             scrollEnabled={scrollEnabled}
-            ref={scrollRef} 
+            ref={scrollRef}
           >
             {step === 1 && (
               <>
@@ -482,12 +570,12 @@ export default function MembershipForm() {
                 <TextInput style={styles.input} placeholder="Last" value={lastName} onChangeText={setLastName} placeholderTextColor={'#E0E0E0'} />
 
                 <Text style={styles.label}>Father/Husband/Mother/Wife's Name *</Text>
-                <TextInput style={styles.inputFull} value={relativeName} onChangeText={setRelativeName} />
+                <TextInput style={styles.inputFull} placeholder="First" placeholderTextColor={'#E0E0E0'} value={relativeName} onChangeText={setRelativeName} />
                 <Text style={styles.label}>Middle Name </Text>
                 <TextInput style={styles.input} placeholder="Middle" value={relativemiddleName} onChangeText={setrelativeMiddleName} placeholderTextColor={'#E0E0E0'} />
                 <Text style={styles.label}>Last Name *</Text>
                 <TextInput style={styles.input} placeholder="Last" value={relativelastName} onChangeText={setrelativeLastName} placeholderTextColor={'#E0E0E0'} />
-                <Text style={styles.label}>Are you living here? </Text>
+                <Text style={styles.label}>Are you living here? *</Text>
                 <View style={styles.radioRow}>
                   {['Yes', 'No'].map((item) => (
                     <TouchableOpacity
@@ -517,9 +605,10 @@ export default function MembershipForm() {
                   onConfirm={handleDateConfirm}
                   onCancel={() => setDatePickerVisible(false)}
                   maximumDate={new Date()}
+
                 />
                 <Text style={styles.label}>Occupation *</Text>
-                <TextInput style={styles.inputFull} value={occupation} onChangeText={setOccupation} />
+                <TextInput style={styles.inputFull} placeholder="Occupation" placeholderTextColor={'#E0E0E0'} value={occupation} onChangeText={setOccupation} />
 
                 <Text style={styles.label}>Phone Number *</Text>
                 <TextInput style={styles.input} placeholder="Phone *" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholderTextColor={'#E0E0E0'} />
@@ -532,13 +621,13 @@ export default function MembershipForm() {
             {step === 2 && (
               <>
                 <Text style={styles.label}>Flat/Villa/Plot No. *</Text>
-                <TextInput style={styles.inputFull} value={flatNo} onChangeText={setFlatNo} />
+                <TextInput style={styles.inputFull} placeholder="Flat/Villa/Plot No." placeholderTextColor={'#E0E0E0'} value={flatNo} onChangeText={setFlatNo} />
 
                 <Text style={styles.label}>Floor</Text>
-                <TextInput style={styles.inputFull} value={floor} onChangeText={setFloor} />
+                <TextInput style={styles.inputFull} placeholder="Floor" placeholderTextColor={'#E0E0E0'} value={floor} onChangeText={setFloor} />
 
                 <Text style={styles.label}>Block Number</Text>
-                <TextInput style={styles.inputFull} value={blockNumber} onChangeText={setBlockNumber} />
+                <TextInput style={styles.inputFull} placeholder="Block Number" placeholderTextColor={'#E0E0E0'} value={blockNumber} onChangeText={setBlockNumber} />
 
                 <Text style={styles.label}>Scheme</Text>
                 <DropDownPicker
@@ -559,29 +648,29 @@ export default function MembershipForm() {
                 <View style={styles.row}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.label}>City *</Text>
-                    <TextInput style={styles.input} value={city} onChangeText={setCity} />
+                    <TextInput style={styles.input} placeholder="City" placeholderTextColor={'#E0E0E0'} value={city} onChangeText={setCity} />
                   </View>
                   <View style={{ flex: 1, marginLeft: 10 }}>
                     <Text style={styles.label}>State *</Text>
-                    <TextInput style={styles.input} value={state} onChangeText={setState} />
+                    <TextInput style={styles.input} placeholder="State" placeholderTextColor={'#E0E0E0'} value={state} onChangeText={setState} />
                   </View>
                 </View>
 
                 <Text style={styles.label}>Postal Code *</Text>
-                <TextInput style={styles.inputFull} value={postalCode} onChangeText={setPostalCode} keyboardType="numeric" />
+                <TextInput style={styles.inputFull} placeholder="Postal Code" placeholderTextColor={'#E0E0E0'} value={postalCode} onChangeText={setPostalCode} keyboardType="numeric" />
 
                 <Text style={styles.label}>Country</Text>
-                <TextInput style={styles.inputFull} value={country} onChangeText={setCountry} />
+                <TextInput style={styles.inputFull} placeholder="Country" placeholderTextColor={'#E0E0E0'} value={country} onChangeText={setCountry} />
 
-                <Text style={styles.label}>No. of family members</Text>
-                <TextInput style={styles.inputFull} value={familyMembers} onChangeText={setFamilyMembers} keyboardType="numeric" />
+                <Text style={styles.label}>No. of family members *</Text>
+                <TextInput style={styles.inputFull} placeholder="No. of family members" placeholderTextColor={'#E0E0E0'} value={familyMembers} onChangeText={setFamilyMembers} keyboardType="numeric" />
               </>
             )}
 
             {step === 3 && (
               <>
                 <Text style={styles.label}>Hobbies/Skills</Text>
-                <TextInput style={styles.inputFull} value={hobbies} onChangeText={setHobbies} multiline />
+                <TextInput style={styles.inputFull} placeholder="Hobbies/Skills" placeholderTextColor={'#E0E0E0'} value={hobbies} onChangeText={setHobbies} multiline />
               </>
             )}
 
@@ -678,9 +767,9 @@ export default function MembershipForm() {
                     <Text style={{ textAlign: 'center', color: 'green', marginTop: 5 }}>✓ Signature captured</Text>
                   </View>
                 )}
-                <SignatureBox 
-                  onSave={setSignature} 
-                  ref={signatureRef} 
+                <SignatureBox
+                  onSave={setSignature}
+                  ref={signatureRef}
                   onBeginSigning={onBeginSigning}
                   onEndSigning={onEndSigning}
                 />
@@ -714,22 +803,22 @@ export default function MembershipForm() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F9FC', padding:16 },
+  container: { flex: 1, backgroundColor: '#F7F9FC', padding: 16 },
   header: {
     width: '100%',
     // paddingHorizontal: 16,
-    height: height / 4.2,
+    height: height / 3.75,
     backgroundColor: '#F7F9FC',
   },
   headerTitle: { fontSize: 14, fontWeight: '600', color: '#519377', textAlign: 'left', marginTop: 10 },
   stepIndicator: { fontSize: 14, color: '#666', fontWeight: '500', alignSelf: 'flex-end' },
-  content: { padding:0},
+  content: { padding: 0 },
   label: { fontSize: 16, fontWeight: '600', marginVertical: 10, color: '#1A1A1A' },
   row: { flexDirection: 'row', marginBottom: 10 },
   input: { backgroundColor: '#FFF', borderRadius: 12, height: 56, paddingHorizontal: 15, borderColor: '#C4C4C4', borderWidth: 1 },
   inputFull: { backgroundColor: '#FFF', borderRadius: 12, height: 56, paddingHorizontal: 15, marginBottom: 10, borderColor: '#C4C4C4', borderWidth: 1 },
   dropdown: { borderRadius: 12, height: 56, borderColor: '#C4C4C4', backgroundColor: '#FFF' },
-  dropdownList: { borderRadius: 12 },
+  dropdownList: { borderRadius: 12, borderColor: '#C4C4C4', height: 46, alignSelf: 'center' },
   radioRow: { flexDirection: 'row', justifyContent: 'center', gap: 50, marginVertical: 20 },
   radioBtn: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   radioCircle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#666' },

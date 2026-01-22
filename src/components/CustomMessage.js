@@ -44,7 +44,7 @@ const CustomMessage = ({ visible, type, text, onHide }) => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: height * 0.15, 
+    bottom: height * 0.10, 
     alignSelf: 'center',
     zIndex: 9999,
     paddingHorizontal: 20,

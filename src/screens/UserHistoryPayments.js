@@ -46,11 +46,18 @@ const DATA = [
 ];
 
 const SectionItem = (item) => {
+  const navigation = useNavigation();
+
+  const handleNavigation = () => {
+    console.log(item, 'item from user payment history page')
+    navigation.navigate('UserHistoryPaymentsDetails', item.item)
+  }
   return (
     <TouchableOpacity
       key={item.id}
       style={styles.card}
       activeOpacity={0.7}
+      onPress={handleNavigation}
     >
       <View style={styles.cardLeft}>
         {item?.residentialId?.applicantPhoto ? (
@@ -100,7 +107,7 @@ const PaymentHistory = () => {
   } = useSelector((state) => state.paymentHistory);
 
   useEffect(() => {
-    dispatch(fetchPaymentHistory({ year: 2025, page: 1, limit: 10 }));
+    dispatch(fetchPaymentHistory({ year: 2026, page: 1, limit: 30 }));
   }, [dispatch]);
 
   const filteredData = data.filter((item) => {
@@ -109,12 +116,12 @@ const PaymentHistory = () => {
   });
 
   console.log(filteredData, 'cilbfdsvf')
-  
+
   const filters = [
     { key: 'all', label: 'All' },
     { key: 'pending', label: 'Pending' },
-    { key: 'verified', label: 'Verified' },
-    { key: 'rejected', label: 'Rejected' },
+    { key: 'verified', label: 'paid' },
+    { key: 'rejected', label: 'failed' },
   ];
 
   if (loading) {
@@ -124,7 +131,7 @@ const PaymentHistory = () => {
   }
 
   const handleGoback = () => {
-  navigation.goBack();
+    navigation.goBack();
   }
 
   console.log(data, 'data')
@@ -134,53 +141,54 @@ const PaymentHistory = () => {
     <SafeAreaView style={styles.container} edges={['top', '0']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleGoback}>
-          <Ionicons name="arrow-back" size={28} color="#000" />
+          <Ionicons name="chevron-back" size={28} color="#519377" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Payment History</Text>
-        <View style={{width:'20%'}}/>
+        <View style={{ width: '20%' }} />
       </View>
       {/* </ScrollView> */}
       <View style={styles.container}>
-      {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
-        {filters.map((filter) => (
-          <TouchableOpacity
-            key={filter.key}
-            style={[
-              styles.filterTab,
-              selectedFilter === filter.key && styles.activeFilterTab,
-            ]}
-            onPress={() => setSelectedFilter(filter.key)}
-          >
-            <Text
-              style=
-              {[styles.filterText,
-              selectedFilter === filter.key && styles.activeFilterText,]}
-              
+        {/* Filter Tabs */}
+        <View style={styles.filterContainer}>
+          {filters.map((filter) => (
+            <TouchableOpacity
+              key={filter.key}
+              style={[
+                styles.filterTab,
+                selectedFilter === filter.key && styles.activeFilterTab,
+              ]}
+              onPress={() => setSelectedFilter(filter.key)}
             >
-              {filter.label}
-            </Text>
-            {filter.key !== 'all' && (
-              <Text style={styles.countText}>
-                ({data.filter((i) => i.status.toLowerCase() === filter.key).length})
+              <Text
+                style=
+                {[styles.filterText,
+                selectedFilter === filter.key && styles.activeFilterText,]}
+
+              >
+                {filter.label}
               </Text>
-            )}
-          </TouchableOpacity>
-        ))}
+              {filter.key !== 'all' && (
+                <Text style={[styles.countText,
+                selectedFilter === filter.key && styles.activeCountText,]}>
+                  ({data.filter((i) => i.status.toLowerCase() === filter.key).length})
+                </Text>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+        {loading ? (
+          <Text style={styles.loadingText}>Loading...</Text>
+        ) : filteredData.length === 0 ? (
+          <Text style={styles.emptyText}>No payments found</Text>
+        ) : (
+          <FlatList
+            data={filteredData}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => <SectionItem item={item} />}
+            contentContainerStyle={{ padding: 20 }}
+          />
+        )}
       </View>
-      {loading ? (
-        <Text style={styles.loadingText}>Loading...</Text>
-      ) : filteredData.length === 0 ? (
-        <Text style={styles.emptyText}>No payments found</Text>
-      ) : (
-        <FlatList
-          data={filteredData}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => <SectionItem item={item} />}
-          contentContainerStyle={{ padding: 20 }}
-        />
-      )}
-    </View>
     </SafeAreaView>
   );
 };
@@ -193,13 +201,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   header: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB',
+
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: moderateScale(15),
     paddingTop: moderateScale(10),
     paddingBottom: moderateScale(15),
-    justifyContent:"space-between"
+    justifyContent: "space-between"
   },
   headerText: {
     fontSize: moderateScale(20),
@@ -391,6 +400,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   avatarPlaceholder: {
+
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -418,15 +428,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatar: {
-    width: moderateScale(60),
-    height: moderateScale(60),
-    borderRadius: moderateScale(30),
+    width: moderateScale(35),
+    height: moderateScale(35),
+    borderRadius: moderateScale(45),
     backgroundColor: '#FFD54F',
     overflow: 'hidden',
   },
   filterContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FFF',
+    backgroundColor: '#F9FAFB',
+
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
@@ -454,6 +465,11 @@ const styles = StyleSheet.create({
   },
   countText: {
     color: '#000',
+    marginLeft: 6,
+    fontSize: 12,
+  },
+  activeCountText: {
+    color: '#fff',
     marginLeft: 6,
     fontSize: 12,
   },

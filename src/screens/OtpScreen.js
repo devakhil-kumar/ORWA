@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef,forwardRef } from 'react';
 import {
     View,
     Text,
@@ -14,102 +14,96 @@ import {
     Platform,
     KeyboardAvoidingView,
 } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomInput from '../components/CustomInput';
 import imagePath from '../contests/imagePath';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginAdmin, LoginUser } from '../app/features/authSlice';
+import { verifyOtp } from '../app/features/authSlice';
 import { showMessage } from '../app/features/messageSlice';
 const { width, height } = Dimensions.get('window');
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import Ionicons from '@react-native-vector-icons/ionicons';
 
-const schemes = [
-    { label: 'Admin', value: 'admin' },
-    { label: 'User', value: 'user' },
-];
 
-const LoginScreen = () => {
-     const navigation = useNavigation();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [openScheme, setOpenScheme] = useState(false);
-    const [scheme, setScheme] = useState('admin');
+const OTPScreen = () => {
+    const navigation = useNavigation();
     const dispatch = useDispatch();
-    const [hasAttemptedLogin, setHasAttemptedLogin] = useState(false);
-    const [errors, setErrors] = useState({ email: '', password: '' });
-    const { loading, user, mesg } = useSelector((state) => state.auth);
+    const route = useRoute();
+    const data = route?.params?.userData;
 
-    const validateEmail = (text) => {
-        if (!text.trim()) {
-            return 'Email is required';
+
+    const [errors, setErrors] = useState({ otp: '' });
+    const [hasAttemptedForgotPassword, setHasAttemptedForgotPassword] = useState(false);
+
+    const inputs = useRef([]);
+    const [otp, setOtp] = useState(['', '', '', '']);
+
+    const handleOTPChange = (value, index) => {
+        const newOTP = [...otp];
+        newOTP[index] = value;
+        setOtp(newOTP);
+
+        // Move to next input automatically
+        if (value && index < otp.length - 1) {
+            inputs.current[index + 1].focus();
         }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(text)) {
-            return 'Please enter a valid email address';
+
+        // If user presses backspace on empty field, go to previous input
+        if (!value && index > 0) {
+            inputs.current[index - 1].focus();
         }
+    };
+
+
+    const validateOtp = (text) => {
+        if (!text.trim()) return 'OTP is required';
+        if (!/^\d{4,6}$/.test(text)) return 'OTP must be 4 digits';
         return '';
     };
 
-    const validatePassword = (text) => {
-        if (!text.trim()) {
-            return 'Password is required';
-        }
-        if (text.length < 6) {
-            return 'Password must be at least 6 characters';
-        }
-        return '';
-    };
+    const handleVerifyOtp = async () => {
 
-    const handleEmailChange = (text) => {
-        setEmail(text);
-        if (hasAttemptedLogin) {
-            setErrors(prev => ({ ...prev, email: validateEmail(text) }));
-        }
-    };
+        setHasAttemptedForgotPassword(true);
+        console.log("Data:", data);
+        const otpString = otp.join("");
 
-    const handlePasswordChange = (text) => {
-        setPassword(text);
-        if (hasAttemptedLogin) {
-            setErrors(prev => ({ ...prev, password: validatePassword(text) }));
-        }
-    };
+        const otpError = validateOtp(otpString);
 
-    const handleSignIn = async () => {
-        setHasAttemptedLogin(true);
-        const emailError = validateEmail(email);
-        const passwordError = validatePassword(password);
-        setErrors({
-            email: emailError,
-            password: passwordError,
-        });
-        if (emailError || passwordError) {
-            return;
-        }
+        setErrors({ otp: otpError });
+
+        if (otpError) return;
+
         const userData = {
-            email: email.trim(),
-            password: password.trim(),
+            email: data.email,
+            otp: otpString,
+            userType: data.userType
         };
+
         try {
-            let response;
-            if (scheme === 'admin') {
-                response = await dispatch(loginAdmin(userData)).unwrap();
-            } else {
-                response = await dispatch(LoginUser(userData)).unwrap();
-            }
+
+            const response = await dispatch(verifyOtp(userData)).unwrap();
+            console.log("Response from otp screen:", response);
             dispatch(
                 showMessage({
                     type: 'success',
-                    text: response?.message || 'Login successful!',
+                    text: response?.message || 'OTP Verified Successfully.',
                 })
             );
+            const Data = {
+                resetToken: response.resetToken,
+                userType: data.userType
+            };
+            navigation.navigate('ResetPassword', { Data });
+
         } catch (err) {
-            console.log('Login error:', err?.message);
+            console.log('Incorrect OTP :', err);
             const errorMessage =
                 err?.response?.data?.message ||
                 err?.message ||
                 err?.error ||
-                'Login Failed';
+                'Incorrect OTP';
             dispatch(
                 showMessage({
                     type: 'error',
@@ -118,16 +112,6 @@ const LoginScreen = () => {
             );
         }
     };
-
-    const handleForgotPasword = () => { 
-         navigation.navigate('ForgotPassword');
-    }
-
-    if (loading) {
-        return <View style={styles.loaderOverlay}>
-            <ActivityIndicator size="large" color="#519377" />
-        </View>
-    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -144,6 +128,17 @@ const LoginScreen = () => {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
+                    <View style={styles.header}>
+                        <View style={styles.headerTop}>
+                            <TouchableOpacity
+                                style={styles.backButton}
+                                onPress={() => navigation.goBack()}
+                            >
+                                <Ionicons name="chevron-back" size={28} color="#519377" />
+                            </TouchableOpacity>
+
+                        </View>
+                    </View>
                     <View style={{ marginTop: 40 }}>
                         <Image
                             source={imagePath.loginImage}
@@ -155,71 +150,51 @@ const LoginScreen = () => {
                             }}
                         />
 
-                        <Text style={styles.subtitle}>Sign In</Text>
+                        <Text style={styles.subtitle}>Forgot Password</Text>
 
                         <View style={{ marginTop: 40 }}>
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Choose the role</Text>
-                                <DropDownPicker
-                                    open={openScheme}
-                                    value={scheme}
-                                    items={schemes}
-                                    setOpen={setOpenScheme}
-                                    setValue={setScheme}
-                                    style={styles.dropdown}
-                                    dropDownContainerStyle={styles.dropdownList}
-                                    listMode="SCROLLVIEW"
-                                />
-                            </View>
 
                             <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Enter Email</Text>
-                                <CustomInput
-                                    placeholder="Enter your email address"
-                                    value={email}
-                                    onChangeText={handleEmailChange}
-                                    keyboardType="email-address"
-                                />
+                                <Text style={styles.label}>Enter Code</Text>
+
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '80%', alignSelf: 'center', marginTop: 20 }}>
+                                    {otp.map((digit, index) => (
+                                        <CustomInput
+                                            key={index}
+                                            value={digit}
+                                            onChangeText={(t) => handleOTPChange(t, index)}
+                                            keyboardType="numeric"
+                                            maxLength={1}
+                                            style={{ width: 50, height: 50, borderRadius: 8 }}
+                                            textInput={{ textAlign: 'center', fontSize: 18 }}
+                                            ref={(ref) => (inputs.current[index] = ref)}
+                                        />
+                                    ))}
+                                </View>
+
+
                                 {errors.email && (
                                     <Text style={styles.errorText}>{errors.email}</Text>
                                 )}
                             </View>
 
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Password</Text>
-                                <CustomInput
-                                    placeholder="Enter your password"
-                                    value={password}
-                                    onChangeText={handlePasswordChange}
-                                    secureTextEntry
-                                />
-                                {errors.password && (
-                                    <Text style={styles.errorText}>{errors.password}</Text>
-                                )}
-                            </View>
-
-                            <View style={[styles.inputContainer, { alignItems: 'flex-end' }]}>
-                                <TouchableOpacity
-                                    onPress={handleForgotPasword}
-                                >
-                                    <Text style={[styles.label,{color:"#666"}]}>Forgot Password?</Text>
-                                </TouchableOpacity>
-                            </View>
                         </View>
+
                     </View>
 
                     <TouchableOpacity
                         style={styles.signInButton}
-                        onPress={handleSignIn}
+                        onPress={handleVerifyOtp}
                     >
-                        <Text style={styles.signInButtonText}>Sign in</Text>
+                        <Text style={styles.signInButtonText}>Send Code</Text>
                     </TouchableOpacity>
 
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
-}
+};
+
 
 const styles = StyleSheet.create({
     container: {
@@ -379,4 +354,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default LoginScreen;
+export default OTPScreen;

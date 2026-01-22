@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import Icon from '@react-native-vector-icons/material-design-icons';
+import Ionicons from '@react-native-vector-icons/ionicons';
 import imagePath from '../contests/imagePath';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,7 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const InfoRow = ({ icon, label, value }) => (
     <View style={styles.infoRow}>
-        <Icon name={icon} size={22} color="#555" />
+        <Icon name={icon} size={22} color="#585858" />
         <View style={styles.infoTextWrap}>
             <Text style={styles.label}>{label}</Text>
             <Text style={styles.value}>{value}</Text>
@@ -56,8 +57,11 @@ const UserProfile = () => {
             <ScrollView style={styles.container}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={handlegoBack}>
-                        <Icon name="arrow-left" size={26} color="#2E7D32" />
+                        <Ionicons name="chevron-back" size={28} color="#519377" />
                     </TouchableOpacity>
+                    {/* <TouchableOpacity >
+                        <MaterialIcons name="share" size={22} color="#000" />
+                    </TouchableOpacity> */}
                 </View>
                 <View style={styles.profileWrapper}>
                     <Image
@@ -79,8 +83,8 @@ const UserProfile = () => {
                     {/* <InfoRow icon="card-account-details-outline" label="Aadhar Card no" value={userData.aadhar} /> */}
                 </View>
                 <TouchableOpacity style={styles.infoRow} onPress={handleLogout}>
-                    <MaterialIcons name="logout" size={23} color="#555" />
-                    <Text style={{ marginLeft: 20, color: "#555", fontWeight: '500', fontSize: 14 }}>Logout</Text>
+                    <MaterialIcons name="logout" size={23} color="#585858" />
+                    <Text style={{ marginLeft: 16, color: "#333", fontWeight: '500', fontSize: 16 }}>Logout</Text>
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
@@ -94,7 +98,7 @@ export default UserProfile;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#F9FAFB',
     },
     header: {
         flexDirection: 'row',
@@ -118,8 +122,8 @@ const styles = StyleSheet.create({
         marginTop: 16,
     },
     nameText: {
-        fontSize: 22,
-        fontWeight: '600',
+        fontSize: 20,
+        fontWeight: '400',
         marginRight: 8,
     },
     editIcon: {
@@ -129,7 +133,7 @@ const styles = StyleSheet.create({
     },
     infoRow: {
         flexDirection: 'row',
-        alignItems: 'center',
+        // alignItems: 'center',
         paddingHorizontal: 20,
         paddingVertical: 14,
         borderBottomWidth: 1,
@@ -140,12 +144,14 @@ const styles = StyleSheet.create({
         marginLeft: 16,
     },
     label: {
-        fontSize: 14,
-        color: '#777',
+        fontSize: 16,
+        fontWeight: 500,
+        color: '#333',
     },
     value: {
-        fontSize: 16,
-        color: '#000',
+        fontSize: 14,
+        fontWeight: 500,
+        color: '#333',
         marginTop: 2,
     },
 });
