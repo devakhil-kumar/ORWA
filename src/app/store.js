@@ -15,6 +15,7 @@ import adminMemberRequestsSlice from '../app/features/adminMemberRequestsSlice';
 import societyReducer from '../app/features/societySlice';
 import contactSlice from '../app/features/contactSlice';
 import userContactSerivce from '../../src/app/features/userContactSlice';
+import DeleteAcountReducer from '../app/features/deleteAcountSlice';
 
 
 const store = configureStore({
@@ -35,6 +36,7 @@ const store = configureStore({
         society: societyReducer,
         contact:contactSlice,
         contactUser:userContactSerivce,
+        deleteAcount:DeleteAcountReducer
     }
 })
 

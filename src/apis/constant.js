@@ -27,10 +27,15 @@ export const API_ROUTES = {
     UPDATESOCIETY: (id) => `society/${id}`,
     CONTACT_US: 'admin/post-contact',
     USERCONTACT_US: 'contact-us',
+<<<<<<< HEAD
 
     UPDATE_USER_PROFILE: `residential/profile`,
     TERMINATION_REQUEST: `residential/termination`,
     GET_TERMINATION_REQUESTS: `admin/residential/termination-requests`
 
 
+=======
+   DELETE_ACOUNT:'residential/delete/'
+    // http://77.42.18.162:2424/api/residential/delete/69428dc67aef91381591dfcd
+>>>>>>> c60a279 (latest changes)
 }

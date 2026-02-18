@@ -117,6 +117,7 @@ const generateCaptcha = () => {
 
   let answer;
   switch (operator) {
+<<<<<<< HEAD
     case '+':
       answer = num1 + num2;
       break;
@@ -127,6 +128,18 @@ const generateCaptcha = () => {
       answer = num1 * num2;
       break;
     default:
+=======
+    case '+': 
+      answer = num1 + num2; 
+      break;
+    case '-': 
+      answer = num1 - num2; 
+      break;
+    case '*': 
+      answer = num1 * num2; 
+      break;
+    default: 
+>>>>>>> c60a279 (latest changes)
       answer = 0;
   }
 
@@ -381,12 +394,16 @@ export default function MembershipForm() {
   const validateStep2 = () => {
     const missing = [];
     if (!flatNo.trim()) missing.push('• Flat/Villa/Plot No.');
+<<<<<<< HEAD
     if (!floor.trim()) missing.push('• Floor No.');
+=======
+>>>>>>> c60a279 (latest changes)
     // if (!city.trim()) missing.push('• City');
     // if (!state.trim()) missing.push('• State');
     // if (!postalCode.trim()) {
     //   missing.push('• Postal Code');
     // } else 
+<<<<<<< HEAD
     // Check Postal Code only if it's provided
     if (postalCode.trim()) {
       if (!/^\d{6}$/.test(postalCode.trim())) {
@@ -423,7 +440,44 @@ export default function MembershipForm() {
     // }
     if (!scheme) {
       missing.push('• Scheme');
+=======
+   // Check Postal Code only if it's provided
+if (postalCode.trim()) {
+  if (!/^\d{6}$/.test(postalCode.trim())) {
+    missing.push('• Postal Code: Must be exactly 6 digits (e.g., 400001)');
+  }
+}
+
+// Check Family Members only if it's provided
+if (familyMembers.trim()) {
+  if (!/^\d+$/.test(familyMembers.trim())) {
+    missing.push('• No. of Family Members: Only numbers allowed');
+  } else {
+    const num = parseInt(familyMembers.trim(), 10);
+    if (num === 0) {
+      missing.push('• No. of Family Members: Must be at least 1');
+    } else if (num > 15) {
+      missing.push('• No. of Family Members: Must be less than or equal to 15');
+>>>>>>> c60a279 (latest changes)
     }
+  }
+}
+
+
+
+    // if (!familyMembers.trim()) {
+    //   missing.push('• No. of Family Members');
+    // } else
+    // if (!/^\d+$/.test(familyMembers.trim())) {
+    //   missing.push('• No. of Family Members: Only numbers allowed');
+    // } else if (parseInt(familyMembers.trim(), 10) === 0) {
+    //   missing.push('• No. of Family Members: Must be at least 1');
+    // } else if (parseInt(familyMembers.trim()) > 15) {
+    //   missing.push('• No. of Family Members: Must be minimum than 15');
+    // }
+    // if (!scheme) {
+    //   missing.push('• Scheme');
+    // }
 
     return missing;
   };
@@ -680,7 +734,10 @@ export default function MembershipForm() {
                   maximumDate={new Date()}
                   minimumDate={new Date(1800, 0, 1)}
                 />
+<<<<<<< HEAD
 
+=======
+>>>>>>> c60a279 (latest changes)
                 <Text style={styles.label}>Occupation</Text>
                 <TextInput style={styles.inputFull} placeholder="Occupation" placeholderTextColor={'#E0E0E0'} value={occupation} onChangeText={setOccupation} />
 
