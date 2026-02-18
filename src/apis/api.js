@@ -61,7 +61,11 @@ export const resetPasswordAPI = userData => {
 export const addMemberAPI = async (formData) => {
     const { token } = await getUserData();
 
-    console.log('API Response Status:', formData);
+    // Debug: log all FormData fields
+    console.log('FormData parts:', formData._parts);
+    formData._parts.forEach(([key, value]) => {
+        console.log(`  ${key}:`, value);
+    });
 
     const response = await fetch(`${BASE_URL}${API_ROUTES.ADD_MEMBERS}`, {
         method: 'POST',
@@ -72,10 +76,10 @@ export const addMemberAPI = async (formData) => {
         body: formData,
     });
 
-    console.log('API  : ', response);
-    console.log('API Response Status:', response.status);
-
     if (!response.ok) {
+        // Log the actual error response body from server
+        const errorBody = await response.text();
+        console.log('Error response body:', errorBody);
         throw new Error('Add member API failed');
     }
 
@@ -89,6 +93,7 @@ export const updateMemberAPI = async (formData, id) => {
     const response = await fetch(`${BASE_URL}${API_ROUTES.UPDATE_MEMBER(id)}`, {
         method: 'PUT',
         headers: {
+            'Content-Type': 'multipart/form-data',
             'x-request-source': 'mobile',
             Authorization: `Bearer ${token}`,
         },
@@ -134,8 +139,8 @@ export const fetchResidentialPayments = (type = 'all') => {
 };
 
 
-export const verifyPayment = (paymentId, status,paidFrom,paidTo) => {
-    return axiosInstance.put(API_ROUTES.VERIFY_PAYMENT(paymentId), { status,paidFrom,paidTo });
+export const verifyPayment = (paymentId, status, paidFrom, paidTo) => {
+    return axiosInstance.put(API_ROUTES.VERIFY_PAYMENT(paymentId), { status, paidFrom, paidTo });
 };
 
 

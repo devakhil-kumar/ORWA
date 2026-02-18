@@ -78,17 +78,26 @@ export const resetPasswordService = async userData => {
     }
 };
 
+// export const apiAddmemberService = async (formdata) => {
+//     try {
+//         console.log(formdata, 'formdata from service')
+//         const response = await addMemberAPI(formdata);
+//         console.log(response, 'data++++++++')
+//         return response
+//     } catch (error) {
+//         console.log(error, 'errorr++++++')
+//         throw new Error(
+//             error || "Failed to add profile"
+//         );
+//     }
+// }
+
 export const apiAddmemberService = async (formdata) => {
     try {
-        console.log(formdata, 'formdata from service')
         const response = await addMemberAPI(formdata);
-        console.log(response, 'data++++++++')
-        return response
+        return response;
     } catch (error) {
-        console.log(error, 'errorr++++++')
-        throw new Error(
-            error || "Failed to add profile"
-        );
+        throw error.message || "Failed to add profile"; // throw string, not new Error()
     }
 }
 

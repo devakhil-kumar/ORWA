@@ -1,34 +1,55 @@
 import React from 'react';
-import { Text, TouchableOpacity, Linking } from 'react-native';
-
+import { Text, TouchableOpacity, Linking, Image } from 'react-native';
+import imagePath from '../contests/imagePath';
 const Footer = () => {
-  
+
   const openLink = () => {
-    Linking.openURL("https://cyberbells.com"); 
+    Linking.openURL("https://cyberbells.com");
   };
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       onPress={openLink}
       style={{
+        
         backgroundColor: '#fff',
         paddingVertical: 8,
+        alignItems:'center',
+        justifyContent:'center',
+        marginBottom:5
       }}
     >
-      <Text 
+      <Text
         style={{
-          alignSelf:'center',
-          textAlign: 'center',
-          color: 'blue',
-          fontSize: 12,
-          fontWeight:'500',
+          color: 'black',
+          fontSize: 14,
+          fontWeight: '500',
         }}
       >
-        Managed by Cyberbells ITES Services Pvt Ltd.
+        Managed by
+       
       </Text>
+       <Image
+          source={imagePath.cyberbellsLogo}
+          style={{
+            width: 150,
+            height: 50,
+          }}
+          resizeMode="contain"
+        />
     </TouchableOpacity>
   );
 };
 
 export default Footer;
 
+ {/* <Text
+          style={{
+            alignSelf: 'center',
+            textAlign: 'center',
+            color: '#4287f5',
+            fontSize: 13,
+            fontWeight: '500',
+          }}
+        > Cyberbells ITES Services Pvt Ltd</Text> */}
+       

@@ -1,17 +1,31 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiAddmemberService, apiUpdatememberService } from '../../apis/service';
 
+// export const addMember = createAsyncThunk(
+//   'members/addMember',
+//   async (formData, { rejectWithValue }) => {
+//     try {
+//       console.log(formData, 'formData from slice')
+//       const response = await apiAddmemberService(formData);
+//       console.log(response.data, 'response__________')
+//       return response.data;
+//     } catch (error) {
+//       return rejectWithValue(
+//         error || 'Failed to add member'
+//       );
+//     }
+//   }
+// );
+
 export const addMember = createAsyncThunk(
   'members/addMember',
   async (formData, { rejectWithValue }) => {
     try {
-      console.log(formData, 'formData from slice')
       const response = await apiAddmemberService(formData);
-      console.log(response.data, 'response__________')
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error || 'Failed to add member'
+        typeof error === 'string' ? error : error.message || 'Failed to add member'
       );
     }
   }
