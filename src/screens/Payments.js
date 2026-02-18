@@ -53,6 +53,7 @@ const PaymentHistoryScreen = () => {
     useFocusEffect(
         useCallback(() => {
             dispatch(fetchResidentialPaymentsThunk('all'));
+            console.log('Data : ', data)
         }, [dispatch])
     );
 
@@ -84,7 +85,7 @@ const PaymentHistoryScreen = () => {
     };
 
     const renderPaymentCard = (item) => {
-        console.log(item?.residentialPhoto, 'item')
+        console.log(item, 'item')
 
         const handleNavigation = () => {
             navigation.navigate('PaymentDetails', { payment: item })

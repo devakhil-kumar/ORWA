@@ -25,7 +25,7 @@ import { showMessage } from '../app/features/messageSlice';
 const { width, height } = Dimensions.get('window');
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Ionicons from '@react-native-vector-icons/ionicons';
-
+import Footer from '../footer/Footer';
 
 const OTPScreen = () => {
     const navigation = useNavigation();
@@ -191,6 +191,7 @@ const OTPScreen = () => {
 
                 </ScrollView>
             </KeyboardAvoidingView>
+                  <Footer />
         </SafeAreaView>
     );
 };

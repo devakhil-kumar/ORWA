@@ -53,6 +53,12 @@ const SocietyHeadScreen = ({ navigation }) => {
         },
         {
             id: 5,
+            icon: 'person-outline',
+            title: 'Termination Requests',
+            onPress: () => navigation.navigate('TerminationRequest'),
+        },
+        {
+            id: 6,
             icon: 'log-out-outline',
             title: 'Logout',
             onPress: () => {

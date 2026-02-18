@@ -61,6 +61,8 @@ export const resetPasswordAPI = userData => {
 export const addMemberAPI = async (formData) => {
     const { token } = await getUserData();
 
+    console.log('API Response Status:', formData);
+
     const response = await fetch(`${BASE_URL}${API_ROUTES.ADD_MEMBERS}`, {
         method: 'POST',
         headers: {
@@ -69,6 +71,9 @@ export const addMemberAPI = async (formData) => {
         },
         body: formData,
     });
+
+    console.log('API  : ', response);
+    console.log('API Response Status:', response.status);
 
     if (!response.ok) {
         throw new Error('Add member API failed');
@@ -98,9 +103,16 @@ export const updateMemberAPI = async (formData, id) => {
 };
 
 export const DeleteMemberAPI = async (id) => {
-        console.log("ID : from api", id)
-    return axiosInstance.delete(API_ROUTES.DELETE_MEMBER(id));
-}
+    console.log('id in API:', id);
+    const { token } = await getUserData();
+
+    return axios.get(`${BASE_URL}${API_ROUTES.DELETE_MEMBER(id)}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'x-request-source': 'mobile',
+        },
+    });
+};
 
 export const PaymentUpload = async (userData) => {
     const { token } = await getUserData();
@@ -122,8 +134,8 @@ export const fetchResidentialPayments = (type = 'all') => {
 };
 
 
-export const verifyPayment = (paymentId, status) => {
-    return axiosInstance.put(API_ROUTES.VERIFY_PAYMENT(paymentId), { status });
+export const verifyPayment = (paymentId, status,paidFrom,paidTo) => {
+    return axiosInstance.put(API_ROUTES.VERIFY_PAYMENT(paymentId), { status,paidFrom,paidTo });
 };
 
 
@@ -139,6 +151,23 @@ export const AnnouncementsHistroy = () => {
 export const getAdminProfile = () => {
     return axiosInstance.get(API_ROUTES.ADMIN_PROFILE)
 }
+
+export const updateUserProfile = async (updatedData) => {
+    const { token } = await getUserData();
+
+    return axios.put(
+        `${BASE_URL}${API_ROUTES.UPDATE_USER_PROFILE}`,
+        updatedData,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'x-request-source': 'mobile',
+                'Content-Type': 'multipart/form-data',
+            },
+        }
+    );
+};
+
 
 export const getAdminNotification = (page, limit) => {
     return axiosInstance.get(`${API_ROUTES.ADMIN_NOTIFICATION}?page=${page}&limit=${limit}`)
@@ -171,6 +200,10 @@ export const getresidentailsAdmin = () => {
     return axiosInstance.get(API_ROUTES.GET_ALL_RESIDENTAILS)
 }
 
+export const getTerminationRequests = () => {
+    return axiosInstance.get(API_ROUTES.GET_TERMINATION_REQUESTS)
+}
+
 // export const getresidentailByIdAdmin = (id) => {
 //     return axiosInstance.get(API_ROUTES.GET_RESIDENTAIL(id))
 // }
@@ -199,7 +232,8 @@ export const ContactUs = (message) => {
     return axiosInstance.post(API_ROUTES.CONTACT_US, message)
 }
 
-export const ContactUsUser = async (formData) => {console.log("jhgjhgjhvjhvjhvjhvjghvjhg",formData);
+export const ContactUsUser = async (formData) => {
+    console.log("jhgjhgjhvjhvjhvjhvjghvjhg", formData);
     const { token } = await getUserData();
     return axios.post(`${BASE_URL}${API_ROUTES.USERCONTACT_US}`, formData, {
         headers: {
@@ -209,3 +243,19 @@ export const ContactUsUser = async (formData) => {console.log("jhgjhgjhvjhvjhvjh
     });
     // return axiosInstance.post(API_ROUTES.USERCONTACT_US, fromData)
 }
+
+
+export const TerminationRequest = async () => {
+    const { token } = await getUserData();
+
+    return axios.post(
+        `${BASE_URL}${API_ROUTES.TERMINATION_REQUEST}`,
+        {},
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'x-request-source': 'mobile',
+            },
+        }
+    );
+};

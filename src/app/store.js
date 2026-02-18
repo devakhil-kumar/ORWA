@@ -16,6 +16,7 @@ import societyReducer from '../app/features/societySlice';
 import contactSlice from '../app/features/contactSlice';
 import userContactSerivce from '../../src/app/features/userContactSlice';
 
+
 const store = configureStore({
     reducer: {
         auth:authReducer,

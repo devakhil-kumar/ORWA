@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getAdminProfileService, getProfileService } from '../../apis/service';
+import { getAdminProfileService, getProfileService, TerminationRequestService, updateUserProfileService } from '../../apis/service';
 import { saveProfileData } from '../../units/asyncStorageManager';
 
 export const fetchProfile = createAsyncThunk(
@@ -27,6 +27,33 @@ export const fetchAdminProfile = createAsyncThunk(
         }
     }
 )
+
+export const updateUserProfile = createAsyncThunk(
+    'profile/updateUserProfile',
+    async (updatedData,{ rejectWithValue }) => {
+        try {
+            const data = await updateUserProfileService(updatedData);
+            console.log('Updated profile data from slice:', data);
+            saveProfileData(data?.data)
+            return data?.data || {};
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+export const terminationRequest = createAsyncThunk(
+    'profile/terminationRequest',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await TerminationRequestService();
+            return response;
+        } catch (err) {
+            return rejectWithValue(err || { message: 'Failed to send termination request' });
+        }
+    }
+);
+
 
 
 const getprofileSlice = createSlice({
@@ -68,6 +95,33 @@ const getprofileSlice = createSlice({
             .addCase(fetchAdminProfile.rejected, (state, action) => {
                 state.adminLoading = false;
                 state.adminerror = action.payload;
+            })
+            .addCase(updateUserProfile.pending, state => {
+                state.adminLoading = true;
+                state.error = null;
+            })
+            .addCase(updateUserProfile.fulfilled, (state, action) => {
+                state.adminLoading = false;
+                state.admin = action.payload;
+            })
+            .addCase(updateUserProfile.rejected, (state, action) => {
+                state.adminLoading = false;
+                state.adminerror = action.payload;
+            })
+            .addCase(terminationRequest.fulfilled, (state, action) => {
+                state.loading = false;
+
+                if (state.admin) {
+                    state.admin.terminationRequested = true;
+                    state.admin.terminationRequestedAt = new Date().toISOString();
+                }
+            })
+            .addCase(terminationRequest.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(terminationRequest.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             })
     }
 });

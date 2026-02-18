@@ -22,6 +22,7 @@ import { showMessage } from '../app/features/messageSlice';
 const { width, height } = Dimensions.get('window');
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from '@react-native-vector-icons/ionicons';
+import Footer from '../footer/Footer';
 
 const schemes = [
     { label: 'Admin', value: 'admin' },
@@ -187,6 +188,7 @@ const ForgotPasswordScreen = () => {
 
                 </ScrollView>
             </KeyboardAvoidingView>
+                  <Footer />
         </SafeAreaView>
     );
 };

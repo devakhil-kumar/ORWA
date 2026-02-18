@@ -24,6 +24,7 @@ import { showMessage } from '../app/features/messageSlice';
 const { width, height } = Dimensions.get('window');
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Ionicons from '@react-native-vector-icons/ionicons';
+import Footer from '../footer/Footer';
 
 const ResetPasswordScreen = () => {
     const navigation = useNavigation();
@@ -224,6 +225,7 @@ const ResetPasswordScreen = () => {
 
                 </ScrollView>
             </KeyboardAvoidingView>
+                  <Footer />
         </SafeAreaView>
     );
 };

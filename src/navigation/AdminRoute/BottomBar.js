@@ -24,7 +24,9 @@ import PaymentHistoryScreen from '../../screens/Payments.js';
 import PaymentDetails from '../../screens/PaymentsDetails.js';
 import AddUpdates from '../../Admin/screens/adminHome/AddUpdates.js';
 import ResidentsList from '../../screens/Profile/ResidentsList.js';
+import TerminationRequest from '../../screens/Profile/TerminationRequest.js'
 import imagePath from '../../contests/imagePath.jsx';
+
 const { width, height } = Dimensions.get('window');
 
 const Tab = createBottomTabNavigator();
@@ -62,6 +64,8 @@ export const ProfileNavigator = () => {
             <Stack.Screen name='ResdentsList' component={ResdentsList} />
             <Stack.Screen name='ContactUs' component={ContactUs} />
             <Stack.Screen name='Notification' component={Notification} />
+            <Stack.Screen name='TerminationRequest' component={TerminationRequest} />
+
         </Stack.Navigator>
     )
 }
@@ -88,7 +92,7 @@ const AdminBottomTabs = () => {
     const insets = useSafeAreaInsets();
     const bottomInset = Platform.OS === 'android' ? insets.bottom : 10;
     const defaultTabBarStyle = {
- 
+
         borderTopWidth: 0,
         height: 70 + bottomInset,
         paddingBottom: bottomInset,
@@ -183,8 +187,10 @@ const AdminBottomTabs = () => {
                 component={AnnouncementNavigator}
                 options={({ route }) => ({
                     tabBarIcon: ({ focused }) => (
-                        <Image source={focused ? imagePath.Updates : imagePath.InActiveUpdates} style={{ width: width / 15.5
-                            , height: height /38 }} />
+                        <Image source={focused ? imagePath.Updates : imagePath.InActiveUpdates} style={{
+                            width: width / 15.5
+                            , height: height / 38
+                        }} />
                     ),
                     tabBarLabel: ({ focused }) => (
                         <Text numberOfLines={1} style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Announcements</Text>
@@ -213,7 +219,9 @@ const AdminBottomTabs = () => {
                     ),
                     tabBarStyle: (() => {
                         const routeName = getFocusedRouteNameFromRoute(route) ?? 'Profile';
-                        if (routeName === 'SocietyInfoScreen' || routeName === 'ResdentsList' || routeName === 'ContactUs' || routeName === 'Notification' || routeName === 'AddMember') {
+                        if (routeName === 'SocietyInfoScreen' || routeName === 'ResdentsList' || routeName === 'ContactUs' || routeName === 'Notification' || routeName === 'AddMember'
+                            || routeName === 'TerminationRequest'
+                        ) {
                             return { display: 'none' };
                         }
                         return defaultTabBarStyle;

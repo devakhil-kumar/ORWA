@@ -1,4 +1,14 @@
-import { addMemberAPI, updateMemberAPI, AnnouncementsHistroy, ContactUs, ContactUsUser, createEventAdmin, DeleteAdminEvent, fetchResidentialPayments, getAdminNotification, getAdminProfile, getEventAdmin, getMemberList, getProfile, getresidentailByIdAdmin, getresidentailsAdmin, getSocietyAdmin, loginAPIAdmin, loginAPIUser, memberVerifyPayment, PaymentHistory, PaymentUpload, UpdateEventAdmin, updateSocietyAdmin, verifyPayment, DeleteMemberAPI, resetPasswordAPI, verifyOtpAPI, forgotPasswordAPI,  } from "./api";
+import { terminationRequest } from "../app/features/getprofileSlice";
+import {
+    addMemberAPI, updateMemberAPI, AnnouncementsHistroy, ContactUs,
+    ContactUsUser, createEventAdmin, DeleteAdminEvent, fetchResidentialPayments,
+    getAdminNotification, getAdminProfile, getEventAdmin, getMemberList, getProfile,
+    getresidentailByIdAdmin, getresidentailsAdmin, getSocietyAdmin, loginAPIAdmin,
+    loginAPIUser, memberVerifyPayment, PaymentHistory, PaymentUpload, UpdateEventAdmin,
+    updateSocietyAdmin, verifyPayment, DeleteMemberAPI, resetPasswordAPI, verifyOtpAPI,
+    forgotPasswordAPI, updateUserProfile,
+    getTerminationRequests, TerminationRequest
+} from "./api";
 
 export const loginService = async userData => {
     try {
@@ -70,6 +80,7 @@ export const resetPasswordService = async userData => {
 
 export const apiAddmemberService = async (formdata) => {
     try {
+        console.log(formdata, 'formdata from service')
         const response = await addMemberAPI(formdata);
         console.log(response, 'data++++++++')
         return response
@@ -96,15 +107,18 @@ export const apiUpdatememberService = async (formdata, id) => {
 }
 export const apiDeletememberService = async (id) => {
     try {
-        console.log("id from services :", id);
+        console.log("id from services:", id);
         const response = await DeleteMemberAPI(id);
-        console.log(response, 'response++++++++++++++=')
         return response.data;
     } catch (error) {
-        throw error.response?.data || { message: 'Failed to delete member.' };
+        throw {
+            message: error.response?.data?.message
+                || error.message
+                || 'Failed to delete member.',
+            status: error.response?.status || 500,
+        };
     }
 };
-
 
 export const UploadPaymentService = async userData => {
     try {
@@ -142,9 +156,9 @@ export const fetchResidentialPaymentsService = async (type = 'all') => {
     }
 }
 
-export const verifyPaymentService = async (paymentId, status) => {
+export const verifyPaymentService = async (paymentId, status,paidFrom,paidTo) => {
     try {
-        const response = await verifyPayment(paymentId, status);
+        const response = await verifyPayment(paymentId, status,paidFrom,paidTo);
         console.log(response, 'response++++++++++++++=')
         return response.data;
     } catch (error) {
@@ -161,6 +175,19 @@ export const getProfileService = async () => {
         throw new Error('Failed to fetch profile.');
     }
 };
+
+export const updateUserProfileService = async (updatedData) => {
+    try {
+       const response = await updateUserProfile(updatedData);
+        console.log('API response for profile update:', response);
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to update profile.');
+    }
+};
+
+
 
 export const AnnouncementsUserService = async () => {
     try {
@@ -228,6 +255,17 @@ export const adminEventUpdateService = async (id, payload) => {
 export const getAdminResdidentailsService = async () => {
     try {
         const response = await getresidentailsAdmin();
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to fetch profile.');
+    }
+};
+
+export const getTerminationRequestService = async () => {
+    try {
+        const response = await getTerminationRequests();
+        console.log('termination request data :', response);
         return response.data;
     } catch (error) {
         console.log(error);
@@ -314,3 +352,13 @@ export const UserContactUsSerivce = async (formData) => {
         throw error.response?.data || { message: 'Failed to update payment status' };
     }
 }
+export const TerminationRequestService = async () => {
+    try {
+        const response = await TerminationRequest();
+        console.log(response.data, 'response++++');
+        return response.data;
+    } catch (error) {
+        console.log(error.response?.data, 'error');
+        throw error.response?.data || { message: 'Failed to send termination request' };
+    }
+};

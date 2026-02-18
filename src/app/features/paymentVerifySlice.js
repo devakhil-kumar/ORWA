@@ -4,9 +4,9 @@ import { verifyPaymentService } from '../../apis/service';
 
 export const verifyPaymentThunk = createAsyncThunk(
   'payment/verify',
-  async ({ paymentId, status }, { rejectWithValue }) => {
+  async ({ paymentId, status,paidFrom,paidTo }, { rejectWithValue }) => {
     try {
-      const response = await verifyPaymentService(paymentId, status);
+      const response = await verifyPaymentService(paymentId, status,paidFrom,paidTo);
       return response;
     } catch (error) {
       return rejectWithValue(error.message || 'Failed to verify payment');

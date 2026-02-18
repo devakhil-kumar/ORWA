@@ -23,6 +23,7 @@ import { loginAdmin, LoginUser } from '../app/features/authSlice';
 import { showMessage } from '../app/features/messageSlice';
 const { width, height } = Dimensions.get('window');
 import { useNavigation } from '@react-navigation/native';
+import Footer from '../footer/Footer';
 
 const schemes = [
     { label: 'Admin', value: 'admin' },
@@ -217,6 +218,7 @@ const LoginScreen = () => {
 
                 </ScrollView>
             </KeyboardAvoidingView>
+                  <Footer />
         </SafeAreaView>
     );
 }

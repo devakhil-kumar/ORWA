@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { getAdminResdidentailByIdService, getAdminResdidentailsService, apiDeletememberService } from '../../apis/service';
+import { getTerminationRequestService, getAdminResdidentailsService, apiDeletememberService } from '../../apis/service';
 
 export const fetchAdminResidentials = createAsyncThunk(
     'adminResidentials/fetch',
@@ -14,20 +14,35 @@ export const fetchAdminResidentials = createAsyncThunk(
     }
 );
 
+export const fetchTerminationRequests = createAsyncThunk(
+    'adminResidentials/fetchTerminationRequests',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await getTerminationRequestService();
+            console.log(response, 'response++++++')
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
 export const deleteMember = createAsyncThunk(
     'adminResidentials/deleteMember',
     async (id, { rejectWithValue }) => {
         try {
-
+            console.log('id in thunk:', id);
             const response = await apiDeletememberService(id);
-            console.log(response, 'delete response+++++++++++++++++')
-            return response.data;
+            return response;
         } catch (error) {
-            console.log(error, 'delete error')
-            return rejectWithValue(error.response?.data || { message: 'Failed to delete member' });
+            return rejectWithValue({
+                message: error?.message || 'Failed to delete member',
+                status: error?.status || 500,
+            });
         }
     }
 );
+
 const adminResidentialSlice = createSlice({
     name: 'adminResidentials',
     initialState: {
@@ -79,8 +94,20 @@ const adminResidentialSlice = createSlice({
             })
             .addCase(deleteMember.rejected, (state, action) => {
                 state.deleteLoading = false;
-                state.error = action.payload;
                 state.success = false;
+                state.error = action.payload?.message || 'Failed to delete member';
+            })
+            .addCase(fetchTerminationRequests.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchTerminationRequests.fulfilled, (state, action) => {
+                state.loading = false;
+                state.residentials = action.payload;
+            })
+            .addCase(fetchTerminationRequests.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             });
     },
 });

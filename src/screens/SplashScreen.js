@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import imagePath from '../contests/imagePath';
 import { useNavigation } from '@react-navigation/native';
+import Footer from '../footer/Footer';
 
 const SplashScreen = () => {
 
@@ -33,6 +34,7 @@ const SplashScreen = () => {
         style={styles.logo}
         resizeMode="contain"
       />
+      <Footer />
     </View>
   );
 };

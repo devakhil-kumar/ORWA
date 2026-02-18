@@ -5,6 +5,7 @@ export const addMember = createAsyncThunk(
   'members/addMember',
   async (formData, { rejectWithValue }) => {
     try {
+      console.log(formData, 'formData from slice')
       const response = await apiAddmemberService(formData);
       console.log(response.data, 'response__________')
       return response.data;

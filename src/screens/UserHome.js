@@ -19,23 +19,27 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchAnnouncements } from '../app/features/announcementSliceUser';
 import imagePath from '../contests/imagePath';
 import LinearGradient from 'react-native-linear-gradient';
+import DateTimePicker from 'react-native-modal-datetime-picker';
+
+
+
+
 
 const UserHome = () => {
 
   const navigation = useNavigation();
   const dispatch = useDispatch();
-
   const onHandleProfile = () => {
     navigation.navigate('Profile')
   }
-
+const monthName = new Date().toLocaleDateString('en-US', { month: 'long' });
   const { user, loading } = useSelector((state) => state.profile);
   console.log(user, loading, 'loading++++++++++++++++++++++')
 
   useEffect(() => {
     dispatch(fetchProfile())
     dispatch(fetchAnnouncements())
-    console.log("Date: ", list[0]?.createdAt);
+    console.log("profile: ", user);
   }, [dispatch])
 
   const handleGohistory = () => {
@@ -52,6 +56,33 @@ const UserHome = () => {
 
   const { list, listLoading, page } = useSelector((state) => state.userAnnouncement);
 
+  const getGradientColors = (status) => {
+    if (!status) return ['#3A3A3A', '#4F4F4F']; // Neutral dark
+
+    switch (status.toLowerCase()) {
+      case "completed":
+      case "paid":
+        return ['#1B5E20', '#4CAF50']; // Dark → Medium Green
+
+      case "pending":
+      case "due":
+        return ['#E65100', '#FB8C00']; // Dark → Medium Orange
+
+      case "not paid":
+      case "unpaid":
+        return ['#B71C1C', '#E53935']; // Dark → Medium Red
+
+      default:
+        return ['#3A3A3A', '#4F4F4F']; // Neutral
+    }
+  };
+
+  const getUri = (value) => {
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    return value?.uri || null;
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#519377" />
@@ -61,9 +92,10 @@ const UserHome = () => {
             {user?.profileImage ?
               <View style={styles.avatar}>
                 <Image
-                  source={user?.residentialId?.applicantPhoto}
+                  source={{ uri: getUri(user?.profileImage) }}
                   style={styles.avatarImage}
                 />
+
               </View> : <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{user?.name?.charAt(0)?.toUpperCase()}</Text>
               </View>}
@@ -91,6 +123,30 @@ const UserHome = () => {
             </View>
           </View>
         </LinearGradient>
+
+
+        {/* payment status*/}
+        <LinearGradient
+          colors={getGradientColors(user?.subscription?.status || 'due')}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={styles.paymentStatusCard}
+        >
+          <View style={styles.cardContent}>
+            <View>
+              <Text style={styles.PaymentStatusHeader}>Payment Status</Text>
+
+              <Text style={styles.PaymentStatusLabel}>
+                Status : {user?.subscription?.status || 'Due'} ({user?.subscription?.nextDueDate || monthName})
+              </Text>
+
+              <Text style={styles.PaymentStatusLabel}>
+                {user?.subscription?.message || 'Maintenance for January 2026 is due.'}
+              </Text>
+            </View>
+          </View>
+        </LinearGradient>
+
 
         {/* Announcements Section */}
         {list.find(item => item.type === 'event') && (
@@ -183,6 +239,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  PaymentStatusHeader: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
+  PaymentStatusLabel: { fontSize: 14, fontWeight: '500', color: '#fff' },
   avatar: {
     width: 48,
     height: 48,
@@ -199,7 +257,7 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 12,
-    fontWeight:600,
+    fontWeight: 600,
     color: '#787878',
   },
   userName: {
@@ -216,6 +274,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     elevation: 5
   },
+  paymentStatusCard: {
+    backgroundColor: '#519377',
+    marginTop: 15,
+    borderRadius: 20,
+    paddingVertical: 25,
+    paddingHorizontal: 15,
+    elevation: 5
+  },
   cardContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -223,7 +289,7 @@ const styles = StyleSheet.create({
   },
   residenceLabel: {
     fontSize: 16,
-    fontWeight:600,
+    fontWeight: 600,
     color: '#FBFBFB',
   },
   flatNumber: {
@@ -379,6 +445,8 @@ const styles = StyleSheet.create({
   avatarImage: {
     width: '100%',
     height: '100%',
+    borderRadius: 70,
+    backgroundColor: '#C8E6C9',
   },
 });
 

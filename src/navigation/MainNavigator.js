@@ -48,6 +48,7 @@ import UserHistoryPaymentsDetails from '../screens/UserHistoryPaymentsDetails.js
 import UserProfile from '../screens/UserProfile.js';
 import imagePath from '../contests/imagePath.jsx';
 import ContactUs from '../screens/Profile/ContactUs.js';
+import EditProfileScreen from '../screens/EditProfileScreen.js';
 const { width, height } = Dimensions.get('window');
 
 
@@ -76,6 +77,15 @@ export const PaymentNavigator = () => {
             <Stack.Screen name="UserSubmitPayment" component={UserSubmitPayment} />
             <Stack.Screen name="UserHistoryPayments" component={UserHistoryPayments} />
             <Stack.Screen name="UserHistoryPaymentsDetails" component={UserHistoryPaymentsDetails} />
+        </Stack.Navigator>
+    )
+}
+
+export const ProfileNavigator = () => {
+    return (
+        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName='UserProfile'>
+            <Stack.Screen name="UserProfile" component={UserProfile} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         </Stack.Navigator>
     )
 }
@@ -168,7 +178,7 @@ const UserBottomTabs = () => {
             />
             <Tab.Screen
                 name="Profile"
-                component={UserProfile}
+                component={ProfileNavigator}
                 options={({ route }) => ({
                     tabBarIcon: ({ focused }) => (
                         <Image source={focused ? imagePath.Profile : imagePath.InactiveProfile} style={{ width: width / 14, height: height / 34 }} />
@@ -178,7 +188,7 @@ const UserBottomTabs = () => {
                     ),
                     tabBarStyle: (() => {
                         const routeName = getFocusedRouteNameFromRoute(route) ?? 'Profile';
-                        if (routeName === '') {
+                        if (routeName === 'EditProfile') {
                             return { display: 'none' };
                         }
                         return defaultTabBarStyle;

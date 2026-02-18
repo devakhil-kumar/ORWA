@@ -83,21 +83,56 @@ const SignatureBox = forwardRef(({ onSave, onBeginSigning, onEndSigning }, ref) 
 });
 
 // Captcha Generator
+// const generateCaptcha = () => {
+//   const num1 = Math.floor(Math.random() * 20) + 1;
+//   const num2 = Math.floor(Math.random() * 20) + 1;
+//   const operators = ['+', '-', '*'];
+//   const operator = operators[Math.floor(Math.random() * operators.length)];
+
+//   let answer;
+//   switch (operator) {
+//     case '+': answer = num1 + num2; break;
+//     case '-': answer = num1 - num2; break;
+//     case '*': answer = num1 * num2; break;
+//     default: answer = 0;
+//   }
+//   if (num1 > num2) {
+//     return { num1, num2, operator, answer };
+//   } else {
+//     return { num2, num1, operator, answer };
+//   }
+
+// };
 const generateCaptcha = () => {
-  const num1 = Math.floor(Math.random() * 20) + 1;
-  const num2 = Math.floor(Math.random() * 20) + 1;
+  let num1 = Math.floor(Math.random() * 20) + 1;
+  let num2 = Math.floor(Math.random() * 20) + 1;
+
+  // Ensure num1 is always the greater number
+  if (num2 > num1) {
+    [num1, num2] = [num2, num1];
+  }
+
   const operators = ['+', '-', '*'];
   const operator = operators[Math.floor(Math.random() * operators.length)];
 
   let answer;
   switch (operator) {
-    case '+': answer = num1 + num2; break;
-    case '-': answer = num1 - num2; break;
-    case '*': answer = num1 * num2; break;
-    default: answer = 0;
+    case '+':
+      answer = num1 + num2;
+      break;
+    case '-':
+      answer = num1 - num2;
+      break;
+    case '*':
+      answer = num1 * num2;
+      break;
+    default:
+      answer = 0;
   }
+
   return { num1, num2, operator, answer };
 };
+
 
 export default function MembershipForm() {
   const dispatch = useDispatch();
@@ -115,6 +150,10 @@ export default function MembershipForm() {
     }
 
   }, [step]);
+
+  React.useEffect(() => {
+    setSignature(""); // clear signature
+  }, [signatureType]);
 
   // Form Fields
   const [firstName, setFirstName] = useState('');
@@ -149,12 +188,13 @@ export default function MembershipForm() {
   const [idProofType, setIdProofType] = useState(null);
   const [addressProofType, setAddressProofType] = useState(null);
   const [ownershipProofType, setOwnershipProofType] = useState(null);
+  const [signatureType, setSignatureType] = useState("Signature Pad");
   const [captcha, setCaptcha] = useState('');
-
   const [openScheme, setOpenScheme] = useState(false);
   const [openIdType, setOpenIdType] = useState(false);
   const [openAddrType, setOpenAddrType] = useState(false);
   const [openOwnType, setOpenOwnType] = useState(false);
+  const [openSignatureType, setOpenSignatureType] = useState(false);
 
   const signatureRef = useRef(null);
   const captchaData = useMemo(() => generateCaptcha(), [step === 6]);
@@ -235,6 +275,10 @@ export default function MembershipForm() {
     { label: 'Other', value: 'Other' },
   ];
 
+  const signatureTypes = [
+    { label: "Signature Pad", value: "Signature Pad" },
+    { label: "Upload Image", value: "Upload Image" }
+  ];
   const pickAndCrop = async (setter, options = {}) => {
     try {
       const image = await ImagePicker.openPicker({
@@ -260,7 +304,7 @@ export default function MembershipForm() {
   const handleDateConfirm = (selectedDate) => {
     const today = new Date();
     const min18Date = new Date(
-      today.getFullYear() - 18,
+      today.getFullYear(),
       today.getMonth(),
       today.getDate()
     );
@@ -280,8 +324,8 @@ export default function MembershipForm() {
     let missing = [];
     if (step === 1) missing = validateStep1();
     else if (step === 2) missing = validateStep2();
-    else if (step === 4) missing = validateStep4();
-    else if (step === 5) missing = validateStep5();
+    // else if (step === 4) missing = validateStep4();
+    // else if (step === 5) missing = validateStep5();
     else if (step === 6) missing = validateStep6();
     if (missing.length > 0) {
       Alert.alert(
@@ -314,9 +358,9 @@ export default function MembershipForm() {
     if (!lastName.trim()) missing.push('• Last Name');
     if (!relativeName.trim()) missing.push('• Relative First Name');
     if (!relativelastName.trim()) missing.push('• Relative Last Name');
-    if (livingHere === null) missing.push('• Are you living here?');
-    if (!dob) missing.push('• Date of Birth');
-    if (!occupation.trim()) missing.push('• Occupation');
+    // if (livingHere === null) missing.push('• Are you living here?');
+    // if (!dob) missing.push('• Date of Birth');
+    // if (!occupation.trim()) missing.push('• Occupation');
     // Phone validation
     if (!phone.trim()) {
       missing.push('• Phone Number');
@@ -337,23 +381,48 @@ export default function MembershipForm() {
   const validateStep2 = () => {
     const missing = [];
     if (!flatNo.trim()) missing.push('• Flat/Villa/Plot No.');
-    if (!city.trim()) missing.push('• City');
-    if (!state.trim()) missing.push('• State');
-    if (!postalCode.trim()) {
-      missing.push('• Postal Code');
-    } else if (!/^\d{6}$/.test(postalCode.trim())) {
-      missing.push('• Postal Code: Must be exactly 6 digits (e.g., 400001)');
+    if (!floor.trim()) missing.push('• Floor No.');
+    // if (!city.trim()) missing.push('• City');
+    // if (!state.trim()) missing.push('• State');
+    // if (!postalCode.trim()) {
+    //   missing.push('• Postal Code');
+    // } else 
+    // Check Postal Code only if it's provided
+    if (postalCode.trim()) {
+      if (!/^\d{6}$/.test(postalCode.trim())) {
+        missing.push('• Postal Code: Must be exactly 6 digits (e.g., 400001)');
+      }
     }
 
 
-    if (!familyMembers.trim()) {
-      missing.push('• No. of Family Members');
-    } else if (!/^\d+$/.test(familyMembers.trim())) {
-      missing.push('• No. of Family Members: Only numbers allowed');
-    } else if (parseInt(familyMembers.trim(), 10) === 0) {
-      missing.push('• No. of Family Members: Must be at least 1');
-    } else if (parseInt(familyMembers.trim()) > 15) {
-      missing.push('• No. of Family Members: Must be minimum than 15');
+    // Check Family Members only if it's provided
+    if (familyMembers.trim()) {
+      if (!/^\d+$/.test(familyMembers.trim())) {
+        missing.push('• No. of Family Members: Only numbers allowed');
+      } else {
+        const num = parseInt(familyMembers.trim(), 10);
+        if (num === 0) {
+          missing.push('• No. of Family Members: Must be at least 1');
+        } else if (num > 15) {
+          missing.push('• No. of Family Members: Must be less than or equal to 15');
+        }
+      }
+    }
+
+
+
+    // if (!familyMembers.trim()) {
+    //   missing.push('• No. of Family Members');
+    // } else
+    // if (!/^\d+$/.test(familyMembers.trim())) {
+    //   missing.push('• No. of Family Members: Only numbers allowed');
+    // } else if (parseInt(familyMembers.trim(), 10) === 0) {
+    //   missing.push('• No. of Family Members: Must be at least 1');
+    // } else if (parseInt(familyMembers.trim()) > 15) {
+    //   missing.push('• No. of Family Members: Must be minimum than 15');
+    // }
+    if (!scheme) {
+      missing.push('• Scheme');
     }
 
     return missing;
@@ -396,8 +465,8 @@ export default function MembershipForm() {
     const allMissing = [
       ...validateStep1(),
       ...validateStep2(),
-      ...validateStep4(),
-      ...validateStep5(),
+      // ...validateStep4(),
+      // ...validateStep5(),
       ...validateStep6(),
     ];
 
@@ -434,9 +503,10 @@ export default function MembershipForm() {
     formData.append('address', `${flatNo}${floor ? `, Floor ${floor}` : ''}, ${scheme}`);
     formData.append('familyMembersCount', familyMembers || '0');
     formData.append('hobbiesAndSkills', hobbies || '');
-    formData.append('identityProofType', idProofType);
-    formData.append('addressProofType', addressProofType);
-    formData.append('ownershipProofType', ownershipProofType);
+    if (idProofType) formData.append('identityProofType', idProofType);
+    if (addressProofType) formData.append('addressProofType', addressProofType);
+    if (ownershipProofType) formData.append('ownershipProofType', ownershipProofType);
+
     formData.append('chosenFlatVilla', flatNo);
     formData.append('requestSource', 'mobile');
 
@@ -445,19 +515,23 @@ export default function MembershipForm() {
     if (ownershipProof) formData.append('ownershipProofDocument', ownershipProof);
     if (photo) formData.append('applicantPhoto', photo);
     if (signature) {
-      try {
-        const base64Data = signature.replace(/^data:image\/[a-z]+;base64,/, '');
-        const filePath = `${RNFS.CachesDirectoryPath}/signature.png`;
-        await RNFS.writeFile(filePath, base64Data, 'base64');
+      if (signatureType === "Signature Pad") {
+        try {
+          const base64Data = signature.replace(/^data:image\/[a-z]+;base64,/, '');
+          const filePath = `${RNFS.CachesDirectoryPath}/signature.png`;
+          await RNFS.writeFile(filePath, base64Data, 'base64');
 
-        formData.append('signature', {
-          uri: Platform.OS === 'android' ? `file://${filePath}` : `file://${filePath}`,
-          type: 'image/png',
-          name: 'signature.png',
-        });
-      } catch (err) {
-        Alert.alert('Error', 'Failed to process signature. Please try again.');
-        return;
+          formData.append('signature', {
+            uri: Platform.OS === 'android' ? `file://${filePath}` : `file://${filePath}`,
+            type: 'image/png',
+            name: 'signature.png',
+          });
+        } catch (err) {
+          Alert.alert('Error', 'Failed to process signature. Please try again.');
+          return;
+        }
+      } else if (signatureType === "Upload Image") {
+        formData.append('signature', { uri: signature.uri, type: signature.type, name: 'signature.png' });
       }
     }
     try {
@@ -466,7 +540,6 @@ export default function MembershipForm() {
         console.log("id from update member api call :", member._id)
         response = await dispatch(updateMember({ id: member._id, formData })).unwrap();
       } else {
-
         response = await dispatch(addMember(formData)).unwrap();
       }
       // const response = await dispatch(addMember(formData)).unwrap();
@@ -575,7 +648,7 @@ export default function MembershipForm() {
                 <TextInput style={styles.input} placeholder="Middle" value={relativemiddleName} onChangeText={setrelativeMiddleName} placeholderTextColor={'#E0E0E0'} />
                 <Text style={styles.label}>Last Name *</Text>
                 <TextInput style={styles.input} placeholder="Last" value={relativelastName} onChangeText={setrelativeLastName} placeholderTextColor={'#E0E0E0'} />
-                <Text style={styles.label}>Are you living here? *</Text>
+                <Text style={styles.label}>Are you living here?</Text>
                 <View style={styles.radioRow}>
                   {['Yes', 'No'].map((item) => (
                     <TouchableOpacity
@@ -588,7 +661,7 @@ export default function MembershipForm() {
                     </TouchableOpacity>
                   ))}
                 </View>
-                <Text style={styles.label}>Date of Birth *</Text>
+                <Text style={styles.label}>Date of Birth</Text>
                 <TouchableOpacity onPress={() => setDatePickerVisible(true)}>
                   <TextInput
                     style={styles.inputFull}
@@ -605,9 +678,10 @@ export default function MembershipForm() {
                   onConfirm={handleDateConfirm}
                   onCancel={() => setDatePickerVisible(false)}
                   maximumDate={new Date()}
-
+                  minimumDate={new Date(1800, 0, 1)}
                 />
-                <Text style={styles.label}>Occupation *</Text>
+
+                <Text style={styles.label}>Occupation</Text>
                 <TextInput style={styles.inputFull} placeholder="Occupation" placeholderTextColor={'#E0E0E0'} value={occupation} onChangeText={setOccupation} />
 
                 <Text style={styles.label}>Phone Number *</Text>
@@ -623,13 +697,13 @@ export default function MembershipForm() {
                 <Text style={styles.label}>Flat/Villa/Plot No. *</Text>
                 <TextInput style={styles.inputFull} placeholder="Flat/Villa/Plot No." placeholderTextColor={'#E0E0E0'} value={flatNo} onChangeText={setFlatNo} />
 
-                <Text style={styles.label}>Floor</Text>
+                <Text style={styles.label}>Floor *</Text>
                 <TextInput style={styles.inputFull} placeholder="Floor" placeholderTextColor={'#E0E0E0'} value={floor} onChangeText={setFloor} />
 
                 <Text style={styles.label}>Block Number</Text>
                 <TextInput style={styles.inputFull} placeholder="Block Number" placeholderTextColor={'#E0E0E0'} value={blockNumber} onChangeText={setBlockNumber} />
 
-                <Text style={styles.label}>Scheme</Text>
+                <Text style={styles.label}>Scheme *</Text>
                 <DropDownPicker
                   open={openScheme}
                   value={scheme}
@@ -641,28 +715,28 @@ export default function MembershipForm() {
                   dropDownContainerStyle={styles.dropdownList}
                 />
 
-                <Text style={styles.label}>Correspondence Address *</Text>
+                <Text style={styles.label}>Correspondence Address</Text>
                 <TextInput style={styles.inputFull} placeholder="Address Line 1" value={address1} onChangeText={setAddress1} />
                 <TextInput style={styles.inputFull} placeholder="Address Line 2" value={address2} onChangeText={setAddress2} />
 
                 <View style={styles.row}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>City *</Text>
+                    <Text style={styles.label}>City</Text>
                     <TextInput style={styles.input} placeholder="City" placeholderTextColor={'#E0E0E0'} value={city} onChangeText={setCity} />
                   </View>
                   <View style={{ flex: 1, marginLeft: 10 }}>
-                    <Text style={styles.label}>State *</Text>
+                    <Text style={styles.label}>State</Text>
                     <TextInput style={styles.input} placeholder="State" placeholderTextColor={'#E0E0E0'} value={state} onChangeText={setState} />
                   </View>
                 </View>
 
-                <Text style={styles.label}>Postal Code *</Text>
+                <Text style={styles.label}>Postal Code</Text>
                 <TextInput style={styles.inputFull} placeholder="Postal Code" placeholderTextColor={'#E0E0E0'} value={postalCode} onChangeText={setPostalCode} keyboardType="numeric" />
 
                 <Text style={styles.label}>Country</Text>
                 <TextInput style={styles.inputFull} placeholder="Country" placeholderTextColor={'#E0E0E0'} value={country} onChangeText={setCountry} />
 
-                <Text style={styles.label}>No. of family members *</Text>
+                <Text style={styles.label}>No. of family members</Text>
                 <TextInput style={styles.inputFull} placeholder="No. of family members" placeholderTextColor={'#E0E0E0'} value={familyMembers} onChangeText={setFamilyMembers} keyboardType="numeric" />
               </>
             )}
@@ -677,19 +751,19 @@ export default function MembershipForm() {
             {step === 4 && (
               <View style={styles.uploadGrid}>
                 <View>
-                  <Text style={styles.label}>Identity Proof *</Text>
+                  <Text style={styles.label}>Identity Proof</Text>
                   <UploadBox title="Identity Proof" file={idProof} onPress={() => pickAndCrop(setIdProof)} />
                 </View>
                 <View>
-                  <Text style={styles.label}>Address Proof *</Text>
+                  <Text style={styles.label}>Address Proof</Text>
                   <UploadBox title="Address Proof" file={addressProof} onPress={() => pickAndCrop(setAddressProof)} />
                 </View>
                 <View>
-                  <Text style={styles.label}>Ownership Proof *</Text>
+                  <Text style={styles.label}>Ownership Proof</Text>
                   <UploadBox title="Ownership Proof" file={ownershipProof} onPress={() => pickAndCrop(setOwnershipProof)} />
                 </View>
                 <View>
-                  <Text style={styles.label}>Photo *</Text>
+                  <Text style={styles.label}>Photo</Text>
                   <UploadBox title="Photo" file={photo} onPress={() => pickAndCrop(setPhoto, { cropperCircleOverlay: true })} />
                 </View>
               </View>
@@ -697,7 +771,7 @@ export default function MembershipForm() {
 
             {step === 5 && (
               <>
-                <Text style={styles.label}>ID Proof Type *</Text>
+                <Text style={styles.label}>ID Proof Type</Text>
                 <DropDownPicker
                   open={openIdType}
                   value={idProofType}
@@ -711,7 +785,7 @@ export default function MembershipForm() {
                   zIndexInverse={1000}
                 />
 
-                <Text style={styles.label}>Address Proof Type *</Text>
+                <Text style={styles.label}>Address Proof Type</Text>
                 <DropDownPicker
                   open={openAddrType}
                   value={addressProofType}
@@ -725,7 +799,7 @@ export default function MembershipForm() {
                   zIndexInverse={2000}
                 />
 
-                <Text style={styles.label}>Ownership Proof Type *</Text>
+                <Text style={styles.label}>Ownership Proof Type</Text>
                 <DropDownPicker
                   open={openOwnType}
                   value={ownershipProofType}
@@ -759,26 +833,48 @@ export default function MembershipForm() {
                     placeholderTextColor={'#E0E0E0'}
                   />
                 </View>
-
-                <Text style={styles.label}>Signature *</Text>
-                {signature && (
-                  <View style={{ marginVertical: 10 }}>
-                    <Image source={{ uri: signature }} style={{ width: '100%', height: 100, borderRadius: 12 }} resizeMode="contain" />
-                    <Text style={{ textAlign: 'center', color: 'green', marginTop: 5 }}>✓ Signature captured</Text>
-                  </View>
-                )}
-                <SignatureBox
-                  onSave={setSignature}
-                  ref={signatureRef}
-                  onBeginSigning={onBeginSigning}
-                  onEndSigning={onEndSigning}
+                <Text style={styles.label}>Select Signature type</Text>
+                <DropDownPicker
+                  open={openSignatureType}
+                  value={signatureType}
+                  setOpen={setOpenSignatureType}
+                  setValue={setSignatureType}
+                  items={signatureTypes}
+                  style={styles.dropdown}
+                  dropDownContainerStyle={[styles.dropdownList, { height: 80 }]}
+                  listMode="SCROLLVIEW"
+                  zIndex={1000}
+                  zIndexInverse={3000}
                 />
-                <TouchableOpacity
-                  style={styles.clearBtn}
-                  onPress={() => signatureRef.current?.clearSignature()}
-                >
-                  <Text style={styles.clearText}>Clear Signature</Text>
-                </TouchableOpacity>
+                <Text style={styles.label}>{signatureType === "Upload Image" ? "Signature Photo" : "Signature"} *</Text>
+
+                {signatureType === "Upload Image" && (
+                  <UploadBox title="Signature Photo" file={signature} onPress={() => pickAndCrop(setSignature, { cropperCircleOverlay: true })} />
+                )}
+                {signatureType === "Signature Pad" && (
+                  <>
+                    {signature && (
+                      <View style={{ marginVertical: 10 }}>
+                        <Image source={{ uri: signature }} style={{ width: '100%', height: 100, borderRadius: 12 }} resizeMode="contain" />
+                        <Text style={{ textAlign: 'center', color: 'green', marginTop: 5 }}>✓ Signature captured</Text>
+                      </View>
+                    )}
+                    <SignatureBox
+                      onSave={setSignature}
+                      ref={signatureRef}
+                      onBeginSigning={onBeginSigning}
+                      onEndSigning={onEndSigning}
+                    />
+                    <TouchableOpacity
+                      style={styles.clearBtn}
+                      onPress={() => signatureRef.current?.clearSignature()}
+                    >
+                      <Text style={styles.clearText}>Clear Signature</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+
+
               </>
             )}
 
