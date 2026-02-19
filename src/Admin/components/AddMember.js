@@ -196,8 +196,12 @@ export default function MembershipForm() {
   const [openOwnType, setOpenOwnType] = useState(false);
   const [openSignatureType, setOpenSignatureType] = useState(false);
 
+  const [membershipNos, setMembershipNos] = useState('');
+
   const signatureRef = useRef(null);
   const captchaData = useMemo(() => generateCaptcha(), [step === 6]);
+
+
 
   // set data 
   React.useEffect(() => {
@@ -205,6 +209,10 @@ export default function MembershipForm() {
       console.log("MEmber:", member);
       console.log("Data from edit : ", member._id)
       console.log("Data from edit : ", member)
+
+      //membership Nos
+      setMembershipNos(member.membershipNos);
+
       setFirstName(member.firstName);
       setMiddleName(member.middleName);
       setLastName(member.lastName);
@@ -243,8 +251,22 @@ export default function MembershipForm() {
     }
   }, [isEdit, member]);
 
+  React.useEffect(() => {
+    if (scheme === 'Plot' || scheme === 'Mulberry Villas') {
+      setFloor('No Floor');
+    } else {
+      setFloor('');
+    }
+  }, [scheme]);
+
   const schemes = [
-    { label: 'true', value: 'true' },
+    { label: 'Silver Birch', value: 'Silver Birch' },
+    { label: 'Ambrosia', value: 'Ambrosia' },
+    { label: 'Celestia Royale', value: 'Celestia Royale' },
+    { label: 'Celestia Grande', value: 'Celestia Grande' },
+    { label: 'Celestia Premiere', value: 'Celestia Premiere' },
+    { label: 'Mulberry Villas', value: 'Mulberry Villas' },
+    { label: 'Plot', value: 'Plot' },
     // { label: 'Golden Oak', value: 'Golden Oak' },
     // { label: 'Platinum Heights', value: 'Platinum Heights' },
   ];
@@ -381,6 +403,11 @@ export default function MembershipForm() {
   const validateStep2 = () => {
     const missing = [];
     if (!flatNo.trim()) missing.push('• Flat/Villa/Plot No.');
+    if (scheme === 'Plot' || scheme === 'Mulberry Villas') {
+      setFloor('No Floor'); // auto-set
+    } else {
+      if (!floor.trim()) missing.push('• Floor No.');
+    }
     // if (!city.trim()) missing.push('• City');
     // if (!state.trim()) missing.push('• State');
     // if (!postalCode.trim()) {
@@ -479,6 +506,9 @@ if (familyMembers.trim()) {
 
     const formData = new FormData();
     formData.append('firstName', firstName);
+    //membership Nos
+    formData.append('membershipNos', membershipNos);
+
     formData.append('middleName', middleName || '');
     formData.append('lastName', lastName);
     formData.append('relationName', relativeName);
@@ -646,6 +676,11 @@ if (familyMembers.trim()) {
                 <TextInput style={styles.input} placeholder="Middle" value={relativemiddleName} onChangeText={setrelativeMiddleName} placeholderTextColor={'#E0E0E0'} />
                 <Text style={styles.label}>Last Name *</Text>
                 <TextInput style={styles.input} placeholder="Last" value={relativelastName} onChangeText={setrelativeLastName} placeholderTextColor={'#E0E0E0'} />
+
+                <Text style={styles.label}>Membership Nos *</Text>
+                <TextInput style={styles.input} placeholder="Membership Nos" value={membershipNos} onChangeText={setMembershipNos} placeholderTextColor={'#E0E0E0'} />
+
+
                 <Text style={styles.label}>Are you living here?</Text>
                 <View style={styles.radioRow}>
                   {['Yes', 'No'].map((item) => (
@@ -695,8 +730,27 @@ if (familyMembers.trim()) {
                 <TextInput style={styles.inputFull} placeholder="Flat/Villa/Plot No." placeholderTextColor={'#E0E0E0'} value={flatNo} onChangeText={setFlatNo} />
 
                 <Text style={styles.label}>Floor *</Text>
-                <TextInput style={styles.inputFull} placeholder="Floor" placeholderTextColor={'#E0E0E0'} value={floor} onChangeText={setFloor} />
-
+                {/* <TextInput style={styles.inputFull} placeholder="Floor" placeholderTextColor={'#E0E0E0'} value={floor} onChangeText={setFloor} /> */}
+                <TextInput
+                  style={styles.inputFull}
+                  placeholder={
+                    scheme === 'Plot' || scheme === 'Mulberry Villas'
+                      ? 'No Floor'
+                      : 'Floor'
+                  }
+                  placeholderTextColor={'#E0E0E0'}
+                  value={
+                    scheme === 'Plot' || scheme === 'Mulberry Villas'
+                      ? 'No Floor'
+                      : floor
+                  }
+                  onChangeText={
+                    scheme === 'Plot' || scheme === 'Mulberry Villas'
+                      ? undefined
+                      : setFloor
+                  }
+                  editable={!(scheme === 'Plot' || scheme === 'Mulberry Villas')}
+                />
                 <Text style={styles.label}>Block Number</Text>
                 <TextInput style={styles.inputFull} placeholder="Block Number" placeholderTextColor={'#E0E0E0'} value={blockNumber} onChangeText={setBlockNumber} />
 
@@ -911,7 +965,7 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#FFF', borderRadius: 12, height: 56, paddingHorizontal: 15, borderColor: '#C4C4C4', borderWidth: 1 },
   inputFull: { backgroundColor: '#FFF', borderRadius: 12, height: 56, paddingHorizontal: 15, marginBottom: 10, borderColor: '#C4C4C4', borderWidth: 1 },
   dropdown: { borderRadius: 12, height: 56, borderColor: '#C4C4C4', backgroundColor: '#FFF' },
-  dropdownList: { borderRadius: 12, borderColor: '#C4C4C4', height: 46, alignSelf: 'center' },
+  dropdownList: { borderRadius: 12, borderColor: '#C4C4C4', height: 120, alignSelf: 'center' },
   radioRow: { flexDirection: 'row', justifyContent: 'center', gap: 50, marginVertical: 20 },
   radioBtn: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   radioCircle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#666' },
