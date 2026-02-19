@@ -17,7 +17,7 @@ const AuthNavigator = () => {
         options={{
           headerShown:false,
           contentStyle: {
-            backgroundColor: '#1A1A1A',
+            backgroundColor: '#fff',
             opacity: 1,
           },
           animationTypeForReplace: 'push',
