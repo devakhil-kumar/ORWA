@@ -108,22 +108,9 @@ export const updateMemberAPI = async (formData, id) => {
 };
 
 export const DeleteMemberAPI = async (id) => {
-<<<<<<< HEAD
-    console.log('id in API:', id);
-    const { token } = await getUserData();
-
-    return axios.get(`${BASE_URL}${API_ROUTES.DELETE_MEMBER(id)}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'x-request-source': 'mobile',
-        },
-    });
-};
-=======
     console.log("ID : from api", id)
     return axiosInstance.delete(API_ROUTES.DELETE_MEMBER(id));
 }
->>>>>>> c60a279 (latest changes)
 
 export const PaymentUpload = async (userData) => {
     const { token } = await getUserData();
@@ -255,25 +242,7 @@ export const ContactUsUser = async (formData) => {
     // return axiosInstance.post(API_ROUTES.USERCONTACT_US, fromData)
 }
 
-<<<<<<< HEAD
-
-export const TerminationRequest = async () => {
-    const { token } = await getUserData();
-
-    return axios.post(
-        `${BASE_URL}${API_ROUTES.TERMINATION_REQUEST}`,
-        {},
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'x-request-source': 'mobile',
-            },
-        }
-    );
-};
-=======
 export const deleteResidential = (id) => {
     console.log(id, 'idfromapis')
     return axiosInstance.delete(`${API_ROUTES.DELETE_ACOUNT}${id}`)
 }
->>>>>>> c60a279 (latest changes)
