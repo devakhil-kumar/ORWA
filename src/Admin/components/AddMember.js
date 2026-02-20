@@ -678,7 +678,7 @@ export default function MembershipForm() {
                 <Text style={styles.label}>Last Name *</Text>
                 <TextInput style={styles.input} placeholder="Last" value={relativelastName} onChangeText={setrelativeLastName} placeholderTextColor={'#E0E0E0'} />
 
-                <Text style={styles.label}>Membership Nos *</Text>
+                <Text style={styles.label}>Membership No.</Text>
                 <TextInput style={styles.input} placeholder="Membership Nos" value={membershipNos} onChangeText={setMembershipNos} placeholderTextColor={'#E0E0E0'} />
 
 
