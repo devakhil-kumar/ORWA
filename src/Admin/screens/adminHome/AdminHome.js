@@ -68,9 +68,11 @@ const AdminHome = () => {
     );
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB', }} edges={['top', '0']}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB', }} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor="#519377" />
-            <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.container} 
+            contentContainerStyle={styles.contentContainer}  
+            showsVerticalScrollIndicator={false} >
                 <View style={styles.header}>
                     <TouchableOpacity style={styles.profileSection} onPress={onHandleProfile}>
                         <View style={styles.avatar}>
@@ -121,7 +123,7 @@ const AdminHome = () => {
                             <View style={[styles.actionIconContainer, { backgroundColor: '#FFF1F2' }]}>
                                 <MaterialIcons name="highlight-off" size={24} color="red" />
                             </View>
-                            <Text style={styles.actionText}>Rejected Pyaments</Text>
+                            <Text style={styles.actionText}>Rejected Payments</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -179,8 +181,12 @@ const AdminHome = () => {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1, paddingHorizontal: 16
+        flex: 1
     },
+    contentContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 40,  
+},
     header: {
         marginTop: 16,
         flexDirection: 'row',

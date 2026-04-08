@@ -121,7 +121,7 @@ const UserProfile = () => {
                 <View style={{ marginTop: 30 }}>
                     <InfoRow icon="email-outline" label="Email" value={userData.email} />
                     <InfoRow icon="phone-outline" label="Phone Number" value={userData.phone} />
-                    <InfoRow icon="home-outline" label="Flat NO" value={userData.flatNo} />
+                    <InfoRow icon="home-outline" label="Flat No" value={userData.flatNo} />
                     {/* <InfoRow icon="card-account-details-outline" label="Aadhar Card no" value={userData.aadhar} /> */}
                 </View>
                 <TouchableOpacity style={styles.infoRow} onPress={handleDeleteMember}>
