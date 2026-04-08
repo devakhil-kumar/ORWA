@@ -97,7 +97,8 @@ export const apiAddmemberService = async (formdata) => {
         const response = await addMemberAPI(formdata);
         return response;
     } catch (error) {
-        throw error.message || "Failed to add profile"; // throw string, not new Error()
+        console.log(error.message)
+        throw error.message || "Failed to add profile"; 
     }
 }
 

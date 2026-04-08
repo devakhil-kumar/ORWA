@@ -24,6 +24,8 @@ export const addMember = createAsyncThunk(
       const response = await apiAddmemberService(formData);
       return response.data;
     } catch (error) {
+
+      console.log(error ,'Error from slice')
       return rejectWithValue(
         typeof error === 'string' ? error : error.message || 'Failed to add member'
       );

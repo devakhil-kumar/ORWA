@@ -78,9 +78,9 @@ export const addMemberAPI = async (formData) => {
 
     if (!response.ok) {
         // Log the actual error response body from server
-        const errorBody = await response.text();
-        console.log('Error response body:', errorBody);
-        throw new Error('Add member API failed');
+        const errorBody = await response.json();
+        console.log('Error response body:', errorBody?.message);
+        throw new Error(errorBody?.message);
     }
 
     return response.json();

@@ -92,16 +92,19 @@ const AdminBottomTabs = () => {
     const insets = useSafeAreaInsets();
     const bottomInset = Platform.OS === 'android' ? insets.bottom : 10;
     const defaultTabBarStyle = {
-
+    
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 3,
+        elevation: 10,
+        backgroundColor: '#fff',
         borderTopWidth: 0,
         height: 70 + bottomInset,
         paddingBottom: bottomInset,
         paddingTop: 8,
-        width: width,
-        borderTopLeftRadius: 40,
-        borderTopRightRadius: 40,
         overflow: "hidden",
-    }
+    };
 
     return (
         <Tab.Navigator
@@ -140,7 +143,7 @@ const AdminBottomTabs = () => {
                 component={Users}
                 options={({ route }) => ({
                     tabBarIcon: ({ focused }) => (
-                        <Ionicons name='person-outline' size={25} color={focused ? '#519377' : '#000'} />
+                        <Ionicons name='person-outline' size={28} color={focused ? '#519377' : '#000'} />
                     ),
                     tabBarLabel: ({ focused }) => (
                         <Text style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Requests</Text>
@@ -168,7 +171,7 @@ const AdminBottomTabs = () => {
                 })}
                 options={({ route }) => ({
                     tabBarIcon: ({ focused }) => (
-                        <Ionicons name='wallet' size={24} color={focused ? '#519377' : '#000'} />
+                        <Ionicons name='wallet' size={28} color={focused ? '#519377' : '#000'} />
                     ),
                     tabBarLabel: ({ focused }) => (
                         <Text style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Payments</Text>
@@ -187,10 +190,11 @@ const AdminBottomTabs = () => {
                 component={AnnouncementNavigator}
                 options={({ route }) => ({
                     tabBarIcon: ({ focused }) => (
-                        <Image source={focused ? imagePath.Updates : imagePath.InActiveUpdates} style={{
-                            width: width / 15.5
-                            , height: height / 38
-                        }} />
+                        <Ionicons name='reload' size={28} color={focused ? '#519377' : '#000'} />
+                        // <Image source={focused ? imagePath.Updates : imagePath.InActiveUpdates} style={{
+                        //     width: 28
+                        //     , height: 20
+                        // }} />
                     ),
                     tabBarLabel: ({ focused }) => (
                         <Text numberOfLines={1} style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Announcements</Text>
@@ -211,7 +215,9 @@ const AdminBottomTabs = () => {
                 component={ProfileNavigator}
                 options={({ route }) => ({
                     tabBarIcon: ({ focused }) => (
-                        <Image source={focused ? imagePath.Profile : imagePath.InactiveProfile} style={{ width: width / 14, height: height / 34 }} />
+
+                        <Ionicons name='person-circle-outline' size={28} color={focused ? '#519377' : '#000'} />
+                        // <Image source={focused ? imagePath.Profile : imagePath.InactiveProfile} style={{ width: width / 14, height: height / 34 }} />
 
                     ),
                     tabBarLabel: ({ focused }) => (

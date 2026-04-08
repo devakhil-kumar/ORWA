@@ -90,7 +90,7 @@ const SocietyInfoScreen = ({ navigation }) => {
                 return;
             }
 
-              if (!blockSector.trim()) {
+            if (!blockSector.trim()) {
                 dispatch(
                     showMessage({
                         type: 'error',
@@ -100,13 +100,13 @@ const SocietyInfoScreen = ({ navigation }) => {
                 return;
             }
 
-              if (!gstNumber.trim()) {
-                dispatch(
-                    showMessage({
-                        type: 'error',
-                        text: 'GST number is required',
-                    })
-                );
+            const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+            if (!gstNumber.trim()) {
+                dispatch(showMessage({ type: 'error', text: 'GST number is required' }));
+                return;
+            } else if (!gstRegex.test(gstNumber.trim().toUpperCase())) {
+                dispatch(showMessage({ type: 'error', text: 'Invalid GST number format.' }));
                 return;
             }
 
@@ -261,7 +261,7 @@ export default SocietyInfoScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-      backgroundColor: '#F9FAFB',
+        backgroundColor: '#F9FAFB',
     },
     loadingContainer: {
         flex: 1,
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: moderateScale(16),
         paddingVertical: moderateScale(12),
-       backgroundColor: '#F9FAFB',
+        backgroundColor: '#F9FAFB',
 
     },
     backButton: {
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     buttonContainer: {
         paddingHorizontal: moderateScale(10),
         paddingVertical: moderateScale(20),
-         backgroundColor: '#F9FAFB',
+        backgroundColor: '#F9FAFB',
 
     },
     updateButton: {

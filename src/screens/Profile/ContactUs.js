@@ -173,7 +173,7 @@ const ContactUs = () => {
 
                 {/* Message Input */}
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Write to us</Text>
+                    <Text style={styles.label}>Write to us *</Text>
                     <CustomInput
                         value={message}
                         onChangeText={setMessage}
@@ -188,7 +188,7 @@ const ContactUs = () => {
 
                 {/* Complaint type */}
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Complaint Type</Text>
+                    <Text style={styles.label}>Complaint Type *</Text>
                     <CustomInput
                         value={complaintType}
                         onChangeText={setComplaintType}

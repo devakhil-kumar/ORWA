@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     View,
     Text,
@@ -255,6 +255,7 @@ const Announcement = () => {
     const dispatch = useDispatch();
     const [searchText, setSearchText] = useState('');
     const navigation = useNavigation();
+    const searchInputRef = useRef(null);
 
 
     useEffect(() => {
@@ -311,7 +312,12 @@ const Announcement = () => {
                 showsVerticalScrollIndicator={false}
                 style={{ flex: 1, backgroundColor: '#F9FAFB80' }}
             > */}
-            <View style={styles.searchContainer}>
+
+            <TouchableOpacity
+                style={styles.searchContainer}
+                onPress={() => searchInputRef.current?.focus()}  // ← tap anywhere to focus
+                activeOpacity={1}
+            >
                 <Ionicons
                     name="search"
                     size={18}
@@ -319,13 +325,14 @@ const Announcement = () => {
                     style={{ marginRight: 8 }}
                 />
                 <TextInput
+                    ref={searchInputRef}  // ← add ref
                     style={styles.searchText}
                     placeholder="Search updates..."
                     placeholderTextColor="#9CA3AF"
                     value={searchText}
                     onChangeText={setSearchText}
                 />
-            </View>
+            </TouchableOpacity>
             <View style={styles.announcementFilterCategoryContainer}>
                 <FlatList
                     data={announcementFilterType}

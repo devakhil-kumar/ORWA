@@ -140,7 +140,8 @@ const TerminationRequest = () => {
                     </TouchableOpacity>
                     <View style={style.textContainer}>
                         <Text style={style.name}>{item.name}</Text>
-                        <Text style={style.address}>{item.address || "not declare"}</Text>
+
+                        <Text style={style.address}>{item.email || "not declare"}</Text>
                     </View>
                 </View>
             </TouchableOpacity>

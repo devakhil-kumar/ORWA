@@ -254,8 +254,6 @@ export default function MembershipForm() {
   React.useEffect(() => {
     if (scheme === 'Plot' || scheme === 'Mulberry Villas') {
       setFloor('No Floor');
-    } else {
-      setFloor('');
     }
   }, [scheme]);
 
@@ -383,11 +381,27 @@ export default function MembershipForm() {
     // if (livingHere === null) missing.push('• Are you living here?');
     // if (!dob) missing.push('• Date of Birth');
     // if (!occupation.trim()) missing.push('• Occupation');
+
+    if (dob) {
+      const today = new Date();
+      const birthDate = new Date(dob);
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      const dayDiff = today.getDate() - birthDate.getDate();
+
+      // Adjust age if birthday hasn't occurred yet this year
+      const actualAge = (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) ? age - 1 : age;
+
+      if (actualAge < 18) {
+        missing.push('• Date of Birth: Must be at least 18 years old');
+      }
+    }
+
     // Phone validation
     if (!phone.trim()) {
       missing.push('• Phone Number');
-    } else if (!/^[0-9]{10}$/.test(phone.trim())) {
-      missing.push('• Phone Number: Must be exactly 10 digits');
+    } else if (!/^[6-9][0-9]{9}$/.test(phone.trim())) {
+      missing.push('• Phone Number: Please enter a valid mobile number.');
     }
 
     // Email validation
@@ -529,7 +543,7 @@ if (familyMembers.trim()) {
     formData.append('country', country);
     formData.append('postalCode', postalCode);
     formData.append('address', `${flatNo}${floor ? `, Floor ${floor}` : ''}, ${scheme}`);
-    formData.append('familyMembersCount', familyMembers || '0');
+    formData.append('familyMembersCount', familyMembers || '');
     formData.append('hobbiesAndSkills', hobbies || '');
     if (idProofType) formData.append('identityProofType', idProofType);
     if (addressProofType) formData.append('addressProofType', addressProofType);
@@ -583,10 +597,11 @@ if (familyMembers.trim()) {
       dispatch(resetAddMemberState());
       navigation.goBack();
     } catch (err) {
+      console.log('Error from add memeber : ', err)
       dispatch(
         showMessage({
           type: 'error',
-          text: err?.message || 'Application Failed!',
+          text: err || 'Error While creating account.',
         })
       );
     }
@@ -654,6 +669,7 @@ if (familyMembers.trim()) {
           behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
+
           <ScrollView
             style={styles.content}
             showsVerticalScrollIndicator={false}
@@ -678,7 +694,7 @@ if (familyMembers.trim()) {
                 <TextInput style={styles.input} placeholder="Last" value={relativelastName} onChangeText={setrelativeLastName} placeholderTextColor={'#E0E0E0'} />
 
                 <Text style={styles.label}>Membership No.</Text>
-                <TextInput style={styles.input} placeholder="Membership Nos" value={membershipNos} onChangeText={setMembershipNos} placeholderTextColor={'#E0E0E0'} />
+                <TextInput style={styles.input} placeholder="Membership No" value={membershipNos} onChangeText={setMembershipNos} placeholderTextColor={'#E0E0E0'} />
 
 
                 <Text style={styles.label}>Are you living here?</Text>
@@ -889,7 +905,19 @@ if (familyMembers.trim()) {
                   open={openSignatureType}
                   value={signatureType}
                   setOpen={setOpenSignatureType}
-                  setValue={setSignatureType}
+                  setValue={(callback) => {
+                    setSignatureType((prev) => {
+                      const newValue = callback(prev);
+
+
+                      setSignature(null);
+
+                      signatureRef?.current?.clearSignature?.();
+
+                      return newValue;
+                    });
+                  }}
+
                   items={signatureTypes}
                   style={styles.dropdown}
                   dropDownContainerStyle={[styles.dropdownList, { height: 80 }]}

@@ -137,25 +137,27 @@ const PaymentDetails = () => {
                             <View style={styles.cardInfo}>
                                 <Text style={styles.residentName}>{payment.residentialName}</Text>
                                 <Text style={styles.residentAddress}>{payment.residentialAddress}</Text>
+                                <View
+                                    style={{
+                                        borderWidth: 1,
+                                        borderColor: '#E5E7EB',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        borderRadius: 15,
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 4,
+                                        marginTop: 8
+                                    }}
+                                >
+                                    <Text style={styles.monthText}>
+                                        {new Date(payment.createdAt).toLocaleDateString("en-US", {
+                                            month: "short",
+                                            year: "numeric",
+                                        })}
+                                    </Text>
+                                </View>
                             </View>
-                            <View
-                                style={{
-                                    borderWidth: 1,
-                                    borderColor: '#E5E7EB',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderRadius: 15,
-                                    paddingHorizontal: 12,
-                                    paddingVertical: 4
-                                }}
-                            >
-                                <Text style={styles.monthText}>
-                                    {new Date(payment.createdAt).toLocaleDateString("en-US", {
-                                        month: "short",
-                                        year: "numeric",
-                                    })}
-                                </Text>
-                            </View>
+
                         </View>
                     </View>
                 </View>

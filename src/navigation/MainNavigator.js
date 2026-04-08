@@ -94,16 +94,19 @@ const UserBottomTabs = () => {
     const insets = useSafeAreaInsets();
     const bottomInset = Platform.OS === 'android' ? insets.bottom : 10;
     const defaultTabBarStyle = {
-    
+
+
+        left: 0,
+        right: 0,
+        bottom: 0,
+
         borderTopWidth: 0,
-        height: 65 + bottomInset,
+        height: 70 + bottomInset,
         paddingBottom: bottomInset,
         paddingTop: 8,
-        borderTopLeftRadius: 40,
-        borderTopRightRadius:40,
+
         overflow: "hidden",
-      
-    }
+    };
 
     return (
         <Tab.Navigator
@@ -143,7 +146,7 @@ const UserBottomTabs = () => {
                 component={UserAnnouncements}
                 options={({ route }) => ({
                     tabBarIcon: ({ focused }) => (
-                        <Image source={focused ? imagePath.Updates : imagePath.InActiveUpdates} style={{ width: 22, height: 20}} />
+                        <Image source={focused ? imagePath.Updates : imagePath.InActiveUpdates} style={{ width: 22, height: 20 }} />
                     ),
                     tabBarLabel: ({ focused }) => (
                         <Text style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Notifications</Text>

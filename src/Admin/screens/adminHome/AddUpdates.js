@@ -90,6 +90,7 @@ const AddUpdates = ({ navigation }) => {
             setAddressProof(null)
             setSocietyName('')
             setSocietyDescription('')
+            navigation.goBack();
         } catch (error) {
             dispatch(
                 showMessage({
