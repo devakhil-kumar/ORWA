@@ -32,7 +32,7 @@ const UserHome = () => {
   const onHandleProfile = () => {
     navigation.navigate('Profile')
   }
-const monthName = new Date().toLocaleDateString('en-US', { month: 'long' });
+  const monthName = new Date().toLocaleDateString('en-US', { month: 'long' });
   const { user, loading } = useSelector((state) => state.profile);
   console.log(user, loading, 'loading++++++++++++++++++++++')
 
@@ -84,7 +84,7 @@ const monthName = new Date().toLocaleDateString('en-US', { month: 'long' });
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={[0, 'top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#519377" />
       <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: '#F9FAFB80', padding: 16 }}>
         <View style={styles.header}>
@@ -130,9 +130,9 @@ const monthName = new Date().toLocaleDateString('en-US', { month: 'long' });
           colors={getGradientColors(user?.subscription?.status || 'due')}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
-          style={styles.paymentStatusCard}
+          style={[styles.paymentStatusCard, { paddingVertical: 0, paddingHorizontal: 0 }]}
         >
-          <View style={styles.cardContent}>
+          <View style={[styles.cardContent, { height: 150, padding: 15, }]}>
             <View>
               <Text style={styles.PaymentStatusHeader}>Payment Status</Text>
 
@@ -267,12 +267,19 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   residenceCard: {
-    backgroundColor: '#519377',
+    // backgroundColor: '#519377',
     marginTop: 15,
     borderRadius: 20,
-    paddingVertical: 25,
-    paddingHorizontal: 15,
-    elevation: 5
+    // padding:10,
+    // paddingVertical: 25,
+    // paddingHorizontal: 15,
+    elevation: 5,
+    height: 100,
+    // justifyContent:'space-between',
+    // flexDirection:'row',
+    // alignItems:'center'
+    // alignSelf:'center'
+    // alignContent:'center'
   },
   paymentStatusCard: {
     backgroundColor: '#519377',
@@ -286,6 +293,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    padding: 15,
+    // backgroundColor:""
   },
   residenceLabel: {
     fontSize: 16,

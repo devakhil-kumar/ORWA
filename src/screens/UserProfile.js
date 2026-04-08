@@ -99,6 +99,11 @@ const UserProfile = () => {
             );
         }
     }
+      const getUri = (value) => {
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    return value?.uri || null;
+  };
 
     return (
         <SafeAreaView style={{ flex: 1 }} edges={['top', '0']}>
