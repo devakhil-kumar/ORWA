@@ -7,7 +7,8 @@ import {
     loginAPIUser, memberVerifyPayment, PaymentHistory, PaymentUpload, UpdateEventAdmin,
     updateSocietyAdmin, verifyPayment, DeleteMemberAPI, resetPasswordAPI, verifyOtpAPI,
     forgotPasswordAPI, updateUserProfile,
-    getTerminationRequests, TerminationRequest
+    getTerminationRequests, TerminationRequest,
+    terminateResidential
 } from "./api";
 
 export const loginService = async userData => {
@@ -26,10 +27,10 @@ export const loginService = async userData => {
 export const loginServiceAdmin = async userData => {
     try {
         const response = await loginAPIAdmin(userData);
-        console.log(response, 'res')
+        console.log(response, 'res from admin')
         return response;
     } catch (error) {
-        console.log(error, 'error')
+        console.log(error, 'error from admin login')
         // const errorMessage =
         //     error.response?.data?.message ||
         //     error.response?.data?.error;
@@ -119,6 +120,7 @@ export const apiDeletememberService = async (id) => {
     try {
         console.log("id from services:", id);
         const response = await DeleteMemberAPI(id);
+        console.log('Delete member' , response)
         return response.data;
     } catch (error) {
         throw {
@@ -362,13 +364,3 @@ export const UserContactUsSerivce = async (formData) => {
         throw error.response?.data || { message: 'Failed to update payment status' };
     }
 }
-export const TerminationRequestService = async () => {
-    try {
-        const response = await TerminationRequest();
-        console.log(response.data, 'response++++');
-        return response.data;
-    } catch (error) {
-        console.log(error.response?.data, 'error');
-        throw error.response?.data || { message: 'Failed to send termination request' };
-    }
-};

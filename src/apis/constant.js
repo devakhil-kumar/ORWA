@@ -8,9 +8,9 @@ export const API_ROUTES = {
     UPDATE_MEMBER: (id) => `admin/residential/${id}`,
     DELETE_MEMBER: (id) => `admin/residential/terminate-account/${id}`,
     UPLOAD_PAYMENT: 'payment/upload',
-    PAYMENT_HISTORY: '/payment/history',
+    PAYMENT_HISTORY: 'payment/history',
     RESIDENTIAL_PAYMENTS: 'admin/residential/payments',
-    VERIFY_PAYMENT: (id) => `/payment/admin/${id}/verify`,
+    VERIFY_PAYMENT: (id) => `payment/admin/${id}/verify`,
     PROFILE_GET: 'residential/profile',
     MY_NOTIFICATION: 'notifications',
     ADMIN_PROFILE: 'admin/profile',
@@ -27,6 +27,5 @@ export const API_ROUTES = {
     UPDATESOCIETY: (id) => `society/${id}`,
     CONTACT_US: 'admin/post-contact',
     USERCONTACT_US: 'contact-us',
-   DELETE_ACOUNT:'residential/delete/'
-    // http://77.42.18.162:2424/api/residential/delete/69428dc67aef91381591dfcd
+   DELETE_ACOUNT: (id) => `residential/delete/${id}`,
 }

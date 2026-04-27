@@ -64,6 +64,7 @@ export const ProfileNavigator = () => {
             <Stack.Screen name='ResdentsList' component={ResdentsList} />
             <Stack.Screen name='ContactUs' component={ContactUs} />
             <Stack.Screen name='Notification' component={Notification} />
+            <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
             <Stack.Screen name='TerminationRequest' component={TerminationRequest} />
 
         </Stack.Navigator>

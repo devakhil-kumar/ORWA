@@ -2,7 +2,7 @@ import axios from "axios";
 import { API_ROUTES } from "./constant";
 import { getUserData } from "../units/asyncStorageManager";
 
-const BASE_URL = "http://77.42.18.162:2424/api/";
+const BASE_URL = "http://49.13.70.253:2424/api/";
 
 const axiosInstance = axios.create({
     baseURL: BASE_URL,
@@ -24,6 +24,21 @@ axiosInstance.interceptors.request.use(
         return config;
     },
     (error) => Promise.reject(error)
+);
+
+axiosInstance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const method = error?.config?.method?.toUpperCase();
+        const requestUrl = `${error?.config?.baseURL || ''}${error?.config?.url || ''}`;
+        console.log('API ERROR =>', {
+            method,
+            url: requestUrl,
+            status: error?.response?.status,
+            message: error?.response?.data?.message || error?.message,
+        });
+        return Promise.reject(error);
+    }
 );
 
 export const loginAPIUser = userData => {
@@ -109,7 +124,7 @@ export const updateMemberAPI = async (formData, id) => {
 
 export const DeleteMemberAPI = async (id) => {
     console.log("ID : from api", id)
-    return axiosInstance.delete(API_ROUTES.DELETE_MEMBER(id));
+    return axiosInstance.get(API_ROUTES.DELETE_MEMBER(id));
 }
 
 export const PaymentUpload = async (userData) => {
@@ -244,5 +259,6 @@ export const ContactUsUser = async (formData) => {
 
 export const deleteResidential = (id) => {
     console.log(id, 'idfromapis')
-    return axiosInstance.delete(`${API_ROUTES.DELETE_ACOUNT}${id}`)
+    return axiosInstance.delete(`${API_ROUTES.DELETE_ACOUNT(id)}`)
 }
+

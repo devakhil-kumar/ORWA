@@ -44,9 +44,9 @@ export const updateUserProfile = createAsyncThunk(
 
 export const terminationRequest = createAsyncThunk(
     'profile/terminationRequest',
-    async (_, { rejectWithValue }) => {
+    async (id, { rejectWithValue }) => {
         try {
-            const response = await TerminationRequestService();
+            const response = await TerminationRequestService(id);
             return response;
         } catch (err) {
             return rejectWithValue(err || { message: 'Failed to send termination request' });

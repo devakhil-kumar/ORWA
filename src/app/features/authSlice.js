@@ -5,6 +5,10 @@ import {
 } from "../../apis/service";
 import { clearUserData, getUserData, saveUserData } from "../../units/asyncStorageManager";
 
+const getErrorPayload = (error, fallbackMessage = 'Something went wrong') => {
+    return error?.response?.data || { message: error?.message || fallbackMessage };
+};
+
 export const LoginUser = createAsyncThunk(
     'auth/loginUser',
     async (userData, { rejectWithValue }) => {
@@ -14,7 +18,7 @@ export const LoginUser = createAsyncThunk(
             saveUserData(response.data)
             return response.data;
         } catch (error) {
-            return rejectWithValue(error?.response?.data)
+            return rejectWithValue(getErrorPayload(error, 'Login failed'));
         }
     }
 )
@@ -27,7 +31,7 @@ export const loginAdmin = createAsyncThunk(
             saveUserData(response.data);
             return response.data;
         } catch (error) {
-            return rejectWithValue(error?.response?.data)
+            return rejectWithValue(getErrorPayload(error, 'Login failed'));
         }
     }
 )

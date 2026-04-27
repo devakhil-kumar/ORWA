@@ -236,7 +236,7 @@ const EditProfileScreen = () => {
             const fixUrl = (path) => {
                 if (!path) return null;
                 if (path.startsWith("http")) return path;
-                return `http://77.42.18.162:2424${path}`;
+                return `http://49.13.70.253:2424${path}`;
             };
             setProfileImage(fixUrl(user.profileImage));
             setSignature(fixUrl(user.signature));
