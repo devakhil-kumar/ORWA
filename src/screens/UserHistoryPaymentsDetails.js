@@ -5,6 +5,7 @@ import {
     StyleSheet,
     TouchableOpacity,
     Image,
+    ScrollView,
     ActivityIndicator,
     Alert,
 } from 'react-native';
@@ -16,6 +17,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { verifyPaymentThunk, resetVerifyState } from '../app/features/paymentVerifySlice';
 import { showMessage } from '../app/features/messageSlice';
+import moment from 'moment';
 
 const UserHistoryPaymentsDetails = () => {
     const route = useRoute();
@@ -26,6 +28,7 @@ const UserHistoryPaymentsDetails = () => {
     useEffect(() => {
         console.log("Print Data: ", payment)
     }, [payment]);
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
@@ -35,46 +38,55 @@ const UserHistoryPaymentsDetails = () => {
                 <Text style={styles.headerTitle}>Payment Details</Text>
                 <View style={styles.placeholder} />
             </View>
+                {/* Resident Card */}
+                <View style={styles.card}>
+                    <View style={styles.cardLeft}>
+                        {payment.residentialId.applicantPhoto ? (
+                            <Image
+                                source={{ uri: payment.residentialId.applicantPhoto }}
+                                style={styles.avatarImage}
+                            />
+                        ) : (
+                            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                                <Ionicons name="person" size={30} color="#519377" />
+                            </View>
+                        )}
+                        <View style={styles.cardInfo}>
+                            <Text style={styles.residentName}>{payment.residentialId.name}</Text>
+                            <Text style={styles.residentAddress}>{payment.residentialId.address}</Text>
 
-            {/* Resident Card */}
-            <View style={styles.card}>
-                <View style={styles.cardLeft}>
-                    {payment.residentialId.applicantPhoto ? (
-                        <Image
-                            source={{ uri: payment.residentialId.applicantPhoto }}
-                            style={styles.avatarImage}
-                        />
-                    ) : (
-                        <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                            <Ionicons name="person" size={30} color="#519377" />
                         </View>
-                    )}
-                    <View style={styles.cardInfo}>
-                        <Text style={styles.residentName}>{payment.residentialId.name}</Text>
-                        <Text style={styles.residentAddress}>{payment.residentialId.address}</Text>
-                        <Text style={styles.monthText}>
-                            {payment.month} {payment.year}
-                        </Text>
                     </View>
                 </View>
-            </View>
-            <Image
-                source={{ uri: payment.paymentScreenshot }}
-                style={styles.paymentImage}
-                resizeMode="contain"
-            />
-            <View
-                style={
-                    payment.status === "pending"
-                        ? styles.pendingButton
-                        : payment.status === "rejected"
-                            ? styles.rejectedButton
-                            : styles.approvedButton
-                }
-            >
-                <Text style={styles.buttonText}>{payment.status}</Text>
-            </View>
+                <Image
+                    source={{ uri: payment.paymentScreenshot }}
+                    style={styles.paymentImage}
+                    resizeMode="contain"
+                    onError={(e) => console.log('Image error:', e.nativeEvent.error)}
+                    onLoad={() => console.log('Image loaded!')}
+                />
+                <View style={{ paddingHorizontal: 20, paddingVertical: 10 }}>
+                    <Text style={styles.descTitle}>Payment Duration :</Text>
 
+                    <Text style={styles.monthText}>
+                        {moment(payment.paidFrom).format('DD-MM-YYYY')} - {moment(payment.paidTo).format('DD-MM-YYYY')}
+                    </Text>
+                </View>
+                <View style={{ paddingHorizontal: 20, paddingVertical: 10 }}>
+                    <Text style={styles.descTitle}>Description :</Text>
+                    <Text style={styles.desc}>{payment.remarks}</Text>
+                </View>
+                <View
+                    style={
+                        payment.status === "pending"
+                            ? styles.pendingButton
+                            : payment.status === "rejected"
+                                ? styles.rejectedButton
+                                : styles.approvedButton
+                    }
+                >
+                    <Text style={styles.buttonText}>{payment.status.toUpperCase()}</Text>
+                </View>
         </SafeAreaView>
     );
 };
@@ -103,7 +115,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: moderateScale(16),
         padding: moderateScale(16),
-        marginVertical: moderateScale(20),
+        marginVertical: moderateScale(10),
         elevation: 4,
     },
     cardLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
@@ -120,13 +132,16 @@ const styles = StyleSheet.create({
     cardInfo: { marginLeft: moderateScale(16) },
     residentName: { fontSize: moderateScale(18), fontWeight: 'bold', color: '#000' },
     residentAddress: { fontSize: moderateScale(15), color: '#666', marginTop: 4 },
-    monthText: { fontSize: moderateScale(14), color: '#519377', marginTop: 8, fontWeight: '600' },
+    monthText: {
+        fontSize: 18,
+        fontWeight: '500', color: '#519377', marginTop: 8,
+    },
     paymentImage: {
         width: '100%',
         height: moderateScale(330),
         borderRadius: moderateScale(16),
         backgroundColor: '#f0f0f0',
-        marginVertical: moderateScale(20),
+        marginBottom: moderateScale(20),
     },
     buttonContainer: {
         flexDirection: 'row',
@@ -161,5 +176,15 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: moderateScale(16),
         fontWeight: 'bold',
+    },
+    descTitle: {
+        fontSize: 22, color: 'black',
+        fontWeight: '600',
+    },
+    desc: {
+        color: 'black',
+        fontSize: 18,
+        fontWeight: '500',
+        marginBottom: 40
     },
 });

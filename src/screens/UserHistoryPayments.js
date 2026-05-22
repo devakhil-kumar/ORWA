@@ -47,7 +47,6 @@ const DATA = [
 
 const SectionItem = (item) => {
   const navigation = useNavigation();
-
   const handleNavigation = () => {
     console.log(item, 'item from user payment history page')
     navigation.navigate('UserHistoryPaymentsDetails', item.item)
@@ -79,7 +78,9 @@ const SectionItem = (item) => {
       </View>
       <View style={styles.receiptIconContainer}>
         <Image
-          source={{ uri: item?.item?.paymentScreenshot }}
+          source={{ uri:item?.item?.paymentScreenshot }}
+          onError={(e) => console.log('Image error:', e.nativeEvent.error)}  // ✅ debug
+          onLoad={() => console.log('Image loaded!')}
           style={styles.receiptIcon}
           resizeMode="contain"
         />
@@ -107,7 +108,7 @@ const PaymentHistory = () => {
   } = useSelector((state) => state.paymentHistory);
 
   useEffect(() => {
-    dispatch(fetchPaymentHistory({ year: 2026, page: 1, limit: 30 }));
+    dispatch(fetchPaymentHistory({ year: new Date().getFullYear() , page: 1, limit: 50 }));
   }, [dispatch]);
 
   const filteredData = data.filter((item) => {

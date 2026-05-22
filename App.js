@@ -1,10 +1,3 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import {
   SafeAreaProvider,
 } from 'react-native-safe-area-context';
@@ -15,6 +8,7 @@ import store from './src/app/store';
 import { hideMessage } from './src/app/features/messageSlice';
 import CustomMessage from './src/components/CustomMessage';
 import { useEffect } from 'react';
+import { StatusBar } from 'react-native';
 
 const GlobalMessageWrapper = () => {
   const { visible, text, type } = useSelector(state => state.message);
@@ -43,6 +37,7 @@ function App() {
 
   return (
     <SafeAreaProvider >
+      <StatusBar barStyle="dark-content" />
       <Provider store={store} >
         <NavigationContainer style={{ backgroundColor: '#F9FAFB' }}>
           <GlobalMessageWrapper />

@@ -8,7 +8,7 @@ import {
     updateSocietyAdmin, verifyPayment, DeleteMemberAPI, resetPasswordAPI, verifyOtpAPI,
     forgotPasswordAPI, updateUserProfile,
     getTerminationRequests, TerminationRequest,
-    terminateResidential
+    terminateResidential, PaymentEditUpload
 } from "./api";
 
 export const loginService = async userData => {
@@ -99,7 +99,7 @@ export const apiAddmemberService = async (formdata) => {
         return response;
     } catch (error) {
         console.log(error.message)
-        throw error.message || "Failed to add profile"; 
+        throw error.message || "Failed to add profile";
     }
 }
 
@@ -120,7 +120,7 @@ export const apiDeletememberService = async (id) => {
     try {
         console.log("id from services:", id);
         const response = await DeleteMemberAPI(id);
-        console.log('Delete member' , response)
+        console.log('Delete member', response)
         return response.data;
     } catch (error) {
         throw {
@@ -132,16 +132,37 @@ export const apiDeletememberService = async (id) => {
     }
 };
 
-export const UploadPaymentService = async userData => {
+export const UploadPaymentService = async (userData, isAdmin) => {
     try {
-        const response = await PaymentUpload(userData);
-        console.log(response, 'res')
+        const response = await PaymentUpload(userData, isAdmin);
+        console.log(response, 'response from service upload payment.')
         return response;
     } catch (error) {
-        console.log(error, 'error')
+        console.log('Status response:', error.response);
+        console.log(error, 'error from service upload payment.')
         // const errorMessage =
         //     error.response?.data?.message ||
         //     error.response?.data?.error;
+        return Promise.reject(error);
+    }
+};
+
+export const EditPaymentService = async (userData, paymentId, retries = 2) => {
+    try {
+        console.log("Payment ID : ", paymentId);
+        const response = await PaymentEditUpload(userData, paymentId);
+        console.log(response, 'response from service edit payment.');
+        return response;
+    } catch (error) {
+        const errMsg = error?.message || error?.response?.data || '';
+        console.log('Error:', errMsg);
+
+        if (errMsg.includes('Network request failed') && retries > 0) {
+            console.log(`Retrying... attempts left: ${retries}`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return EditPaymentService(userData, paymentId, retries - 1);
+        }
+
         return Promise.reject(error);
     }
 };
@@ -168,9 +189,9 @@ export const fetchResidentialPaymentsService = async (type = 'all') => {
     }
 }
 
-export const verifyPaymentService = async (paymentId, status,paidFrom,paidTo) => {
+export const verifyPaymentService = async (paymentId, status, paidFrom, paidTo) => {
     try {
-        const response = await verifyPayment(paymentId, status,paidFrom,paidTo);
+        const response = await verifyPayment(paymentId, status, paidFrom, paidTo);
         console.log(response, 'response++++++++++++++=')
         return response.data;
     } catch (error) {
@@ -190,7 +211,7 @@ export const getProfileService = async () => {
 
 export const updateUserProfileService = async (updatedData) => {
     try {
-       const response = await updateUserProfile(updatedData);
+        const response = await updateUserProfile(updatedData);
         console.log('API response for profile update:', response);
         return response.data;
     } catch (error) {

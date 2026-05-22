@@ -8,6 +8,8 @@ export const API_ROUTES = {
     UPDATE_MEMBER: (id) => `admin/residential/${id}`,
     DELETE_MEMBER: (id) => `admin/residential/terminate-account/${id}`,
     UPLOAD_PAYMENT: 'payment/upload',
+    ADMIN_UPLOAD_PAYMENT: 'payment/admin/upload',
+    ADMIN_EDIT_PAYMENT: (paymentId)=> `payment/admin/${paymentId}/edit`,
     PAYMENT_HISTORY: 'payment/history',
     RESIDENTIAL_PAYMENTS: 'admin/residential/payments',
     VERIFY_PAYMENT: (id) => `payment/admin/${id}/verify`,

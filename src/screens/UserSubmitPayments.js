@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from "react";
 import {
     View,
     Text,
@@ -21,11 +21,12 @@ import MaterialDesignIcons from '@react-native-vector-icons/material-design-icon
 import ImageCropPicker from 'react-native-image-crop-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { State } from 'react-native-gesture-handler';
-import { uploadPaymentThunk } from '../app/features/paymentUploadSlice';
+import { uploadPaymentThunk, editPaymentThunk } from '../app/features/paymentUploadSlice';
 import { showMessage } from '../app/features/messageSlice';
 import FontAwesome from '@react-native-vector-icons/fontawesome';
-import { useNavigation } from '@react-navigation/native';
-import imagePath from '../contests/imagePath';
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { fetchAdminResidentials } from "../app/features/getResidentails";
 
 const { width } = Dimensions.get('window');
 
@@ -104,39 +105,187 @@ const CustomInput = ({ placeholder, type, style, isEditable = true }) => {
     );
 };
 
-const SubmitPayment = () => {
+const SubmitPayment = ({ route }) => {
     const [idProof, setIdProof] = useState(null);
     const { loading } = useSelector((state) => state.payment);
     const { user } = useSelector((state) => state.profile);
-
+    const { isAdmin = false, isEdit = false, payment = {} } = route?.params ?? {};
     const dispatch = useDispatch();
     const navigation = useNavigation();
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [description, setDescription] = useState('');
+    const { residentials: userList = [], loading: loadingUsers } = useSelector((state) => state.residential); console.log('userList:', userList);
+    console.log('full residential state:', useSelector((state) => state.residential));
+    const [existingScreenshot, setExistingScreenshot] = useState(null);
+
+    const [fromDate, setFromDate] = useState(null);
+    const [toDate, setToDate] = useState(null);
+    const [showFromPicker, setShowFromPicker] = useState(false);
+    const [showToPicker, setShowToPicker] = useState(false);
+
+    useFocusEffect(
+
+        useCallback(() => {
+            if (isAdmin) {
+                console.log("Payment :", payment);
+                dispatch(fetchAdminResidentials())
+                    .unwrap()
+                    .then(() => checkIsEdit())
+                    .catch((err) => console.log('API error:', err));
+            }
+        }, [dispatch, isAdmin])
+    );
+
+
+    const checkIsEdit = () => {
+        if (!isEdit || !payment) return;
+        const matchedUser = userList.find((u) => u._id === payment?.residentialId);
+        setSelectedUser(matchedUser);
+        if (!matchedUser) {
+            navigation.goBack();
+        };
+        setFromDate(payment?.paidFrom ? new Date(payment.paidFrom) : null);
+        setToDate(payment?.paidTo ? new Date(payment.paidTo) : null);
+        setDescription(payment?.remarks || '');
+
+        // ✅ Normalize URL string to { uri, name } object
+        if (payment?.paymentScreenshot) {
+            const url = payment.paymentScreenshot;
+            setExistingScreenshot({ uri: url, name: url.split('/').pop() });
+        }
+
+        setIdProof(null); // user must pick new image to replace
+        console.log("Payment screenshot:", payment?.paymentScreenshot);
+
+
+    };
+
 
 
     const handleSubmit = async () => {
-        if (!idProof) {
-            Alert.alert('Error', 'Please upload payment proof');
+        if (isAdmin && !selectedUser?._id) {
+            Alert.alert('Error', 'Please Select a resident.');
             return;
         }
+        if (!idProof) {
+            Alert.alert('Error', 'Please upload payment proof.');
+            return;
+        }
+        if (!fromDate) {
+            Alert.alert('Error', 'Please select a from date.');
+            return;
+        }
+        if (!toDate) {
+            Alert.alert('Error', 'Please select a to date.');
+            return;
+        }
+        if (!description.trim()) {
+            Alert.alert('Error', 'Please enter a description.');
+            return;
+        }
+
+
+
         const fromData = new FormData();
+        if (isAdmin && selectedUser?._id != null) fromData.append('residentialId', selectedUser?._id);
         if (idProof) fromData.append('paymentScreenshot', idProof);
+        if (fromDate) fromData.append('paidFrom', fromDate.toISOString());
+        if (toDate) fromData.append('paidTo', toDate.toISOString());
+        if (description.trim()) fromData.append('remarks', description.trim());
+
         console.log(fromData, 'formadata=====')
         try {
-            const response = await dispatch(uploadPaymentThunk(fromData)).unwrap();
-            dispatch(
-                showMessage({
-                    type: 'success',
-                    text: response?.message || 'Payment uploaded successfully. Pending verification.',
-                })
-            );
-            setIdProof(null);
+
+            const response = await dispatch(uploadPaymentThunk({ userData: fromData, isAdmin }))
+            console.log("Response : ", response);
+
+            if (response.meta.requestStatus === 'fulfilled') {
+                dispatch(
+                    showMessage({
+                        type: 'success',
+                        text: response?.payload?.message || 'Payment uploaded successfully. Pending verification.',
+                    })
+                );
+
+                setFromDate(null);
+                setToDate(null);
+                setDescription(null);
+                setIdProof(null);
+                navigation.goBack()
+            } else {
+                dispatch(
+                    showMessage({
+                        type: 'error',
+                        text: response?.payload || 'Error while submit payment.',
+                    })
+                );
+            }
+
+
         } catch (error) {
             dispatch(
                 showMessage({
                     type: 'error',
-                    text: error || 'Payment uploaded successfully. Pending verification.',
+                    text: error || 'Error while submit payment.',
                 })
             );
+
+        }
+    };
+
+
+    const handleEditSubmit = async () => {
+        if (isAdmin && !selectedUser?._id) {
+            Alert.alert('Error', 'Please Select a resident.');
+            return;
+        }
+        if (!existingScreenshot && !idProof) {
+            Alert.alert('Error', 'Please upload payment proof.');
+            return;
+        }
+        if (!fromDate) {
+            Alert.alert('Error', 'Please select a from date.');
+            return;
+        }
+        if (!toDate) {
+            Alert.alert('Error', 'Please select a to date.');
+            return;
+        }
+        if (!description.trim()) {
+            Alert.alert('Error', 'Please enter a description.');
+            return;
+        }
+
+        console.log('payment._id:', payment?._id);
+
+        const isLocalFile = (file) =>
+            file?.uri?.startsWith('file://');
+
+        const fileToUpload = idProof ?? (isLocalFile(existingScreenshot) ? existingScreenshot : null);
+
+        const fromData = new FormData();
+        if (isAdmin && selectedUser?._id != null) fromData.append('residentialId', selectedUser?._id);
+        if (fileToUpload) {
+            console.log("Screenshot : ", fileToUpload);
+            fromData.append('paymentScreenshot', fileToUpload);
+        }
+        if (fromDate) fromData.append('paidFrom', fromDate.toISOString());
+        if (toDate) fromData.append('paidTo', toDate.toISOString());
+        if (description.trim()) fromData.append('remarks', description.trim());
+
+        console.log(fromData, 'formadata=====')
+
+        try {
+            const response = await dispatch(editPaymentThunk({ userData: fromData, paymentId: payment?._id })).unwrap();
+            console.log("Print edit response :", response);
+            dispatch(showMessage({ type: 'success', text: response?.message || 'Edited!' }));
+            setDescription(null);
+            setIdProof(null);
+            navigation.popTo('PaymentHistory');
+
+        } catch (error) {
+            dispatch(showMessage({ type: 'error', text: error+",Please Try Again." || 'Edit failed.' }));
         }
     };
 
@@ -159,75 +308,307 @@ const SubmitPayment = () => {
     }
 
 
+
+    const formatDate = (date) => {
+        if (!date) return 'Select Date';
+
+        const d = date instanceof Date ? date : new Date(date);
+
+        if (isNaN(d.getTime())) return 'Select Date';
+
+        return d.toLocaleDateString('en-US', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        });
+    };
+
+    const handleFromDateChange = (event, selectedDate) => {
+        setShowFromPicker(Platform.OS === 'ios');
+        if (selectedDate) {
+            setFromDate(selectedDate);
+            if (toDate && selectedDate > toDate) {
+                setToDate(null);
+            }
+        }
+    };
+
+    const handleToDateChange = (event, selectedDate) => {
+        setShowToPicker(Platform.OS === 'ios');
+        if (selectedDate) {
+            setToDate(selectedDate);
+        }
+    };
+
+
+
     return (
         <SafeAreaView style={styles.container} edges={['top', '0']}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={handlegoBack}>
                     <Ionicons name="chevron-back" size={28} color="#519377" />
                 </TouchableOpacity>
-                <Text style={styles.headerText}>Submit Payment</Text>
+                <Text style={styles.headerText}>{isEdit ? "Edit Payment" : "Submit Payment"}</Text>
                 {/* <View style={{ width: '10%' }} /> */}
-                <TouchableOpacity onPress={handleHistory}>
+                {isAdmin ? <View style={{ width: 27 }} /> : (<TouchableOpacity onPress={handleHistory}>
                     <FontAwesome name="history" size={27} color='#519377' />
-                </TouchableOpacity>
+                </TouchableOpacity>)}
             </View>
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 style={{ flex: 1, backgroundColor: '#F9FAFB80', padding: 16 }}
             >
-                <View style={styles.profileCard}>
-                    <View style={styles.nameRow}>
-                        <View style={styles.iconCircle}>
-                            {user?.profileImage ? (
-                                <Image
-                                    source={{ uri: user.profileImage }}
-                                    style={styles.avatar}
+                {isAdmin ? (
+                    // ── Admin View: User Dropdown ──
+                    <View style={styles.profileCard}>
+                        <Text
+                            style={[
+                                styles.label,
+                                { color: 'black', marginBottom: moderateScale(8) },
+                            ]}
+                        >
+                            Select User
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.dropdownTrigger}
+                            onPress={() => setDropdownOpen(!dropdownOpen)}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={styles.dropdownTriggerText}>
+                                {selectedUser ? selectedUser.name : 'Select a user...'}
+                            </Text>
+                            <Ionicons
+                                name={dropdownOpen ? 'chevron-up' : 'chevron-down'}
+                                size={20}
+                                color="#519377"
+                            />
+                        </TouchableOpacity>
+
+                        {dropdownOpen && (
+                            <View style={styles.dropdownList}>
+                                <ScrollView
+                                    nestedScrollEnabled
+                                    style={{ maxHeight: moderateScale(200) }}
+                                    showsVerticalScrollIndicator={false}
+                                >
+                                    {userList.map((u) => (
+                                        <TouchableOpacity key={u._id}
+                                            style={[
+                                                styles.dropdownItem,
+                                                selectedUser?._id === u._id &&
+                                                styles.dropdownItemActive,
+                                            ]}
+                                            onPress={() => {
+                                                setSelectedUser(u);
+                                                setDropdownOpen(false);
+                                            }}
+                                        >
+                                            <View style={styles.dropdownAvatar}>
+                                                <Ionicons
+                                                    name="person"
+                                                    size={20}
+                                                    color="#000"
+                                                />
+                                            </View>
+                                            <View>
+                                                <Text style={styles.dropdownItemText}>
+                                                    {u.name}
+                                                </Text>
+                                                <Text style={styles.dropdownItemSub}>
+                                                    Flat No. : {u.flatNumber}
+                                                </Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        )}
+
+                        {/* Show selected user's fields below */}
+                        {selectedUser && (
+                            <>
+                                <Text
+                                    style={[
+                                        styles.label,
+                                        { color: 'black', marginTop: moderateScale(16) },
+                                    ]}
+                                >
+                                    Name
+                                </Text>
+                                <CustomInput
+                                    placeholder={selectedUser?.name}
+                                    type={'person'}
+                                    style={{ marginTop: moderateScale(6) }}
+                                    value={selectedUser?.name}
+                                    isEditable={false}
                                 />
-                            ) : (
-                                <View style={styles.avatarPlaceholder}>
-                                    <Ionicons name="person" size={30} color="#000" />
-                                </View>
-                            )}
-                        </View>
-                        <View style={{ marginStart: moderateScale(16) }}>
-                            <Text style={styles.mediumText}>{user?.name}</Text>
-                            <Text style={styles.label}>{user?.flatNumber}</Text>
-                        </View>
+                                <Text
+                                    style={[
+                                        styles.label,
+                                        { color: 'black', marginTop: moderateScale(16) },
+                                    ]}
+                                >
+                                    Email
+                                </Text>
+                                <CustomInput
+                                    isEditable={false}
+                                    placeholder={selectedUser?.email}
+                                    value={selectedUser?.email}
+                                    type={'email'}
+                                    style={{ marginTop: moderateScale(6) }}
+                                />
+                                <Text
+                                    style={[
+                                        styles.label,
+                                        { color: 'black', marginTop: moderateScale(16) },
+                                    ]}
+                                >
+                                    Description
+                                </Text>
+                                <TextInput
+                                    value={description}
+                                    onChangeText={setDescription}
+                                    placeholder="Add a note or description..."
+                                    placeholderTextColor="#9CA3AF"
+                                    multiline
+                                    numberOfLines={4}
+                                    textAlignVertical="top"
+                                    style={styles.descriptionInput}
+                                />
+                            </>
+                        )}
                     </View>
-                    <Text
-                        style={[
-                            styles.label,
-                            { color: 'black', marginTop: moderateScale(16) },
-                        ]}
-                    >
-                        Name
-                    </Text>
-                    <CustomInput
-                        placeholder={user?.name}
-                        type={'person'}
-                        style={{ marginTop: moderateScale(6) }}
-                        value={user?.name}
-                        isEditable={false}
-                        pointerEvents="none"
+                ) : (
+                    // ── Normal User View ──
+                    <View style={styles.profileCard}>
+                        <View style={styles.nameRow}>
+                            <View style={styles.iconCircle}>
+                                {user?.profileImage ? (
+                                    <Image
+                                        source={{ uri: user.profileImage }}
+                                        style={styles.avatar}
+                                    />
+                                ) : (
+                                    <View style={styles.avatarPlaceholder}>
+                                        <Ionicons name="person" size={30} color="#000" />
+                                    </View>
+                                )}
+                            </View>
+                            <View style={{ marginStart: moderateScale(16) }}>
+                                <Text style={styles.mediumText}>{user?.name}</Text>
+                                <Text style={styles.label}>{user?.flatNumber}</Text>
+                            </View>
+                        </View>
+                        <Text
+                            style={[
+                                styles.label,
+                                { color: 'black', marginTop: moderateScale(16) },
+                            ]}
+                        >
+                            Name
+                        </Text>
+                        <CustomInput
+                            placeholder={user?.name}
+                            type={'person'}
+                            style={{ marginTop: moderateScale(6) }}
+                            value={user?.name}
+                            isEditable={false}
+                        />
+                        <Text
+                            style={[
+                                styles.label,
+                                { color: 'black', marginTop: moderateScale(16) },
+                            ]}
+                        >
+                            Email
+                        </Text>
+                        <CustomInput
+                            isEditable={false}
+                            placeholder={user?.email}
+                            value={user?.email}
+                            type={'email'}
+                            style={{ marginTop: moderateScale(6) }}
+                        />
 
-                    />
-                    <Text
-                        style={[
-                            styles.label,
-                            { color: 'black', marginTop: moderateScale(16) },
-                        ]}
-                    >
-                        Email
-                    </Text>
-                    <CustomInput
-                        isEditable={false}
-                        placeholder={user?.email}
-                        type={'email'}
-                        style={{ marginTop: moderateScale(6) }}
+                        <Text
+                            style={[
+                                styles.label,
+                                { color: 'black', marginTop: moderateScale(16) },
+                            ]}
+                        >
+                            Description
+                        </Text>
+                        <TextInput
+                            value={description}
+                            onChangeText={setDescription}
+                            placeholder="Add a note or description..."
+                            placeholderTextColor="#9CA3AF"
+                            multiline
+                            numberOfLines={4}
+                            textAlignVertical="top"
+                            style={styles.descriptionInput}
+                        />
+                    </View>
+                )}
 
-                        pointerEvents="none"
-                    />
+
+
+                {/* Date Pickers */}
+                <View style={styles.dateRow}>
+                    {/* From Date */}
+                    <View style={styles.dateGroup}>
+                        <Text style={styles.dateLabel}>From</Text>
+                        <TouchableOpacity
+                            style={styles.dateButton}
+                            onPress={() => setShowFromPicker(true)}
+                        >
+                            <Ionicons name="calendar-outline" size={16} color="#519377" />
+                            <Text style={[styles.dateText, !fromDate && styles.datePlaceholder]}>
+                                {formatDate(fromDate)}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Divider */}
+                    <View style={styles.dateDivider} />
+
+                    {/* To Date */}
+                    <View style={styles.dateGroup}>
+                        <Text style={styles.dateLabel}>To</Text>
+                        <TouchableOpacity
+                            style={styles.dateButton}
+                            onPress={() => setShowToPicker(true)}
+                        >
+                            <Ionicons name="calendar-outline" size={16} color="#519377" />
+                            <Text style={[styles.dateText, !toDate && styles.datePlaceholder]}>
+                                {formatDate(toDate)}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
+
+                {/* From Date Picker */}
+                {showFromPicker && (
+                    <DateTimePicker
+                        value={fromDate || new Date()}
+                        mode="date"
+                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                        onChange={handleFromDateChange}
+                        maximumDate={toDate || undefined}
+                    />
+                )}
+
+                {/* To Date Picker */}
+                {showToPicker && (
+                    <DateTimePicker
+                        value={toDate || new Date()}
+                        mode="date"
+                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                        onChange={handleToDateChange}
+                        minimumDate={fromDate || undefined}
+                    />
+                )}
+
                 <View
                     style={{
                         flexDirection: 'row',
@@ -251,13 +632,13 @@ const SubmitPayment = () => {
                         (Screenshot or Receipt)
                     </Text>
                 </View>
-                <UploadBox title="Tap to upload screenshot" file={idProof} onPress={() => pickAndCrop(setIdProof)} />
+                <UploadBox title="Tap to upload screenshot" file={idProof ?? existingScreenshot} onPress={() => pickAndCrop(setIdProof)} />
                 <TouchableOpacity
                     style={[styles.buttonStyle, { marginTop: moderateScale(24) }]}
-                    onPress={handleSubmit}
+                    onPress={isEdit ? handleEditSubmit : handleSubmit}
                 >
                     <Text style={[styles.mediumText, { color: 'white' }]}>
-                        Submit Payment
+                        {isEdit ? "Edit Payment" : "Submit Payment"}
                     </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -284,6 +665,19 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F9FAFB',
+        paddingBottom: 40
+    },
+    descriptionInput: {
+        marginTop: moderateScale(6),
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        borderRadius: 10,
+        backgroundColor: '#F9FAFB',
+        paddingHorizontal: moderateScale(12),
+        paddingVertical: moderateScale(10),
+        fontSize: moderateScale(15),
+        color: '#374151',
+        minHeight: moderateScale(100),
     },
     header: {
         flexDirection: 'row',
@@ -457,5 +851,115 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         flex: 1
+    },
+
+    dateRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginVertical: moderateScale(20),
+        backgroundColor: '#fff',
+        borderRadius: moderateScale(16),
+        padding: moderateScale(14),
+        elevation: 2,
+    },
+    dateGroup: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    dateLabel: {
+        fontSize: moderateScale(12),
+        color: '#9CA3AF',
+        fontWeight: '500',
+        marginBottom: 6,
+    },
+    dateButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        backgroundColor: '#F9FAFB',
+    },
+    dateText: {
+        fontSize: moderateScale(13),
+        color: '#111827',
+        fontWeight: '500',
+    },
+    datePlaceholder: {
+        color: '#9CA3AF',
+    },
+    dateDivider: {
+        width: 1,
+        height: 40,
+        backgroundColor: '#E5E7EB',
+        marginHorizontal: 10,
+    },
+
+
+
+
+
+
+    dropdownTrigger: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 10,
+        paddingHorizontal: moderateScale(14),
+        paddingVertical: moderateScale(12),
+        backgroundColor: '#f9f9f9',
+    },
+    dropdownTriggerText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    dropdownList: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 10,
+        marginTop: moderateScale(4),
+        backgroundColor: '#fff',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    dropdownItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: moderateScale(14),
+        paddingVertical: moderateScale(10),
+        gap: moderateScale(10),
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    dropdownItemActive: {
+        backgroundColor: '#e8f5f0',
+    },
+    dropdownAvatar: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    dropdownItemText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#333',
+    },
+    dropdownItemSub: {
+        fontSize: 12,
+        color: '#999',
+        marginTop: 2,
     },
 });

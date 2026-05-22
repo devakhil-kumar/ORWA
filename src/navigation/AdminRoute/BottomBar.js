@@ -26,6 +26,7 @@ import AddUpdates from '../../Admin/screens/adminHome/AddUpdates.js';
 import ResidentsList from '../../screens/Profile/ResidentsList.js';
 import TerminationRequest from '../../screens/Profile/TerminationRequest.js'
 import imagePath from '../../contests/imagePath.jsx';
+import UserSubmitPayment from '../../screens/UserSubmitPayments.js';
 
 const { width, height } = Dimensions.get('window');
 
@@ -76,6 +77,7 @@ export const PaymentNavigator = () => {
         <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName='PaymentHistory'>
             <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
             <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
+            <Stack.Screen name="UserSubmitPayment" component={UserSubmitPayment} />            
         </Stack.Navigator>
     )
 }
@@ -179,7 +181,7 @@ const AdminBottomTabs = () => {
                     ),
                     tabBarStyle: (() => {
                         const routeName = getFocusedRouteNameFromRoute(route) ?? 'User';
-                        if (routeName === 'PaymentDetails') {
+                        if (routeName === 'PaymentDetails' || routeName === "UserSubmitPayment") {
                             return { display: 'none' };
                         }
                         return defaultTabBarStyle;

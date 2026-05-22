@@ -117,16 +117,16 @@ const generateCaptcha = () => {
 
   let answer;
   switch (operator) {
-    case '+': 
-      answer = num1 + num2; 
+    case '+':
+      answer = num1 + num2;
       break;
-    case '-': 
-      answer = num1 - num2; 
+    case '-':
+      answer = num1 - num2;
       break;
-    case '*': 
-      answer = num1 * num2; 
+    case '*':
+      answer = num1 * num2;
       break;
-    default: 
+    default:
       answer = 0;
   }
 
@@ -196,7 +196,7 @@ export default function MembershipForm() {
   const [openOwnType, setOpenOwnType] = useState(false);
   const [openSignatureType, setOpenSignatureType] = useState(false);
 
-  const [membershipNos, setMembershipNos] = useState('');
+  const [membershipNo, setMembershipNo] = useState('');
 
   const signatureRef = useRef(null);
   const captchaData = useMemo(() => generateCaptcha(), [step === 6]);
@@ -211,7 +211,7 @@ export default function MembershipForm() {
       console.log("Data from edit : ", member)
 
       //membership Nos
-      setMembershipNos(member.membershipNos);
+      setMembershipNo(member.membershipNo);
 
       setFirstName(member.firstName);
       setMiddleName(member.middleName);
@@ -382,20 +382,23 @@ export default function MembershipForm() {
     // if (!dob) missing.push('• Date of Birth');
     // if (!occupation.trim()) missing.push('• Occupation');
 
-    if (dob) {
-      const today = new Date();
-      const birthDate = new Date(dob);
-      const age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      const dayDiff = today.getDate() - birthDate.getDate();
 
-      // Adjust age if birthday hasn't occurred yet this year
-      const actualAge = (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) ? age - 1 : age;
+    if (!membershipNo.trim()) missing.push('• Membership Number');
 
-      if (actualAge < 18) {
-        missing.push('• Date of Birth: Must be at least 18 years old');
-      }
-    }
+    // if (dob) {
+    //   const today = new Date();
+    //   const birthDate = new Date(dob);
+    //   const age = today.getFullYear() - birthDate.getFullYear();
+    //   const monthDiff = today.getMonth() - birthDate.getMonth();
+    //   const dayDiff = today.getDate() - birthDate.getDate();
+
+    // Adjust age if birthday hasn't occurred yet this year
+    //   const actualAge = (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) ? age - 1 : age;
+
+    //   if (actualAge < 18) {
+    //     missing.push('• Date of Birth: Must be at least 18 years old');
+    //   }
+    // }
 
     // Phone validation
     if (!phone.trim()) {
@@ -418,7 +421,7 @@ export default function MembershipForm() {
     const missing = [];
     if (!flatNo.trim()) missing.push('• Flat/Villa/Plot No.');
     if (scheme === 'Plot' || scheme === 'Mulberry Villas') {
-      setFloor('No Floor'); // auto-set
+      setFloor('No Floor');
     } else {
       if (!floor.trim()) missing.push('• Floor No.');
     }
@@ -427,26 +430,26 @@ export default function MembershipForm() {
     // if (!postalCode.trim()) {
     //   missing.push('• Postal Code');
     // } else 
-   // Check Postal Code only if it's provided
-if (postalCode.trim()) {
-  if (!/^\d{6}$/.test(postalCode.trim())) {
-    missing.push('• Postal Code: Must be exactly 6 digits (e.g., 400001)');
-  }
-}
-
-// Check Family Members only if it's provided
-if (familyMembers.trim()) {
-  if (!/^\d+$/.test(familyMembers.trim())) {
-    missing.push('• No. of Family Members: Only numbers allowed');
-  } else {
-    const num = parseInt(familyMembers.trim(), 10);
-    if (num === 0) {
-      missing.push('• No. of Family Members: Must be at least 1');
-    } else if (num > 15) {
-      missing.push('• No. of Family Members: Must be less than or equal to 15');
+    // Check Postal Code only if it's provided
+    if (postalCode.trim()) {
+      if (!/^\d{6}$/.test(postalCode.trim())) {
+        missing.push('• Postal Code: Must be exactly 6 digits (e.g., 400001)');
+      }
     }
-  }
-}
+
+    // Check Family Members only if it's provided
+    if (familyMembers.trim()) {
+      if (!/^\d+$/.test(familyMembers.trim())) {
+        missing.push('• No. of Family Members: Only numbers allowed');
+      } else {
+        const num = parseInt(familyMembers.trim(), 10);
+        if (num === 0) {
+          missing.push('• No. of Family Members: Must be at least 1');
+        } else if (num > 15) {
+          missing.push('• No. of Family Members: Must be less than or equal to 15');
+        }
+      }
+    }
 
 
 
@@ -460,9 +463,9 @@ if (familyMembers.trim()) {
     // } else if (parseInt(familyMembers.trim()) > 15) {
     //   missing.push('• No. of Family Members: Must be minimum than 15');
     // }
-    // if (!scheme) {
-    //   missing.push('• Scheme');
-    // }
+    if (!scheme) {
+      missing.push('• Scheme');
+    }
 
     return missing;
   };
@@ -495,18 +498,18 @@ if (familyMembers.trim()) {
   };
 
   const handleSubmit = async () => {
-    const userAnswer = parseInt(captcha, 10);
-    if (isNaN(userAnswer) || userAnswer !== captchaData.answer) {
-      Alert.alert('Error', 'Incorrect captcha answer. Please try again.');
-      return;
-    }
+    // const userAnswer = parseInt(captcha, 10);
+    // if (isNaN(userAnswer) || userAnswer !== captchaData.answer) {
+    //   Alert.alert('Error', 'Incorrect captcha answer. Please try again.');
+    //   return;
+    // }
 
     const allMissing = [
       ...validateStep1(),
       ...validateStep2(),
       // ...validateStep4(),
       // ...validateStep5(),
-      ...validateStep6(),
+      // ...validateStep6(),
     ];
 
     if (allMissing.length > 0) {
@@ -521,7 +524,7 @@ if (familyMembers.trim()) {
     const formData = new FormData();
     formData.append('firstName', firstName);
     //membership Nos
-    formData.append('membershipNos', membershipNos);
+    formData.append('membershipNos', membershipNo);
 
     formData.append('middleName', middleName || '');
     formData.append('lastName', lastName);
@@ -693,8 +696,8 @@ if (familyMembers.trim()) {
                 <Text style={styles.label}>Last Name *</Text>
                 <TextInput style={styles.input} placeholder="Last" value={relativelastName} onChangeText={setrelativeLastName} placeholderTextColor={'#E0E0E0'} />
 
-                <Text style={styles.label}>Membership No.</Text>
-                <TextInput style={styles.input} placeholder="Membership No" value={membershipNos} onChangeText={setMembershipNos} placeholderTextColor={'#E0E0E0'} />
+                <Text style={styles.label}>Membership No. *</Text>
+                <TextInput style={styles.input} placeholder="Membership No. *" value={membershipNo} onChangeText={setMembershipNo} placeholderTextColor={'#E0E0E0'} />
 
 
                 <Text style={styles.label}>Are you living here?</Text>
@@ -884,7 +887,7 @@ if (familyMembers.trim()) {
 
             {step === 6 && (
               <>
-                <Text style={styles.label}>Captcha *</Text>
+                <Text style={styles.label}>Captcha</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
                   <View style={styles.captchaBox}>
                     <Text style={styles.captchaText}>
@@ -925,7 +928,7 @@ if (familyMembers.trim()) {
                   zIndex={1000}
                   zIndexInverse={3000}
                 />
-                <Text style={styles.label}>{signatureType === "Upload Image" ? "Signature Photo" : "Signature"} *</Text>
+                <Text style={styles.label}>{signatureType === "Upload Image" ? "Signature Photo" : "Signature"}</Text>
 
                 {signatureType === "Upload Image" && (
                   <UploadBox title="Signature Photo" file={signature} onPress={() => pickAndCrop(setSignature, { cropperCircleOverlay: true })} />
@@ -959,9 +962,16 @@ if (familyMembers.trim()) {
 
             <View style={styles.buttonRow}>
               {step < 6 ? (
-                <TouchableOpacity style={styles.btnPrimary} onPress={nextStep}>
-                  <Text style={styles.btnTextWhite}>Next</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: "row", width: '100%', alignContent: 'center', justifyContent: 'space-between' }}>
+                  <TouchableOpacity style={[styles.btnPrimary, { width: '49%' }]} onPress={nextStep}>
+                    <Text style={styles.btnTextWhite}>Next</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.btnSuccess, { width: '49%' }]} onPress={handleSubmit} disabled={loading}>
+                    <Text style={styles.btnTextWhite}>
+                      {loading ? 'Submitting...' : 'Submit Application'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               ) : (
                 <TouchableOpacity style={styles.btnSuccess} onPress={handleSubmit} disabled={loading}>
                   <Text style={styles.btnTextWhite}>
@@ -982,7 +992,7 @@ const styles = StyleSheet.create({
   header: {
     width: '100%',
     // paddingHorizontal: 16,
-    height: height / 3.75,
+    height: height / 4,
     backgroundColor: '#F7F9FC',
   },
   headerTitle: { fontSize: 14, fontWeight: '600', color: '#519377', textAlign: 'left', marginTop: 10 },

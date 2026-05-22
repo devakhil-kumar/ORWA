@@ -3,6 +3,9 @@ import { API_ROUTES } from "./constant";
 import { getUserData } from "../units/asyncStorageManager";
 
 const BASE_URL = "http://49.13.70.253:2424/api/";
+// const BASE_URL = "https://6771-2405-201-5020-c0a7-1019-7d94-7608-c95.ngrok-free.app/api/";
+
+
 
 const axiosInstance = axios.create({
     baseURL: BASE_URL,
@@ -127,15 +130,48 @@ export const DeleteMemberAPI = async (id) => {
     return axiosInstance.get(API_ROUTES.DELETE_MEMBER(id));
 }
 
-export const PaymentUpload = async (userData) => {
+export const PaymentUpload = async (userData, isAdmin = false) => {
     const { token } = await getUserData();
-    return axios.post(`${BASE_URL}${API_ROUTES.UPLOAD_PAYMENT}`, userData, {
+    console.log(`IsAdmin : ${isAdmin}`);
+    const url = isAdmin ? `${BASE_URL}${API_ROUTES.ADMIN_UPLOAD_PAYMENT}` : `${BASE_URL}${API_ROUTES.UPLOAD_PAYMENT}`;
+    console.log(`Url : ${url}`)
+    return axios.post(url, userData, {
         headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
         },
     });
 }
+
+export const PaymentEditUpload = async (userData, paymentId) => {
+    const { token } = await getUserData();
+    console.log("Payment ID : ", paymentId);
+    console.log(`Url : ${BASE_URL}${API_ROUTES.ADMIN_EDIT_PAYMENT(paymentId)}`);
+    // ✅ Debug: inspect every FormData part
+    console.log('FormData parts:', JSON.stringify(userData));
+
+    const response = await fetch(`${BASE_URL}${API_ROUTES.ADMIN_EDIT_PAYMENT(paymentId)}`, {
+        method: 'PUT',
+        headers: {
+            'x-request-source': 'mobile',
+            Authorization: `Bearer ${token}`,
+        },
+        body: userData,
+    });
+
+    // ✅ Parse ONCE, store in variable
+    const data = await response.json();
+
+    console.log("Response from api.js:", data);
+
+    if (!response.ok) {
+        // ✅ Now you can read the error message from parsed data too
+        console.log("Error from api.js",response.json());
+        throw new Error(data?.message || 'Payment edit upload failed');
+    }
+
+    return data;
+};
 
 export const PaymentHistory = (year, page, limit) => {
     return axiosInstance.get(`${API_ROUTES.PAYMENT_HISTORY}?year=${year}&page=${page}&limit=${limit}`);

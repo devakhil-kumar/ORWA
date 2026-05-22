@@ -19,6 +19,7 @@ import { verifyPaymentThunk, resetVerifyState } from '../app/features/paymentVer
 import { showMessage } from '../app/features/messageSlice';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform } from 'react-native';
+import { isDraft } from '@reduxjs/toolkit';
 
 const PaymentDetails = () => {
     const route = useRoute();
@@ -116,7 +117,9 @@ const PaymentDetails = () => {
                     <Ionicons name="chevron-back" size={28} color="#519377" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Payment Details</Text>
-                <View style={styles.placeholder} />
+                <TouchableOpacity onPress={() => navigation.navigate('UserSubmitPayment', { isEdit: true, payment: payment, isAdmin: true })}>
+                    <Ionicons name="pencil" size={28} color="#519377" />
+                </TouchableOpacity>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: '#F9FAFB', paddingHorizontal: 16 }}>
 
@@ -165,7 +168,13 @@ const PaymentDetails = () => {
                     source={{ uri: payment.paymentScreenshot }}
                     style={styles.paymentImage}
                     resizeMode="contain"
+                    onError={(e) => console.log('Image error:', e.nativeEvent.error)}
+                    onLoad={() => console.log('Image loaded!')}
                 />
+                <View style={{ paddingHorizontal: 20, paddingVertical: 10 }}>
+                    <Text style={styles.descTitle}>Description :</Text>
+                    <Text style={styles.desc}>{payment.remarks}</Text>
+                </View>
                 {/* Date Pickers */}
                 <View style={styles.dateRow}>
                     {/* From Date */}
@@ -173,7 +182,7 @@ const PaymentDetails = () => {
                         <Text style={styles.dateLabel}>From</Text>
                         <TouchableOpacity
                             style={styles.dateButton}
-                            onPress={() => setShowFromPicker(true)}
+                            onPress={() => payment !== null ? null : setShowFromPicker(true)}
                         >
                             <Ionicons name="calendar-outline" size={16} color="#519377" />
                             <Text style={[styles.dateText, !fromDate && styles.datePlaceholder]}>
@@ -190,7 +199,7 @@ const PaymentDetails = () => {
                         <Text style={styles.dateLabel}>To</Text>
                         <TouchableOpacity
                             style={styles.dateButton}
-                            onPress={() => setShowToPicker(true)}
+                            onPress={() => payment !== null ? null : setShowToPicker(true)}
                         >
                             <Ionicons name="calendar-outline" size={16} color="#519377" />
                             <Text style={[styles.dateText, !toDate && styles.datePlaceholder]}>
@@ -222,29 +231,47 @@ const PaymentDetails = () => {
                     />
                 )}
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity
-                        style={styles.approveButton}
-                        onPress={() => handleVerify('verified')}
-                        disabled={verifyingStatus !== null}
-                    >
-                        {verifyingStatus === 'verified' ? (
-                            <ActivityIndicator color="#FFF" />
-                        ) : (
-                            <Text style={styles.buttonText}>Approve</Text>
-                        )}
-                    </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={styles.denyButton}
-                        onPress={() => handleVerify('rejected')}
-                        disabled={verifyingStatus !== null}
-                    >
-                        {verifyingStatus === 'rejected' ? (
-                            <ActivityIndicator color="#FFF" />
-                        ) : (
-                            <Text style={styles.buttonText}>Deny</Text>
-                        )}
-                    </TouchableOpacity>
+                    {/* Show Approve button if pending or verified */}
+                    {(payment.status === 'pending' || payment.status === 'verified') && (
+                        <TouchableOpacity
+                            style={[
+                                styles.approveButton,
+                                { width: payment.status === 'pending' ? '45%' : '100%' }
+                            ]}
+                            onPress={() => payment.status === 'pending' ? handleVerify('verified') : null}
+                            disabled={verifyingStatus !== null || payment.status === 'verified'}
+                        >
+                            {verifyingStatus === 'verified' ? (
+                                <ActivityIndicator color="#FFF" />
+                            ) : (
+                                <Text style={styles.buttonText}>
+                                    {payment.status === 'verified' ? 'Verified' : 'Approve'}
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                    )}
+
+                    {/* Show Reject button if pending or rejected */}
+                    {(payment.status === 'pending' || payment.status === 'rejected') && (
+                        <TouchableOpacity
+                            style={[
+                                styles.denyButton,
+                                { width: payment.status === 'pending' ? '45%' : '100%' }
+                            ]}
+                            onPress={() => payment.status === 'pending' ? handleVerify('rejected') : null}
+                            disabled={verifyingStatus !== null || payment.status === 'rejected'}
+                        >
+                            {verifyingStatus === 'rejected' ? (
+                                <ActivityIndicator color="#FFF" />
+                            ) : (
+                                <Text style={styles.buttonText}>
+                                    {payment.status === 'rejected' ? 'Rejected' : 'Deny'}
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                    )}
+
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -256,6 +283,7 @@ export default PaymentDetails;
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F9FAFB' },
     header: {
+        paddingHorizontal: 20,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -268,6 +296,14 @@ const styles = StyleSheet.create({
         flex: 1,
         textAlign: 'center',
         marginRight: moderateScale(34),
+    },
+    descTitle: {
+        fontSize: 22, color: 'black',
+        fontWeight: '600',
+    },
+    desc: {
+        fontSize: 18, color: 'black',
+        fontWeight: '500',
     },
     placeholder: { width: moderateScale(34) },
     card: {

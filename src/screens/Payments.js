@@ -27,8 +27,9 @@ const PaymentHistoryScreen = () => {
 
 
     useEffect(() => {
-        console.log("UserID", userId)
-    }, [userId]);
+        console.log("data", data)
+
+    }, [data]);
 
     useFocusEffect(
         useCallback(() => {
@@ -86,7 +87,6 @@ const PaymentHistoryScreen = () => {
 
     const renderPaymentCard = (item) => {
         console.log(item, 'item')
-
         const handleNavigation = () => {
             navigation.navigate('PaymentDetails', { payment: item })
         }
@@ -94,10 +94,16 @@ const PaymentHistoryScreen = () => {
         return (
             <TouchableOpacity key={item._id} style={styles.paymentCard} onPress={handleNavigation}>
                 <View style={styles.cardContent}>
-                    <Image
-                        source={{ uri: item?.residentialPhoto }}
-                        style={styles.avatar}
-                    />
+                    {item?.residentialPhoto === null ?
+                        <View style={{ alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                            <Ionicons name="person" size={30} color="#519377" />
+                        </View>
+                        : <Image
+                            source={{ uri: item?.residentialPhoto }}
+                            style={styles.avatar}
+                            onError={(e) => console.log('Image error:', e.nativeEvent.error)}
+                            onLoad={() => console.log('Image loaded!')}
+                        />}
                     <View style={styles.infoContainer}>
                         <Text style={styles.nameText}>{item?.residentialName}</Text>
                         <Text style={styles.addressText}>{item?.residentialAddress}</Text>
@@ -123,6 +129,8 @@ const PaymentHistoryScreen = () => {
                     <Image
                         source={{ uri: item?.paymentScreenshot }}
                         style={styles.paymentScreenshot}
+                        onError={(e) => console.log('Image error:', e.nativeEvent.error)}
+                        onLoad={() => console.log('Image loaded!')}
                     />
                 </TouchableOpacity>
             </TouchableOpacity>
@@ -141,7 +149,7 @@ const PaymentHistoryScreen = () => {
                         >
                             <Ionicons name="chevron-back" size={28} color="#519377" />
                         </TouchableOpacity>
-                        <Text style={styles.headerTitle}>{isRejected ? "Rejected payments" : "Payement History"}</Text>
+                        <Text style={styles.headerTitle}>{isRejected ? "Rejected payments" : "Payment History"}</Text>
                         <View style={{ width: 50 }} />
                     </View>
                 </View>
@@ -217,6 +225,15 @@ const PaymentHistoryScreen = () => {
                         </View>
                     )}
                 </ScrollView>
+                <TouchableOpacity
+                    style={styles.fab}
+                    onPress={() => {
+                        navigation.navigate('UserSubmitPayment', { isAdmin: true });
+                    }}
+                    activeOpacity={0.8}
+                >
+                    <Ionicons name="add" size={28} color="#fff" />
+                </TouchableOpacity>
             </View>
         </SafeAreaView>
     );
@@ -226,6 +243,22 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F9FAFB',
+    },
+    fab: {
+        position: 'absolute',
+        bottom: 24,
+        right: 24,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#519377',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 6,
+        elevation: 8,       // Android shadow
     },
     header: {
         paddingHorizontal: 20,
