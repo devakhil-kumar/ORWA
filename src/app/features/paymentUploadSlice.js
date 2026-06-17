@@ -10,10 +10,14 @@ export const uploadPaymentThunk = createAsyncThunk(
             console.log(response.data, 'response===========')
             return response.data;
         } catch (error) {
+            console.log("Error : ", error);
             return rejectWithValue(
-                error.response?.data?.message ||
-                error.response?.data?.error ||
-                'Failed to upload payment'
+                {
+                    message: error.response?.data?.message ||
+                        error.response?.data?.error ||
+                        'Failed to upload payment',
+                    status: error.response?.status
+                }
             );
         }
     }
@@ -24,11 +28,11 @@ export const editPaymentThunk = createAsyncThunk(
         try {
             console.log("Payment ID : ", paymentId);
             const response = await EditPaymentService(userData, paymentId);
-            return response.data; 
+            return response.data;
         } catch (error) {
-            console.log("Error : ",error,",Please try again.");
+            console.log("Error : ", error, ",Please try again.");
             return rejectWithValue(
-                error.message || 'Failed to edit payment'
+                { message: error.message || 'Failed to edit payment'}
             );
         }
     }
@@ -52,11 +56,12 @@ const paymentUploadSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(uploadPaymentThunk.pending, (state) => {
-                state.loading = true;
-                state.success = false;
-                state.error = null;
-            })
+           .addCase(uploadPaymentThunk.pending, (state) => {
+    state.loading = true;
+    state.success = false;
+    state.error = null; 
+})
+
             .addCase(uploadPaymentThunk.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = true;
@@ -65,7 +70,7 @@ const paymentUploadSlice = createSlice({
             .addCase(uploadPaymentThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.success = false;
-                state.error = action.payload;
+                state.error = action.payload?.message || 'Something went wrong';
             })
             .addCase(editPaymentThunk.pending, (state) => {
                 state.loading = true;
@@ -78,7 +83,7 @@ const paymentUploadSlice = createSlice({
             })
             .addCase(editPaymentThunk.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload;
+                state.error = action.payload?.message || 'Something went wrong';
             });
     },
 });

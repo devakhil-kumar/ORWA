@@ -30,18 +30,15 @@ import { fetchAdminResidentials } from "../app/features/getResidentails";
 
 const { width } = Dimensions.get('window');
 
-
-const pickAndCrop = async (setter, options = {}) => {
+const pickAndCrop = async (setter) => {
     try {
         const image = await ImageCropPicker.openPicker({
-            width: options.width || 800,
-            height: options.height || 800,
-            cropping: true,
-            cropperCircleOverlay: options.circle || false,
-            freeStyleCropEnabled: true,
+            mediaType: 'photo',
+            cropping: false,
             compressImageQuality: 0.8,
             includeBase64: false,
         });
+
         setter({
             uri: image.path,
             type: image.mime,
@@ -125,7 +122,6 @@ const SubmitPayment = ({ route }) => {
     const [showToPicker, setShowToPicker] = useState(false);
 
     useFocusEffect(
-
         useCallback(() => {
             if (isAdmin) {
                 console.log("Payment :", payment);
@@ -214,12 +210,10 @@ const SubmitPayment = ({ route }) => {
                 setIdProof(null);
                 navigation.goBack()
             } else {
-                dispatch(
-                    showMessage({
-                        type: 'error',
-                        text: response?.payload || 'Error while submit payment.',
-                    })
-                );
+                dispatch(showMessage({
+                    type: 'error',
+                    text: response?.payload?.message || 'Error while submit payment.',
+                }));
             }
 
 
@@ -260,7 +254,7 @@ const SubmitPayment = ({ route }) => {
         console.log('payment._id:', payment?._id);
 
         const isLocalFile = (file) =>
-            file?.uri?.startsWith('file://');
+            file?.uri?.startsWith('http://');
 
         const fileToUpload = idProof ?? (isLocalFile(existingScreenshot) ? existingScreenshot : null);
 
@@ -285,12 +279,13 @@ const SubmitPayment = ({ route }) => {
             navigation.popTo('PaymentHistory');
 
         } catch (error) {
-            dispatch(showMessage({ type: 'error', text: error+",Please Try Again." || 'Edit failed.' }));
+            dispatch(showMessage({ type: 'error', text: error + ",Please Try Again." || 'Edit failed.' }));
         }
     };
 
     const handleCancel = () => {
         setIdProof(null);
+        navigation.goBack();
     };
 
     if (loading) {
@@ -843,7 +838,14 @@ const styles = StyleSheet.create({
         marginLeft: 8
     },
     uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding: 30, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed', marginTop: 12 },
-    uploadedImage: { width: 120, height: 120, borderRadius: 12, marginBottom: 10 },
+    uploadedImage: {
+        width: '100%',
+        minHeight: 300,
+        height: undefined,
+        aspectRatio: 9 / 16, // screenshot ratio
+        borderRadius: 12,
+        marginBottom: 10,
+    },
     hint: { fontSize: 14, color: '#000', marginTop: 10, fontWeight: 500 },
     uploadText: { fontSize: 12, color: '#838383', fontWeight: 500 },
     loaderOverlay: {

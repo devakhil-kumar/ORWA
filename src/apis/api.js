@@ -2,6 +2,7 @@ import axios from "axios";
 import { API_ROUTES } from "./constant";
 import { getUserData } from "../units/asyncStorageManager";
 
+// const BASE_URL = "http://49.13.70.253:5010/api/";
 const BASE_URL = "http://49.13.70.253:2424/api/";
 // const BASE_URL = "https://6771-2405-201-5020-c0a7-1019-7d94-7608-c95.ngrok-free.app/api/";
 
@@ -125,10 +126,16 @@ export const updateMemberAPI = async (formData, id) => {
     return response.json();
 };
 
-export const DeleteMemberAPI = async (id) => {
+export const TerminateMemberAPI = async (id) => {
     console.log("ID : from api", id)
-    return axiosInstance.get(API_ROUTES.DELETE_MEMBER(id));
+    return axiosInstance.get(API_ROUTES.TERMINATE_MEMBER(id));
 }
+
+export const ReActivateMemberAPI = async (id) => {
+    console.log("ID : from api", id)
+    return axiosInstance.get(API_ROUTES.REACTIVATE_MEMBER(id));
+}
+
 
 export const PaymentUpload = async (userData, isAdmin = false) => {
     const { token } = await getUserData();
@@ -293,8 +300,7 @@ export const ContactUsUser = async (formData) => {
     // return axiosInstance.post(API_ROUTES.USERCONTACT_US, fromData)
 }
 
-export const deleteResidential = (id) => {
-    console.log(id, 'idfromapis')
-    return axiosInstance.delete(`${API_ROUTES.DELETE_ACOUNT(id)}`)
+export const deleteResidential = ()=> {
+    return axiosInstance.post(`${API_ROUTES.DELETE_ACOUNT}`)
 }
 

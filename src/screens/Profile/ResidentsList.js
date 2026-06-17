@@ -7,7 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { useDispatch, useSelector, } from "react-redux";
-import { fetchAdminResidentialById, fetchAdminResidentials, deleteMember } from "../../app/features/getResidentails";
+import { fetchAdminResidentialById, fetchAdminResidentials, terminateMember } from "../../app/features/getResidentails";
 import { showMessage } from "../../app/features/messageSlice";
 import { processInset } from "react-native-reanimated/lib/typescript/common";
 import RNFS from "react-native-fs";
@@ -61,6 +61,9 @@ const ResidentsList = () => {
 
     const { residentials, loading } = useSelector((state) => state.residential)
     console.log(residentials, loading, 'loading, resdi+++++++++++')
+    const activeResidents = residentials?.filter(
+        resident => resident.isActive === true
+    ) || [];
 
     useFocusEffect(
         useCallback(() => {
@@ -104,7 +107,7 @@ const ResidentsList = () => {
         try {
             console.log("Selected item :", selectedItem);
             const result = await dispatch(
-                deleteMember(selectedItem || selectedItem)
+                terminateMember(selectedItem || selectedItem)
             ).unwrap();
             dispatch(fetchAdminResidentials());
 
@@ -150,9 +153,9 @@ const ResidentsList = () => {
                                 : [...prev, item._id]
                         );
                     }}>
-                        {residentials.profileImage ? (
+                        {activeResidents.profileImage ? (
                             <Image
-                                source={{ uri: residentials.profileImage }}
+                                source={{ uri: activeResidents.profileImage }}
                                 style={style.avatar}
                             />
                         ) : (
@@ -201,7 +204,7 @@ const ResidentsList = () => {
 
     const handleExport = async () => {
         try {
-            const selectedItems = residentials.filter(item =>
+            const selectedItems = activeResidents.filter(item =>
                 selectedList.includes(item._id)
             );
             if (selectedItems.length === 0) return;
@@ -255,11 +258,11 @@ const ResidentsList = () => {
                             {selectedList.length > 0 && (
                                 <TouchableOpacity
                                     style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}
-                                    onPress={() => handleSelectAll(residentials)}
+                                    onPress={() => handleSelectAll(activeResidents)}
                                 >
                                     <Ionicons
                                         name={
-                                            selectedList.length === residentials.length
+                                            selectedList.length === activeResidents.length
                                                 ? "checkbox"
                                                 : "checkbox-outline"
                                         }
@@ -286,7 +289,7 @@ const ResidentsList = () => {
                         </View>
                         : <View style={style.listWrapper}>
                             <FlatList
-                                data={residentials}
+                                data={activeResidents}
                                 // keyExtractor={(item) => item.id}
                                 keyExtractor={(item, index) =>
                                     item?.id ? item.id.toString() : index.toString()
@@ -313,9 +316,9 @@ const ResidentsList = () => {
                             <MaterialIcons name="delete-outline" size={50} color="#D32F2F" />
                         </View>
 
-                        <Text style={style.deleteTitle}>Delete Member?</Text>
+                        <Text style={style.deleteTitle}>Terminate Member?</Text>
                         <Text style={style.deleteMessage}>
-                            Are you sure you want to delete this Member? This action cannot be undone.
+                            Are you sure you want to Terminate this Member?
                         </Text>
 
                         <View style={style.deleteButtonsContainer}>
@@ -332,7 +335,7 @@ const ResidentsList = () => {
                                 onPress={confirmDelete}
 
                             >
-                                <Text style={style.confirmDeleteButtonText}>Yes, Delete</Text>
+                                <Text style={style.confirmDeleteButtonText}>Yes, Terminate</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -354,7 +357,7 @@ const style = StyleSheet.create({
     exportText: { fontSize: moderateScale(14), marginLeft: 8 },
     addUserBtn: { flexDirection: 'row', backgroundColor: '#519377', borderRadius: 8, alignItems: "center", padding: 12, marginLeft: 8 },
     addUserText: { fontSize: moderateScale(14), marginLeft: 8, lineHeight: moderateScale(15), color: '#fff' },
-    listWrapper: { marginTop: 20,marginBottom:40 },
+    listWrapper: { marginTop: 20, marginBottom: 40 },
     listContent: { paddingBottom: 10 },
     fab: {
         position: 'absolute',

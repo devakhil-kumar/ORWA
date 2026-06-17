@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { deleteResidential } from '../../apis/api'; 
+import { deleteResidential } from '../../apis/api';
 
 // Initial State
 const initialState = {
   isLoading: false,
   error: null,
-  deleteStatus: 'idle', 
+  deleteStatus: 'idle',
   deleteMessage: null,
 };
 
@@ -14,17 +14,18 @@ export const deleteResidentialThunk = createAsyncThunk(
   'residential/delete',
   async (userId, { rejectWithValue }) => {
     try {
-        console.log(userId, 'userIDfromthunk')
-      const response = await deleteResidential(userId);
-      console.log(response,'res')
-      return response.data;
-      
-    } catch (error) {
-        console.log(error,'res')
+      const response = await deleteResidential();
+      console.log(response, 'response')
 
-      return rejectWithValue(
-        error.response?.data?.message || 'Failed to delete residential'
-      );
+      return response.data;
+
+    } catch (error) {
+      console.log(error, 'w=err')
+
+      return rejectWithValue({
+        message: error.response?.data?.message || 'Failed to terminated residential',
+        status: error.response?.status,
+      });
     }
   }
 );
@@ -52,12 +53,12 @@ const deleteResidentialSlice = createSlice({
       .addCase(deleteResidentialThunk.fulfilled, (state, action) => {
         state.isLoading = false;
         state.deleteStatus = 'succeeded';
-        state.deleteMessage = action.payload.message || 'Residential deleted successfully';
+        state.deleteMessage = action.payload.message || 'Residential terminated successfully';
       })
       .addCase(deleteResidentialThunk.rejected, (state, action) => {
         state.isLoading = false;
         state.deleteStatus = 'failed';
-        state.error = action.payload;
+        state.error = action.payload?.message || 'Something went wrong';
       });
   },
 });

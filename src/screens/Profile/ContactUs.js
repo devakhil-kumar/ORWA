@@ -56,8 +56,8 @@ const ContactUs = () => {
             return;
         }
         const formData = new FormData();
-        formData.append('name', user?.name);
-        formData.append('email', user?.email);
+        // formData.append('name', user?.name);
+        // formData.append('email', user?.email);
         formData.append('phone', user?.phone);
         formData.append('message', message);
         formData.append('complaintType', complaintType);
@@ -100,7 +100,7 @@ const ContactUs = () => {
             dispatch(
                 showMessage({
                     type: 'error',
-                    text: error?.message || 'Failed to send message. Please try again.',
+                    text: error?.message,
                 })
             );
         }

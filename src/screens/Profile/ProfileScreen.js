@@ -24,7 +24,15 @@ const { width, height } = Dimensions.get('window');
 const SocietyHeadScreen = ({ navigation }) => {
 
     const dispatch = useDispatch();
+
     const { admin, adminLoading } = useSelector((state) => state.profile);
+
+    const adminData = admin ?? {
+        name: 'Society Head',
+        email: 'Not Available',
+        phone: 'Not Available',
+        profileImage: null,
+    };
 
     const generalMenuItems = [
         {
@@ -101,9 +109,9 @@ const SocietyHeadScreen = ({ navigation }) => {
             </ImageBackground>
             <View style={styles.profileCard}>
                 <View style={styles.profileContent}>
-                    {admin?.profileImage ? (
+                    {adminData?.profileImage ? (
                         <Image
-                            source={{ uri: admin?.profileImage }}
+                            source={{ uri: adminData?.profileImage }}
                             style={styles.avatar}
                         />
                     ) : (
@@ -112,9 +120,9 @@ const SocietyHeadScreen = ({ navigation }) => {
                         </View>
                     )}
                     <View style={styles.profileInfo}>
-                        <Text style={styles.adminName}>{admin.name}</Text>
-                        <Text style={styles.adminEmail}>{admin.email}</Text>
-                        <Text style={styles.adminPhone}>{admin.phone}</Text>
+                        <Text style={styles.adminName}>{adminData.name}</Text>
+                        <Text style={styles.adminEmail}>{adminData.email}</Text>
+                        <Text style={styles.adminPhone}>{adminData.phone}</Text>
                     </View>
                     {/* <TouchableOpacity style={styles.editIconButton}>
                         <Ionicons name="create-outline" size={24} color="#333" />
@@ -150,7 +158,7 @@ export default SocietyHeadScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-         backgroundColor: '#F9FAFB',
+        backgroundColor: '#F9FAFB',
     },
     header: {
         backgroundColor: '#115543',
@@ -169,7 +177,7 @@ const styles = StyleSheet.create({
         marginTop: Platform.OS === 'android' ? 75 : 60
     },
     profileCard: {
-      justifyContent:'center',
+        justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#fff',
         marginHorizontal: moderateScale(16),

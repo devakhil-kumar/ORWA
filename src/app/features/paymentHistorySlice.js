@@ -9,11 +9,13 @@ export const fetchPaymentHistory = createAsyncThunk(
       const response = await PaymentHistoryService(year, page, limit);
       return response.data; // { success, count, total, page, totalPages, data }
     } catch (error) {
-      const message =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        'Failed to fetch payment history';
-      return rejectWithValue(message);
+      return rejectWithValue({
+        message:
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          'Failed to fetch payment history',
+        status: error.response?.status,  
+      });
     }
   }
 );

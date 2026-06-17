@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../app/features/authSlice';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
 import { useNavigation } from '@react-navigation/native';
-import {deleteResidentialThunk} from '../app/features/deleteAcountSlice';
+import { deleteResidentialThunk } from '../app/features/deleteAcountSlice';
 import { showMessage } from '../app/features/messageSlice';
 
 const InfoRow = ({ icon, label, value }) => (
@@ -28,6 +28,7 @@ const UserProfile = () => {
     const [deleteLoading, setDeleteLoading] = useState(false);
 
     const dummyData = {
+        membershipType: "co-owner",
         name: "John Doe",
         email: "johndoe@example.com",
         phone: "+91 9876543210",
@@ -37,8 +38,8 @@ const UserProfile = () => {
     };
 
     const { user, loading } = useSelector((state) => state.profile);
-    console.log(user?._id, 'vbdfvbdfhbvkdfvbsdfhj')
     const userData = {
+        membershipType: user?.membershipType || dummyData.membershipType,
         name: user?.name || dummyData.name,
         email: user?.email || dummyData.email,
         phone: user?.phone || dummyData.phone,
@@ -71,7 +72,7 @@ const UserProfile = () => {
             const userId = user?._id || user?.id;
 
             const result = await dispatch(deleteResidentialThunk(
-            userId,
+                userId,
             )).unwrap();
 
             setDeleteLoading(false);
@@ -80,7 +81,7 @@ const UserProfile = () => {
             dispatch(
                 showMessage({
                     type: 'success',
-                    text: 'Your account has been deleted successfully.',
+                    text: 'Your account has been Terminated successfully.',
                 })
             );
 
@@ -94,16 +95,16 @@ const UserProfile = () => {
             dispatch(
                 showMessage({
                     type: 'error',
-                    text: error || 'Failed to delete account',
+                    text: error?.message || 'Failed to terminate account', 
                 })
             );
         }
     }
-      const getUri = (value) => {
-    if (!value) return null;
-    if (typeof value === 'string') return value;
-    return value?.uri || null;
-  };
+    const getUri = (value) => {
+        if (!value) return null;
+        if (typeof value === 'string') return value;
+        return value?.uri || null;
+    };
 
     return (
         <SafeAreaView style={{ flex: 1 }} edges={['top', '0']}>
@@ -124,6 +125,7 @@ const UserProfile = () => {
                     <Text style={styles.nameText}>{userData.name}</Text>
                 </View>
                 <View style={{ marginTop: 30 }}>
+                    <InfoRow icon="account-outline" label="Membership Type" value={userData.membershipType} />
                     <InfoRow icon="email-outline" label="Email" value={userData.email} />
                     <InfoRow icon="phone-outline" label="Phone Number" value={userData.phone} />
                     <InfoRow icon="home-outline" label="Flat No" value={userData.flatNo} />
@@ -131,7 +133,7 @@ const UserProfile = () => {
                 </View>
                 <TouchableOpacity style={styles.infoRow} onPress={openDeleteModal}>
                     <MaterialIcons name="delete-outline" size={23} color="#333" />
-                    <Text style={{ marginLeft: 16, color: "#333", fontWeight: '500', fontSize: 16 }}>Delete Account</Text>
+                    <Text style={{ marginLeft: 16, color: "#333", fontWeight: '500', fontSize: 16 }}>Terminate Account</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.infoRow} onPress={handleLogout}>
@@ -154,9 +156,9 @@ const UserProfile = () => {
                             <MaterialIcons name="delete-outline" size={50} color="#D32F2F" />
                         </View>
 
-                        <Text style={styles.deleteTitle}>Delete Account?</Text>
+                        <Text style={styles.deleteTitle}>Terminate Account?</Text>
                         <Text style={styles.deleteMessage}>
-                            Are you sure you want to delete your account? This action cannot be undone.
+                            Are you sure you want to terminate your account?
                         </Text>
 
                         <View style={styles.deleteButtonsContainer}>
@@ -176,7 +178,7 @@ const UserProfile = () => {
                                 {deleteLoading ? (
                                     <ActivityIndicator size="small" color="#fff" />
                                 ) : (
-                                    <Text style={styles.confirmDeleteButtonText}>Yes, Delete</Text>
+                                    <Text style={styles.confirmDeleteButtonText}>Yes, Terminate</Text>
                                 )}
                             </TouchableOpacity>
                         </View>

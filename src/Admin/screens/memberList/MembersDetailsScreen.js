@@ -91,6 +91,12 @@ const MemberDetailScreen = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+
+      {/* Full Name */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Membership Type</Text>
+          <TextInput style={styles.input} value={member?.membershipType} editable={false} />
+        </View>
         {/* Full Name */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Full Name</Text>

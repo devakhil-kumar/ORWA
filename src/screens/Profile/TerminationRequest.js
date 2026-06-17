@@ -7,7 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { useDispatch, useSelector, } from "react-redux";
-import { fetchTerminationRequests, deleteMember } from "../../app/features/getResidentails";
+import { fetchTerminationRequests, terminateMember, fetchAdminResidentials ,reActivateMember} from "../../app/features/getResidentails";
 import { showMessage } from "../../app/features/messageSlice";
 import { processInset } from "react-native-reanimated/lib/typescript/common";
 import RNFS from "react-native-fs";
@@ -47,15 +47,29 @@ const residents = [
 
 const TerminationRequest = () => {
     const navigation = useNavigation();
+    const [isAlreadyTerminated, setIsAlreadyTerminated] = useState(false);
 
     const dispatch = useDispatch();
 
+    const { residentialsReqTermination, reqTerminationLoading } = useSelector((state) => state.residential)
     const { residentials, loading } = useSelector((state) => state.residential)
-    console.log(residentials, loading, 'loading, resdi+++++++++++')
+    console.log(residentials, "All resedentils data");
+    console.log(residentialsReqTermination, "req termination resedentils data");
+    const inactiveResidents = residentials?.filter(
+        resident => resident.isActive === false
+    ) || [];
+
+    console.log('Inactive Residents:', inactiveResidents);
+
+
+    const filteredResedentials = isAlreadyTerminated ? inactiveResidents : residentialsReqTermination;
+
 
     useFocusEffect(
         useCallback(() => {
             dispatch(fetchTerminationRequests());
+            dispatch(fetchAdminResidentials());
+
         }, [dispatch])
     );
 
@@ -82,26 +96,51 @@ const TerminationRequest = () => {
         setDeleteModalVisible(false);
     };
 
-   const confirmDelete = async () => {
-    try {
-        console.log("Selected item id:", selectedItem); 
-        const result = await dispatch(
-            deleteMember(selectedItem)
-        ).unwrap();
+    const confirmDelete = async () => {
+        try {
+            console.log("Selected item id:", selectedItem);
+            const result = await dispatch(
+                terminateMember(selectedItem)
+            ).unwrap();
 
-        dispatch(fetchTerminationRequests());
-        closeDeleteModal();
-        dispatch(showMessage({
-            type: 'success',
-            text: result?.message || 'Member deleted successfully!',
-        }));
-    } catch (error) {
-        dispatch(showMessage({
-            type: 'error',
-            text: error?.message || 'Failed to delete member.',
-        }));
-    }
-};
+            console.log("Terminate Account : ", result);
+            dispatch(fetchTerminationRequests());
+            dispatch(fetchAdminResidentials());
+            closeDeleteModal();
+            dispatch(showMessage({
+                type: 'success',
+                text: result?.message || 'Member Terminated successfully!',
+            }));
+        } catch (error) {
+            dispatch(showMessage({
+                type: 'error',
+                text: error?.message || 'Failed to terminate member.',
+            }));
+        }
+    };
+
+    const confirmReActivateUser = async () => {
+        try {
+            console.log("Selected item id:", selectedItem);
+            const result = await dispatch(
+                reActivateMember(selectedItem)
+            ).unwrap();
+
+            console.log("Terminate Account : ", result);
+            dispatch(fetchTerminationRequests());
+            dispatch(fetchAdminResidentials());
+            closeDeleteModal();
+            dispatch(showMessage({
+                type: 'success',
+                text: result?.message || 'Member Terminated successfully!',
+            }));
+        } catch (error) {
+            dispatch(showMessage({
+                type: 'error',
+                text: error?.message || 'Failed to terminate member.',
+            }));
+        }
+    };
 
     const handleOnItemTap = (id) => {
         console.log("id from fun:", id);
@@ -109,6 +148,7 @@ const TerminationRequest = () => {
             userId: id
         });
     };
+
 
     const [selectedList, setSelectedList] = useState([]);
     const renderItem = ({ item }) => {
@@ -127,9 +167,9 @@ const TerminationRequest = () => {
                                 : [...prev, item._id]
                         );
                     }}>
-                        {residentials.profileImage ? (
+                        {filteredResedentials.profileImage ? (
                             <Image
-                                source={{ uri: residentials.profileImage }}
+                                source={{ uri: filteredResedentials.profileImage }}
                                 style={style.avatar}
                             />
                         ) : (
@@ -160,7 +200,7 @@ const TerminationRequest = () => {
 
     const handleExport = async () => {
         try {
-            const selectedItems = residentials.filter(item =>
+            const selectedItems = filteredResedentials.filter(item =>
                 selectedList.includes(item._id)
             );
             if (selectedItems.length === 0) return;
@@ -214,11 +254,11 @@ const TerminationRequest = () => {
                             {selectedList.length > 0 && (
                                 <TouchableOpacity
                                     style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}
-                                    onPress={() => handleSelectAll(residentials)}
+                                    onPress={() => handleSelectAll(filteredResedentials)}
                                 >
                                     <Ionicons
                                         name={
-                                            selectedList.length === residentials.length
+                                            selectedList.length === filteredResedentials.length
                                                 ? "checkbox"
                                                 : "checkbox-outline"
                                         }
@@ -244,8 +284,21 @@ const TerminationRequest = () => {
                             <ActivityIndicator size="large" color="#519377" />
                         </View>
                         : <View style={style.listWrapper}>
+                            <View style={style.categoryRow}>
+                                <TouchableOpacity onPress={() => { setIsAlreadyTerminated(false) }} style={isAlreadyTerminated ? style.inactiveCategoryChip : style.activeCategoryChip}>
+                                    <Text style={isAlreadyTerminated ? style.inactiveCategoryText : style.activeCategoryText}>
+                                        Termination Requests
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={isAlreadyTerminated ? style.activeCategoryChip : style.inactiveCategoryChip} onPress={() => { setIsAlreadyTerminated(true) }}>
+                                    <Text style={isAlreadyTerminated ? style.activeCategoryText : style.inactiveCategoryText}>
+                                        Already Terminated
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                             <FlatList
-                                data={residentials}
+                                data={filteredResedentials}
                                 // keyExtractor={(item) => item.id}
                                 keyExtractor={(item, index) =>
                                     item?.id ? item.id.toString() : index.toString()
@@ -272,9 +325,9 @@ const TerminationRequest = () => {
                             <MaterialIcons name="delete-outline" size={50} color="#D32F2F" />
                         </View>
 
-                        <Text style={style.deleteTitle}>Delete Member?</Text>
+                        <Text style={style.deleteTitle}>{isAlreadyTerminated ? "Re-Activate" : "Terminate"} Member?</Text>
                         <Text style={style.deleteMessage}>
-                            Are you sure you want to delete this Member? This action cannot be undone.
+                            Are you sure you want to {isAlreadyTerminated ? "Re-Activate" : "terminate"} this Member?
                         </Text>
 
                         <View style={style.deleteButtonsContainer}>
@@ -288,10 +341,10 @@ const TerminationRequest = () => {
 
                             <TouchableOpacity
                                 style={[style.deleteModalButton, style.confirmDeleteButton]}
-                                onPress={confirmDelete}
+                                onPress={isAlreadyTerminated ? confirmReActivateUser : confirmDelete}
 
                             >
-                                <Text style={style.confirmDeleteButtonText}>Yes, Delete</Text>
+                                <Text style={style.confirmDeleteButtonText}>{isAlreadyTerminated ? "Yes Re-Activate" : "Yes, Terminate"}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -304,6 +357,44 @@ const TerminationRequest = () => {
 export default TerminationRequest;
 
 const style = StyleSheet.create({
+    categoryRow: {
+        flexDirection: 'row',
+        paddingVertical: 16,
+        gap: 12,
+    },
+
+    activeCategoryChip: {
+        flex: 1,
+        backgroundColor: '#519377',
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 2,
+    },
+
+    inactiveCategoryChip: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+    },
+
+    activeCategoryText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
+
+    inactiveCategoryText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#374151',
+    },
     main: { flex: 1, backgroundColor: '#F9FAFB', },
     innerCantainer: { flex: 1, padding: 16 },
     topButtonsRow: { flexDirection: "row", marginTop: 15, alignItems: 'center', alignSelf: 'center', width: '100%', justifyContent: 'space-between' },

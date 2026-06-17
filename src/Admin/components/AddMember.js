@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useRef, useState, useMemo } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef, useState, useMemo, use } from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addMember, resetAddMemberState, updateMember } from '../../app/features/addMemberSlice';
 import { showMessage } from '../../app/features/messageSlice';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { getUserData } from "../../units/asyncStorageManager";
 
 const { width, height } = Dimensions.get('window');
 
@@ -148,7 +149,6 @@ export default function MembershipForm() {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({ y: 0, animated: true });
     }
-
   }, [step]);
 
   React.useEffect(() => {
@@ -166,6 +166,7 @@ export default function MembershipForm() {
   const [floor, setFloor] = useState('');
   const [blockNumber, setBlockNumber] = useState('');
   const [scheme, setScheme] = useState('');
+  const [membershipType, setMembershipType] = useState('');
   const [livingHere, setLivingHere] = useState(null);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -191,6 +192,7 @@ export default function MembershipForm() {
   const [signatureType, setSignatureType] = useState("Signature Pad");
   const [captcha, setCaptcha] = useState('');
   const [openScheme, setOpenScheme] = useState(false);
+  const [openMembershipType, setOpenMembershipType] = useState(false);
   const [openIdType, setOpenIdType] = useState(false);
   const [openAddrType, setOpenAddrType] = useState(false);
   const [openOwnType, setOpenOwnType] = useState(false);
@@ -212,6 +214,7 @@ export default function MembershipForm() {
 
       //membership Nos
       setMembershipNo(member.membershipNo);
+      setMembershipType(member.membershipType);
 
       setFirstName(member.firstName);
       setMiddleName(member.middleName);
@@ -267,6 +270,12 @@ export default function MembershipForm() {
     { label: 'Plot', value: 'Plot' },
     // { label: 'Golden Oak', value: 'Golden Oak' },
     // { label: 'Platinum Heights', value: 'Platinum Heights' },
+  ];
+
+  const membershipOptions = [
+    { label: 'Owner', value: 'owner' },
+    { label: 'Co-Owner', value: 'co-owner' },
+    { label: 'Family Member', value: 'family_member' },
   ];
 
   const docTypes = [
@@ -374,6 +383,7 @@ export default function MembershipForm() {
 
   const validateStep1 = () => {
     const missing = [];
+    if (!membershipType.trim()) missing.push('• Membership Type');
     if (!firstName.trim()) missing.push('• First Name');
     if (!lastName.trim()) missing.push('• Last Name');
     if (!relativeName.trim()) missing.push('• Relative First Name');
@@ -521,7 +531,12 @@ export default function MembershipForm() {
       return;
     }
 
+    const { user } = await getUserData();
+    console.log('society ID : ', user['_id']);
+
     const formData = new FormData();
+    formData.append('societyId', user['_id']);
+    formData.append('membershipType', membershipType);
     formData.append('firstName', firstName);
     //membership Nos
     formData.append('membershipNos', membershipNo);
@@ -682,6 +697,18 @@ export default function MembershipForm() {
           >
             {step === 1 && (
               <>
+
+                <Text style={styles.label}>Select Membership Type *</Text>
+                <DropDownPicker
+                  open={openMembershipType}
+                  value={membershipType}
+                  items={membershipOptions}
+                  setOpen={setOpenMembershipType}
+                  listMode="SCROLLVIEW"
+                  setValue={setMembershipType}
+                  style={styles.dropdown}
+                  dropDownContainerStyle={styles.dropdownList}
+                />
                 <Text style={styles.label}>Name *</Text>
                 <TextInput style={styles.input} placeholder="First" value={firstName} onChangeText={setFirstName} placeholderTextColor={'#E0E0E0'} />
                 <Text style={styles.label}>Middle Name </Text>

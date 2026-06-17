@@ -12,8 +12,10 @@ export const fetchAnnouncements = createAsyncThunk(
         } catch (error) {
             console.log('THUNK ERROR:', error?.response?.data);
             console.log('THUNK ERROR:________', error);
-            return rejectWithValue(
-                error.message
+            return rejectWithValue({
+              message:  error.message,
+              status: error.response?.status,
+            }
             );
         }
     }

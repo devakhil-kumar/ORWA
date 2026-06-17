@@ -6,10 +6,11 @@ export const API_ROUTES = {
     RESETPASSWORD: 'auth/reset-password',
     ADD_MEMBERS: 'admin/residential',
     UPDATE_MEMBER: (id) => `admin/residential/${id}`,
-    DELETE_MEMBER: (id) => `admin/residential/terminate-account/${id}`,
+    TERMINATE_MEMBER: (id) => `admin/residential/terminate-account/${id}?isActive=false`,
+    REACTIVATE_MEMBER: (id) => `admin/residential/terminate-account/${id}?isActive=true`,
     UPLOAD_PAYMENT: 'payment/upload',
     ADMIN_UPLOAD_PAYMENT: 'payment/admin/upload',
-    ADMIN_EDIT_PAYMENT: (paymentId)=> `payment/admin/${paymentId}/edit`,
+    ADMIN_EDIT_PAYMENT: (paymentId) => `payment/admin/${paymentId}/edit`,
     PAYMENT_HISTORY: 'payment/history',
     RESIDENTIAL_PAYMENTS: 'admin/residential/payments',
     VERIFY_PAYMENT: (id) => `payment/admin/${id}/verify`,
@@ -29,5 +30,6 @@ export const API_ROUTES = {
     UPDATESOCIETY: (id) => `society/${id}`,
     CONTACT_US: 'admin/post-contact',
     USERCONTACT_US: 'contact-us',
-   DELETE_ACOUNT: (id) => `residential/delete/${id}`,
+    DELETE_ACOUNT: 'residential/termination',
+    GET_TERMINATION_REQUESTS: 'admin/residential/termination-requests'
 }

@@ -137,7 +137,7 @@ const UserHome = () => {
               <Text style={styles.PaymentStatusHeader}>Payment Status</Text>
 
               <Text style={styles.PaymentStatusLabel}>
-                Status : {user?.subscription?.status || 'Due'} ({user?.subscription?.nextDueDate || monthName})
+                Status : {user?.subscription?.status || 'Due'} ({new Date(user?.subscription?.nextDueDate).toLocaleDateString('en-GB') || monthName})
               </Text>
 
               <Text style={styles.PaymentStatusLabel}>

@@ -5,16 +5,17 @@ import {
     getAdminNotification, getAdminProfile, getEventAdmin, getMemberList, getProfile,
     getresidentailByIdAdmin, getresidentailsAdmin, getSocietyAdmin, loginAPIAdmin,
     loginAPIUser, memberVerifyPayment, PaymentHistory, PaymentUpload, UpdateEventAdmin,
-    updateSocietyAdmin, verifyPayment, DeleteMemberAPI, resetPasswordAPI, verifyOtpAPI,
+    updateSocietyAdmin, verifyPayment, TerminateMemberAPI, resetPasswordAPI, verifyOtpAPI,
     forgotPasswordAPI, updateUserProfile,
     getTerminationRequests, TerminationRequest,
-    terminateResidential, PaymentEditUpload
+    terminateResidential, PaymentEditUpload,ReActivateMemberAPI
 } from "./api";
 
 export const loginService = async userData => {
     try {
         const response = await loginAPIUser(userData);
         console.log(response, 'res')
+
         return response;
     } catch (error) {
         // const errorMessage =
@@ -96,6 +97,7 @@ export const resetPasswordService = async userData => {
 export const apiAddmemberService = async (formdata) => {
     try {
         const response = await addMemberAPI(formdata);
+
         return response;
     } catch (error) {
         console.log(error.message)
@@ -116,10 +118,10 @@ export const apiUpdatememberService = async (formdata, id) => {
         );
     }
 }
-export const apiDeletememberService = async (id) => {
+export const apiTerminateMemberService = async (id) => {
     try {
         console.log("id from services:", id);
-        const response = await DeleteMemberAPI(id);
+        const response = await TerminateMemberAPI(id);
         console.log('Delete member', response)
         return response.data;
     } catch (error) {
@@ -127,6 +129,22 @@ export const apiDeletememberService = async (id) => {
             message: error.response?.data?.message
                 || error.message
                 || 'Failed to delete member.',
+            status: error.response?.status || 500,
+        };
+    }
+};
+
+export const apiReActivateMemberService = async (id) => {
+    try {
+        console.log("id from services:", id);
+        const response = await ReActivateMemberAPI(id);
+        console.log('Re-Activate member', response)
+        return response.data;
+    } catch (error) {
+        throw {
+            message: error.response?.data?.message
+                || error.message
+                || 'Failed to Re-Activate member.',
             status: error.response?.status || 500,
         };
     }
@@ -147,22 +165,14 @@ export const UploadPaymentService = async (userData, isAdmin) => {
     }
 };
 
-export const EditPaymentService = async (userData, paymentId, retries = 2) => {
+export const EditPaymentService = async (userData, paymentId) => {
     try {
         console.log("Payment ID : ", paymentId);
         const response = await PaymentEditUpload(userData, paymentId);
-        console.log(response, 'response from service edit payment.');
-        return response;
+        console.log(response.data, 'response from service edit payment.');
+        return response; // axios wraps in .data
     } catch (error) {
-        const errMsg = error?.message || error?.response?.data || '';
-        console.log('Error:', errMsg);
-
-        if (errMsg.includes('Network request failed') && retries > 0) {
-            console.log(`Retrying... attempts left: ${retries}`);
-            await new Promise(resolve => setTimeout(resolve, 500));
-            return EditPaymentService(userData, paymentId, retries - 1);
-        }
-
+        console.log('Error:', error?.response?.data || error.message);
         return Promise.reject(error);
     }
 };
@@ -170,7 +180,7 @@ export const EditPaymentService = async (userData, paymentId, retries = 2) => {
 export const PaymentHistoryService = async (year, page, limit) => {
     try {
         const response = await PaymentHistory(year, page, limit);
-        console.log(response, 'res')
+        console.log(response, 'res') 
         return response;
     } catch (error) {
         console.log(error, 'error')
@@ -381,7 +391,7 @@ export const UserContactUsSerivce = async (formData) => {
         console.log(response, 'response++++')
         return response.data
     } catch (error) {
-        console.log(error.response?.data, 'error')
-        throw error.response?.data || { message: 'Failed to update payment status' };
+        console.log(error, 'error hgvhjkj')
+        throw error || { message: 'Failed to Send Your complaint.' };
     }
 }

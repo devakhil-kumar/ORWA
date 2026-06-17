@@ -1,16 +1,19 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { UserContactUsSerivce } from '../../apis/service'; 
+import { UserContactUsSerivce } from '../../apis/service';
 
 export const submitUserContactUs = createAsyncThunk(
   'contact/submitContactUs',
   async (formData, { rejectWithValue }) => {
     try {
       const response = await UserContactUsSerivce(formData);
-      return response; 
+      console.log('cvdgsvbncd m');
+      return response;
     } catch (error) {
-      return rejectWithValue(
-        error.message || 'Failed to send message. Please try again.'
-      );
+      console.log("error from help desk : ", error);
+      return rejectWithValue({
+        message: error?.status === 401 ? 'You have been LoggedOut, Please login again.' : error?.message,
+        status: error?.status,
+      });
     }
   }
 );

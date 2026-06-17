@@ -305,7 +305,7 @@ const Announcement = () => {
                     </TouchableOpacity>
                     {/* <Text style={styles.headerText}>Announcements</Text> */}
                 </View>
-                <Text style={styles.headerText}>Notifications</Text>
+                <Text style={styles.headerText}>Notinvbvm,.fications</Text>
                 <View style={{ width: '10%' }} />
             </View>
             {/* <ScrollView

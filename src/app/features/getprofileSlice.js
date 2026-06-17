@@ -10,7 +10,7 @@ export const fetchProfile = createAsyncThunk(
             saveProfileData(data?.data)
             return data?.data || {};
         } catch (error) {
-            return rejectWithValue(error.message);
+            return rejectWithValue({message:error.message,status: error.response?.status,});
         }
     }
 );
