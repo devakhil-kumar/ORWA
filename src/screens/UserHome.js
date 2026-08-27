@@ -21,10 +21,6 @@ import imagePath from '../contests/imagePath';
 import LinearGradient from 'react-native-linear-gradient';
 import DateTimePicker from 'react-native-modal-datetime-picker';
 
-
-
-
-
 const UserHome = () => {
 
   const navigation = useNavigation();
@@ -55,6 +51,14 @@ const UserHome = () => {
   }
 
   const { list, listLoading, page } = useSelector((state) => state.userAnnouncement);
+
+  // Sort announcements by createdAt — newest first
+  const sortedList = [...(list || [])].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
+
+  // Get the most recent event-type announcement
+  const latestEvent = sortedList.find(item => item.type === 'event');
 
   const getGradientColors = (status) => {
     if (!status) return ['#3A3A3A', '#4F4F4F']; // Neutral dark
@@ -148,41 +152,37 @@ const UserHome = () => {
         </LinearGradient>
 
 
-        {/* Announcements Section */}
-        {list.find(item => item.type === 'event') && (
-          (() => {
-            const eventItem = list.find(item => item.type === 'event');
-            return (
-              <View style={[styles.section,]}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Announcements</Text>
-                  <TouchableOpacity onPress={handelAnnoucment}>
-                    <Text style={styles.viewAllText}>View all</Text>
-                  </TouchableOpacity>
-                </View>
+        {/* Announcements Section — shows the most recent event */}
+        {latestEvent && (
+          <View style={[styles.section,]}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Announcements</Text>
+              <TouchableOpacity onPress={handelAnnoucment}>
+                <Text style={styles.viewAllText}>View all</Text>
+              </TouchableOpacity>
+            </View>
 
-                <View style={styles.announcementCard}>
-                  <View style={styles.announcementIcon}>
-                    <Icon name="bullhorn" size={48} color="#FF6B35" />
-                  </View>
-                  <View style={styles.announcementContent}>
-                    <View style={styles.announcementHeader}>
-                      <Text style={styles.announcementTitle}>{eventItem?.title}</Text>
+            <View style={[styles.announcementCard, { alignItems: 'flex-start', justifyContent: 'flex-start' }]}>
+              <View style={styles.announcementIcon}>
+                <Icon name="bullhorn" size={48} color="#FF6B35" />
+              </View>
+              <View style={styles.announcementContent}>
+                <View style={styles.announcementHeader}>
 
-                      <View style={styles.announcementDateCard}>
-                        <Text style={styles.announcementDate}>
-                          {new Date(eventItem?.createdAt).toLocaleDateString("en-GB")}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={styles.announcementText}>
-                      {eventItem?.message}
+                  <View style={styles.announcementDateCard}>
+                    <Text style={styles.announcementDate}>
+                      {new Date(latestEvent?.createdAt).toLocaleDateString("en-GB")}
                     </Text>
                   </View>
                 </View>
+
+                <Text style={styles.announcementTitle}>{latestEvent?.title}</Text>
+                <Text style={styles.announcementText}>
+                  {latestEvent?.message}
+                </Text>
               </View>
-            );
-          })()
+            </View>
+          </View>
         )}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -351,10 +351,9 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 8,
     backgroundColor: '#FFE8E0',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     marginRight: 12,
-    alignSelf: 'center'
   },
   announcementContent: {
     flex: 1,
@@ -369,6 +368,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#000000',
+    marginBottom: 10
   },
   announcementDateCard: { paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#F3F4F6', borderRadius: 15 },
   announcementDate: {
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 14,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 30,
     elevation: 5
   },
   actionIconContainer: {

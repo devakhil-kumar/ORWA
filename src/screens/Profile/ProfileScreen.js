@@ -67,6 +67,12 @@ const SocietyHeadScreen = ({ navigation }) => {
         },
         {
             id: 6,
+            icon: 'lock-closed-outline',
+            title: 'Change Password',
+            onPress: () => navigation.navigate('ChangePassword'),
+        },
+        {
+            id: 7,
             icon: 'log-out-outline',
             title: 'Logout',
             onPress: () => {
@@ -78,6 +84,12 @@ const SocietyHeadScreen = ({ navigation }) => {
     const helpMenuItems = [
         {
             id: 6,
+            icon: 'person-outline',
+            title: 'Users Complaints',
+            onPress: () => navigation.navigate('ComplaintsList'),
+        },
+        {
+            id: 7,
             icon: 'person-outline',
             title: 'Contact Us',
             onPress: () => navigation.navigate('ContactUs'),

@@ -1,69 +1,38 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View, PermissionsAndroid, Platform, Alert, Linking, Image, Modal, ScrollView, Dimensions, } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View, PermissionsAndroid, Platform, Alert, Linking, Image, Modal, ScrollView, Dimensions, TextInput } from 'react-native';
 import Feather from "@react-native-vector-icons/feather";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { moderateScale } from "react-native-size-matters";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
-import { useDispatch, useSelector, } from "react-redux";
-import { fetchAdminResidentialById, fetchAdminResidentials, terminateMember } from "../../app/features/getResidentails";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAdminResidentials, terminateMember } from "../../app/features/getResidentails";
 import { showMessage } from "../../app/features/messageSlice";
-import { processInset } from "react-native-reanimated/lib/typescript/common";
 import RNFS from "react-native-fs";
 import Share from "react-native-share";
-const { width, height } = Dimensions.get('window');
 
-const residents = [
-    {
-        id: '1',
-        name: 'Resident Name',
-        address: 'Address goes here',
-        date: '29-09-2024',
-        image: 'https://randomuser.me/api/portraits/women/44.jpg',
-    },
-    {
-        id: '2',
-        name: 'Resident Name',
-        address: 'Address goes here',
-        date: '29-09-2024',
-        image: 'https://randomuser.me/api/portraits/women/45.jpg',
-    },
-    {
-        id: '3',
-        name: 'Resident Name',
-        address: 'Address goes here',
-        date: '29-09-2024',
-        image: 'https://randomuser.me/api/portraits/women/46.jpg',
-    },
-    {
-        id: '4',
-        name: 'Resident Name',
-        address: 'Address goes here',
-        date: '29-09-2024',
-        image: 'https://randomuser.me/api/portraits/women/47.jpg',
-    },
-];
+const { width } = Dimensions.get('window');
 
 const ResidentsList = () => {
     const navigation = useNavigation();
-
-
-    const onHandleProfile = () => {
-        navigation.navigate('Profile')
-    }
-
-    const onHandleCreate = () => {
-        navigation.navigate('AddMember')
-    }
-
     const dispatch = useDispatch();
 
-    const { residentials, loading } = useSelector((state) => state.residential)
-    console.log(residentials, loading, 'loading, resdi+++++++++++')
+    const { residentials, loading } = useSelector((state) => state.residential);
     const activeResidents = residentials?.filter(
         resident => resident.isActive === true
     ) || [];
+
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredResidents = activeResidents.filter(resident => {
+        const query = searchQuery.toLowerCase().trim();
+        if (!query) return true;
+        return (
+            resident.name?.toLowerCase().includes(query) ||
+            resident.address?.toLowerCase().includes(query)
+        );
+    });
 
     useFocusEffect(
         useCallback(() => {
@@ -75,23 +44,21 @@ const ResidentsList = () => {
         if (loading) return null;
         return (
             <View style={{ marginTop: 50, alignItems: 'center' }}>
-                <Text style={{ color: '#999', fontSize: 16 }}>No Residents yet</Text>
+                <Text style={{ color: '#999', fontSize: 16 }}>
+                    {searchQuery ? 'No matching residents found' : 'No Residents yet'}
+                </Text>
             </View>
         );
     };
-
-    // modal 
 
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
 
     const handleEditMember = (member) => {
-        // dispatch(fetchAdminResidentialById(id));
         navigation.navigate('AddMember', {
             isEdit: true,
             member: member,
         });
-
     };
 
     const handleDeleteMember = (item) => {
@@ -101,21 +68,19 @@ const ResidentsList = () => {
 
     const closeDeleteModal = () => {
         setDeleteModalVisible(false);
+        setSelectedItem(null);
     };
 
     const confirmDelete = async () => {
+        if (!selectedItem) return;
         try {
-            console.log("Selected item :", selectedItem);
-            const result = await dispatch(
-                terminateMember(selectedItem || selectedItem)
-            ).unwrap();
+            const result = await dispatch(terminateMember(selectedItem._id)).unwrap();
             dispatch(fetchAdminResidentials());
-
             closeDeleteModal();
             dispatch(
                 showMessage({
                     type: 'success',
-                    text: result?.message || 'Member deleted successfully!',
+                    text: result?.message || 'Member terminated successfully!',
                 })
             );
         } catch (error) {
@@ -123,68 +88,77 @@ const ResidentsList = () => {
             dispatch(
                 showMessage({
                     type: 'error',
-                    text: error?.message || 'Failed to delete member.',
+                    text: error?.message || 'Failed to terminate member.',
                 })
             );
         }
     };
 
     const handleOnItemTap = (id) => {
-        console.log("id from fun:", id);
-        navigation.navigate('PaymentHistory', {
-            userId: id
-        });
+        navigation.navigate('PaymentHistory', { userId: id });
     };
 
     const [selectedList, setSelectedList] = useState([]);
+
     const renderItem = ({ item }) => {
         const isItemSelected = selectedList.includes(item._id);
+
         return (
             <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => handleOnItemTap(item._id)}
             >
-
-                <View style={[style.card, isItemSelected && style.selectedCard]}>
-                    <TouchableOpacity onPress={() => {
-                        setSelectedList(prev =>
-                            prev.includes(item._id)
-                                ? prev.filter(id => id !== item._id)
-                                : [...prev, item._id]
-                        );
-                    }}>
-                        {activeResidents.profileImage ? (
+                <View style={[styles.card, isItemSelected && styles.selectedCard]}>
+                    {/* Selection Area (Avatar) */}
+                    <TouchableOpacity
+                        onPress={() => {
+                            setSelectedList(prev =>
+                                prev.includes(item._id)
+                                    ? prev.filter(id => id !== item._id)
+                                    : [...prev, item._id]
+                            );
+                        }}
+                        style={styles.avatarContainer}
+                    >
+                        {/* {item.profileImage ? (
                             <Image
-                                source={{ uri: activeResidents.profileImage }}
-                                style={style.avatar}
+                                source={{ uri: item.profileImage }}
+                                style={styles.avatar}
                             />
-                        ) : (
-                            <View style={style.avatarPlaceholder}>
-                                <Ionicons name="person" size={30} color="#519377" />
-                            </View>
-                        )}
+                        ) : ( */}
+                        <View style={styles.avatarPlaceholder}>
+                            <Ionicons name="person" size={30} color="#519377" />
+                        </View>
+                        {/* )} */}
                     </TouchableOpacity>
-                    <View style={style.textContainer}>
-                        <Text style={style.name}>{item.name}</Text>
-                        <Text style={style.address}>{item.address || "not declare"}</Text>
+
+                    <View style={styles.textContainer}>
+                        <Text style={styles.name}>{item.name}</Text>
+                        <Text style={styles.address}>
+                            {item.address || "Address not declared"}
+                        </Text>
                     </View>
-                    <View style={style.rightContainer}>
-                        <View style={style.iconRow}>
+
+                    <View style={styles.rightContainer}>
+                        <View style={styles.iconRow}>
                             <TouchableOpacity onPress={() => handleEditMember(item)}>
-                                <Feather name="edit" size={15} color="#000" />
+                                <Feather name="edit" size={18} color="#519377" />
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={() => handleDeleteMember(item._id)} >
+                            <TouchableOpacity
+                                onPress={() => handleDeleteMember(item)}
+                                style={{ marginLeft: 14 }}
+                            >
                                 <MaterialIcons
                                     name="delete"
-                                    size={18}
+                                    size={20}
                                     color="#D32F2F"
-                                    style={{ marginLeft: 14 }}
                                 />
                             </TouchableOpacity>
                         </View>
-                        <Text style={style.date}>{new Date(item.createdAt)
-                            .toLocaleDateString("en-GB")
-                            .replaceAll("/", "-")}
+                        <Text style={styles.date}>
+                            {new Date(item.createdAt)
+                                .toLocaleDateString("en-GB")
+                                .replaceAll("/", "-")}
                         </Text>
                     </View>
                 </View>
@@ -192,15 +166,13 @@ const ResidentsList = () => {
         );
     };
 
-
-    const handleSelectAll = (items) => {
-        if (selectedList.length === items.length) {
+    const handleSelectAll = () => {
+        if (selectedList.length === filteredResidents.length) {
             setSelectedList([]); // unselect all
         } else {
-            setSelectedList(items.map(item => item._id)); // select all
+            setSelectedList(filteredResidents.map(item => item._id)); // select all visible
         }
     };
-
 
     const handleExport = async () => {
         try {
@@ -209,133 +181,155 @@ const ResidentsList = () => {
             );
             if (selectedItems.length === 0) return;
 
-            const header = Object.keys(selectedItems[0]).join(",") + "\n";
+            // Better CSV escaping
+            const keys = Object.keys(selectedItems[0]);
+            const escapeCsv = (value) => {
+                if (value === null || value === undefined) return '""';
+                const str = typeof value === 'object' ? JSON.stringify(value) : String(value);
+                return `"${str.replace(/"/g, '""')}"`;
+            };
+
+            const header = keys.map(k => `"${k}"`).join(',') + '\n';
             const rows = selectedItems
-                .map(item =>
-                    Object.values(item)
-                        .map(v => `"${String(v).replace(/"/g, '""')}"`)
-                        .join(",")
-                )
-                .join("\n");
+                .map(item => keys.map(key => escapeCsv(item[key])).join(','))
+                .join('\n');
 
             const csvData = header + rows;
+            const fileName = `residents_export_${Date.now()}.csv`;
 
-            // ANDROID SAFE PATH → Downloads folder
-            const path =
-                Platform.OS === "android"
-                    ? `${RNFS.DownloadDirectoryPath}/export.csv`
-                    : `${RNFS.DocumentDirectoryPath}/export.csv`;
+            const path = `${RNFS.CachesDirectoryPath}/${fileName}`;
+            await RNFS.writeFile(path, csvData, 'utf8');
 
-            await RNFS.writeFile(path, csvData, "utf8");
-
-            console.log("CSV saved at:", path);
-
-            const fileUrl =
-                Platform.OS === "android" ? `file://${path}` : path;
-
-            console.log("Sharing URL:", fileUrl);
+            const base64 = await RNFS.readFile(path, 'base64');
 
             await Share.open({
-                title: "Export CSV",
-                url: fileUrl,
-                type: "text/csv",
+                title: 'Export Residents',
+                url: `data:text/csv;base64,${base64}`,
+                type: 'text/csv',
+                filename: fileName,               
                 failOnCancel: false,
+                useInternalStorage: true,          
             });
+
+            // Optional: clean up the temp file
+            await RNFS.unlink(path).catch(() => { });
+
         } catch (error) {
-            console.log("CSV Export Error:", error);
+            console.log('CSV Export Error:', error);
+            dispatch(showMessage({ type: 'error', text: 'Failed to export CSV' }));
         }
     };
+
     return (
-        <SafeAreaView style={style.container} edges={['top']}>
-            <View style={style.main}>
-                <View style={style.innerCantainer}>
-                    <View style={style.header}>
+        <SafeAreaView style={styles.container} edges={['top']}>
+            <View style={styles.main}>
+                <View style={styles.innerContainer}>
+                    {/* Header */}
+                    <View style={styles.header}>
                         <TouchableOpacity
-                            style={style.backButton}
+                            style={styles.backButton}
                             onPress={() => navigation.goBack()}
                         >
-                            {selectedList.length === 0 && <Ionicons name="chevron-back" size={28} color="#519377" />}
-                            {selectedList.length > 0 && (
+                            {selectedList.length === 0 ? (
+                                <Ionicons name="chevron-back" size={28} color="#519377" />
+                            ) : (
                                 <TouchableOpacity
-                                    style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}
-                                    onPress={() => handleSelectAll(activeResidents)}
+                                    style={{ flexDirection: "row", alignItems: "center" }}
+                                    onPress={handleSelectAll}
                                 >
                                     <Ionicons
                                         name={
-                                            selectedList.length === activeResidents.length
+                                            selectedList.length === filteredResidents.length
                                                 ? "checkbox"
                                                 : "checkbox-outline"
                                         }
                                         size={24}
                                         color="#519377"
                                     />
-
                                 </TouchableOpacity>
                             )}
                         </TouchableOpacity>
-                        <Text style={style.headerTitle}>List of Members</Text>
+
+                        <Text style={styles.headerTitle}>List of Members</Text>
+
                         {selectedList.length > 0 && (
-                            <TouchableOpacity
-                                style={{ marginLeft: 12 }}
-                                onPress={handleExport}
-                            >
+                            <TouchableOpacity onPress={handleExport}>
                                 <Ionicons name="share-outline" size={28} color="#519377" />
                             </TouchableOpacity>
                         )}
                     </View>
-                    {loading ?
-                        <View style={style.loaderOverlay}>
+
+                    {/* Search Bar */}
+                    <View style={styles.searchContainer}>
+                        <Feather name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search by name or address..."
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            placeholderTextColor="#9CA3AF"
+                            clearButtonMode="while-editing"
+                        />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                                <Feather name="x" size={18} color="#9CA3AF" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
+                    {/* List */}
+                    {loading ? (
+                        <View style={styles.loaderOverlay}>
                             <ActivityIndicator size="large" color="#519377" />
                         </View>
-                        : <View style={style.listWrapper}>
+                    ) : (
+                        <View style={styles.listWrapper}>
                             <FlatList
-                                data={activeResidents}
-                                // keyExtractor={(item) => item.id}
+                                data={filteredResidents}
                                 keyExtractor={(item, index) =>
-                                    item?.id ? item.id.toString() : index.toString()
+                                    item?._id ? item._id.toString() : index.toString()
                                 }
                                 renderItem={renderItem}
                                 showsVerticalScrollIndicator={false}
-                                contentContainerStyle={{ paddingBottom: 20 }}
+                                contentContainerStyle={{ paddingBottom: 80 }}
                                 ListEmptyComponent={renderEmpty}
                             />
-                        </View>}
+                        </View>
+                    )}
                 </View>
             </View>
 
-            {/* resident delete modal */}
+            {/* Delete Confirmation Modal */}
             <Modal
                 visible={deleteModalVisible}
                 animationType="fade"
                 transparent={true}
                 onRequestClose={closeDeleteModal}
             >
-                <View style={style.deleteModalOverlay}>
-                    <View style={style.deleteModalContent}>
-                        <View style={style.deleteIconWrapper}>
+                <View style={styles.deleteModalOverlay}>
+                    <View style={styles.deleteModalContent}>
+                        <View style={styles.deleteIconWrapper}>
                             <MaterialIcons name="delete-outline" size={50} color="#D32F2F" />
                         </View>
 
-                        <Text style={style.deleteTitle}>Terminate Member?</Text>
-                        <Text style={style.deleteMessage}>
-                            Are you sure you want to Terminate this Member?
+                        <Text style={styles.deleteTitle}>Terminate Member?</Text>
+                        <Text style={styles.deleteMessage}>
+                            Are you sure you want to terminate this member? This action cannot be undone.
                         </Text>
 
-                        <View style={style.deleteButtonsContainer}>
+                        <View style={styles.deleteButtonsContainer}>
                             <TouchableOpacity
-                                style={[style.deleteModalButton, style.cancelButton]}
+                                style={[styles.deleteModalButton, styles.cancelButton]}
                                 onPress={closeDeleteModal}
-
                             >
-                                <Text style={style.cancelButtonText}>No, Cancel</Text>
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={[style.deleteModalButton, style.confirmDeleteButton]}
+                                style={[styles.deleteModalButton, styles.confirmDeleteButton]}
                                 onPress={confirmDelete}
-
                             >
-                                <Text style={style.confirmDeleteButtonText}>Yes, Terminate</Text>
+                                <Text style={styles.confirmDeleteButtonText}>Yes, Terminate</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -347,95 +341,53 @@ const ResidentsList = () => {
 
 export default ResidentsList;
 
-const style = StyleSheet.create({
-    main: { flex: 1, backgroundColor: '#F9FAFB', },
-    innerCantainer: { flex: 1, padding: 16 },
-    topButtonsRow: { flexDirection: "row", marginTop: 15, alignItems: 'center', alignSelf: 'center', width: '100%', justifyContent: 'space-between' },
-    filterBtn: { flexDirection: 'row', padding: 4 },
-    filterText: { fontSize: moderateScale(14), marginLeft: 8 },
-    exportBtn: { flexDirection: 'row', padding: 7, borderWidth: 1, borderRadius: 8, borderColor: 'gray', marginLeft: 10 },
-    exportText: { fontSize: moderateScale(14), marginLeft: 8 },
-    addUserBtn: { flexDirection: 'row', backgroundColor: '#519377', borderRadius: 8, alignItems: "center", padding: 12, marginLeft: 8 },
-    addUserText: { fontSize: moderateScale(14), marginLeft: 8, lineHeight: moderateScale(15), color: '#fff' },
-    listWrapper: { marginTop: 20, marginBottom: 40 },
-    listContent: { paddingBottom: 10 },
-    fab: {
-        position: 'absolute',
-        right: 20,
-        bottom: 30,
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: '#3B82F6',
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 8,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.3,
-        shadowRadius: 4.65,
-    },
-    container: {
-        flex: 1,
-        backgroundColor: '#F9FAFB',
-    },
-    profileSection: {
+const styles = StyleSheet.create({
+    main: { flex: 1, backgroundColor: '#F9FAFB' },
+    innerContainer: { flex: 1, padding: 16 },
+    container: { flex: 1, backgroundColor: '#F9FAFB' },
+
+    header: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-end'
+        justifyContent: 'space-between',
+        marginBottom: 16,
     },
-    menuButton: {
-        // marginRight: 15,
+    backButton: {
+        padding: 4,
     },
-    avatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: '#E0E0E0',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginLeft: 12,
-    },
-    avatarText: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#666',
-    },
-    welcomeText: {
-        fontSize: 12,
-        color: '#999',
-        textAlign: 'right'
-    },
-    userName: {
+    headerTitle: {
         fontSize: moderateScale(20),
         fontWeight: '600',
-        color: '#000000',
-        marginTop: 2,
-    },
-    heading: {
-        fontSize: 22,
-        fontWeight: '700',
+        color: '#000',
+        flex: 1,
         textAlign: 'center',
-        marginVertical: 20,
-        color: '#111827',
     },
 
-    selectedCard: {
+    // Search Styles
+    searchContainer: {
         flexDirection: 'row',
-        backgroundColor: '#85caeaff',
-        borderRadius: 14,
-        padding: 14,
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        paddingHorizontal: 14,
         marginBottom: 16,
-
-        shadowColor: '#000',
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 4,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        height: 48,
     },
+    searchIcon: {
+        marginRight: 10,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: moderateScale(15),
+        color: '#1F2937',
+    },
+    clearButton: {
+        padding: 4,
+    },
+
+    listWrapper: { flex: 1 },
 
     card: {
         flexDirection: 'row',
@@ -443,7 +395,6 @@ const style = StyleSheet.create({
         borderRadius: 14,
         padding: 14,
         marginBottom: 16,
-
         shadowColor: '#000',
         shadowOpacity: 0.08,
         shadowRadius: 8,
@@ -451,15 +402,34 @@ const style = StyleSheet.create({
         elevation: 4,
     },
 
-    avatar: {
-        width: 46,
-        height: 46,
-        borderRadius: 23,
+    selectedCard: {
+        backgroundColor: '#DCFCE7',
+        borderColor: '#519377',
+        borderWidth: 1.5,
+    },
+
+    avatarContainer: {
         marginRight: 12,
+    },
+
+    avatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+    },
+
+    avatarPlaceholder: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#E0F2F1',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 
     textContainer: {
         flex: 1,
+        justifyContent: 'center',
     },
 
     name: {
@@ -476,7 +446,7 @@ const style = StyleSheet.create({
 
     rightContainer: {
         alignItems: 'flex-end',
-        justifyContent: 'center'
+        justifyContent: 'space-between',
     },
 
     iconRow: {
@@ -486,41 +456,17 @@ const style = StyleSheet.create({
 
     date: {
         fontSize: 12,
-        color: '#2E7D32',
-        marginTop: 8
+        color: '#519377',
+        marginTop: 8,
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: moderateScale(0),
-        paddingVertical: moderateScale(0),
-    },
-    backButton: {
-        marginTop: 2
-    },
-    headerTitle: {
-        fontSize: moderateScale(20),
-        fontWeight: '600',
-        color: '#000',
-        flex: 1,
-        textAlign: 'center',
-    },
-    avatarPlaceholder: {
-        width: moderateScale(50),
-        height: moderateScale(50),
-        borderRadius: moderateScale(35),
-        backgroundColor: '#FFD54F',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10
-    },
+
     loaderOverlay: {
+        flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        flex: 1
     },
-    //delete modal style 
+
+    // Delete Modal
     deleteModalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -584,10 +530,6 @@ const style = StyleSheet.create({
     },
     confirmDeleteButton: {
         backgroundColor: '#D32F2F',
-    },
-    deleteButtonDisabled: {
-        backgroundColor: '#FFCDD2',
-        opacity: 0.7,
     },
     confirmDeleteButtonText: {
         fontSize: 16,

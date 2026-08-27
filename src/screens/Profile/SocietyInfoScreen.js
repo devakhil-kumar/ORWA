@@ -79,7 +79,6 @@ const SocietyInfoScreen = ({ navigation }) => {
     const handleUpdate = async () => {
 
         try {
-            // Validation
             if (!societyName.trim()) {
                 dispatch(
                     showMessage({
@@ -121,6 +120,7 @@ const SocietyInfoScreen = ({ navigation }) => {
             }
 
             const societyId = societyData[0]?._id;
+            console.log("Society ID :",societyId);
             if (!societyId) {
                 dispatch(
                     showMessage({

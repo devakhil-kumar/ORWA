@@ -71,7 +71,7 @@ const ContactUs = () => {
         //     complaintType : complaintType,
         //     complaintFile :complaintProof
         // }
-        
+
         console.log("vjhgvkjvkjhbv", formData, 'payload')
 
         try {
@@ -108,8 +108,8 @@ const ContactUs = () => {
     const pickAndCrop = async (setter, options = {}) => {
         try {
             const image = await ImageCropPicker.openPicker({
-                width: options.width || 800,
-                height: options.height || 800,
+                width: options.width,
+                height: options.height,
                 cropping: true,
                 cropperCircleOverlay: options.circle || false,
                 freeStyleCropEnabled: true,

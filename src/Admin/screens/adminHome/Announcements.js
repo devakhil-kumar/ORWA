@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View, PermissionsAndroid, Platform, Alert, Linking, Image, Dimensions, Modal, ScrollView } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View, TextInput, Platform, Alert, Linking, Image, Dimensions, Modal, ScrollView } from 'react-native';
 import Feather from "@react-native-vector-icons/feather";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { moderateScale } from "react-native-size-matters";
@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { showMessage } from "../../../app/features/messageSlice";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 
 const Announcements = () => {
@@ -26,6 +27,8 @@ const Announcements = () => {
     const [editTitle, setEditTitle] = useState('');
     const [editDescription, setEditDescription] = useState('');
     const [editImage, setEditImage] = useState(null);
+    const [date, setDate] = useState(null);
+    const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     console.log(editImage, 'eeditimage++++')
     const dispatch = useDispatch();
     const route = useRoute();
@@ -37,13 +40,31 @@ const Announcements = () => {
         }, [dispatch])
     );
 
+    // Sort events by eventDate — newest first
+    const sortedEvents = [...(events || [])].sort(
+        (a, b) => new Date(b.eventDate) - new Date(a.eventDate)
+    );
 
+    const formatDate = (date) => {
+        if (!date) return '';
+        return date.toISOString().split('T')[0];
+    };
+
+    const handleDateConfirm = (selectedDate) => {
+        setDate(selectedDate);
+        setDatePickerVisible(false);
+    };
     const handleEditEvent = (event) => {
         console.log(event, 'event+++++++')
         setSelectedEvent(event);
         setEditTitle(event.title || '');
         setEditDescription(event.description || '');
-        setEditImage(event?.image); // Reset image
+        if (event.eventDate) {
+            const eventDateObj = new Date(event.eventDate);
+            setDate(isNaN(eventDateObj.getTime()) ? null : eventDateObj);
+        } else {
+            setDate(null);
+        } setEditImage(event?.image); // Reset image
         setEditModalVisible(true);
     };
 
@@ -122,9 +143,18 @@ const Announcements = () => {
             Alert.alert('Validation Error', 'Please enter a description');
             return;
         }
+        if (!date) {
+            Alert.alert('Validation Error', 'Please select a date');
+            return;
+        }
+
+        const formattedDate = formatDate(date);
+
         const formData = new FormData();
         formData.append('title', editTitle.trim());
         formData.append('description', editDescription.trim());
+        formData.append('eventDate', formattedDate);
+
         if (editImage && typeof editImage !== 'string') {
             formData.append('image', {
                 uri: editImage.uri,
@@ -163,21 +193,28 @@ const Announcements = () => {
     }
 
     const renderItem = ({ item }) => {
+        // Safe date formatting
+        const displayDate = item?.eventDate
+            ? item.eventDate.split('T')[0]
+            : 'N/A';
+
         return (
             <View style={style.card}>
                 <View style={style.iconWrapper}>
-                    <Image source={imagePath.speakerImage} style={{ width: width * 0.1 / 2, height: height * 0.1 / 5 }} />
+                    <Image
+                        source={imagePath.speakerImage}
+                        style={{ width: width * 0.1 / 2, height: height * 0.1 / 5 }}
+                    />
                 </View>
+
                 <View style={style.textContainer}>
-                    <Text style={style.name}>{item.title}</Text>
-                    <Text style={style.address}>{item.description}</Text>
+                    <Text style={style.name}>{item.title || 'Untitled'}</Text>
+                    <Text style={style.address}>{item.description || 'No description'}</Text>
                 </View>
 
                 <View style={style.rightContainer}>
-                    <Text style={style.dateText}> {new Date(item.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                    })}</Text>
+                    <Text style={style.dateText}>{displayDate}</Text>
+
                     <View style={style.iconRow}>
                         <TouchableOpacity onPress={() => handleEditEvent(item)}>
                             <Feather name="edit" size={15} color="#000" />
@@ -190,7 +227,6 @@ const Announcements = () => {
                                 style={{ marginLeft: 14 }}
                             />
                         </TouchableOpacity>
-
                     </View>
                 </View>
             </View>
@@ -226,7 +262,7 @@ const Announcements = () => {
                     </View> */}
                     <View style={style.listWrapper}>
                         <FlatList
-                            data={events}
+                            data={sortedEvents}
                             keyExtractor={(item, index) =>
                                 item?.id ? item.id.toString() : index.toString()
                             }
@@ -284,6 +320,31 @@ const Announcements = () => {
                                     editable={!updateLoading}
                                 />
                             </View>
+
+                            <Text style={style.label}>Announcement Date *</Text>
+                            <TouchableOpacity onPress={() => setDatePickerVisible(true)}>
+                                <TextInput
+                                    style={style.inputFull}
+                                    value={formatDate(date)}
+                                    placeholder="Select Date"
+                                    editable={false}
+                                    pointerEvents="none"
+                                    placeholderTextColor={'#E0E0E0'}
+                                />
+                            </TouchableOpacity>
+
+                            <DateTimePickerModal
+                                isVisible={isDatePickerVisible}
+                                mode="date"
+                                onConfirm={handleDateConfirm}
+                                onCancel={() => setDatePickerVisible(false)}
+                                maximumDate={new Date()}
+                                minimumDate={new Date(1800, 0, 1)}
+                                themeVariant="light"           // forces light theme text/controls
+                                isDarkModeEnabled={false}      // some versions also read this
+                                pickerContainerStyleIOS={{ backgroundColor: '#FFFFFF' }} // explicit bg to match
+                            />
+
                             <View style={style.inputGroup}>
                                 <Text style={style.label}>Update Image (Optional)</Text>
                                 <TouchableOpacity
@@ -310,7 +371,6 @@ const Announcements = () => {
                                 </TouchableOpacity>
                             </View>
 
-                            {/* Update Button */}
                             <TouchableOpacity
                                 style={[style.updateButton, updateLoading && style.updateButtonDisabled]}
                                 onPress={handleUpdate}
@@ -743,4 +803,12 @@ const style = StyleSheet.create({
         fontWeight: '600',
         color: '#fff',
     },
+    label: {
+        fontSize: moderateScale(16),
+        fontWeight: '600',
+        color: '#000',
+        marginBottom: moderateScale(0),
+    },
+    inputFull: { marginTop: 10, backgroundColor: '#FFF', borderRadius: 12, height: 56, paddingHorizontal: 15, marginBottom: 10, borderColor: '#C4C4C4', borderWidth: 1 },
+
 });

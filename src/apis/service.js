@@ -6,9 +6,11 @@ import {
     getresidentailByIdAdmin, getresidentailsAdmin, getSocietyAdmin, loginAPIAdmin,
     loginAPIUser, memberVerifyPayment, PaymentHistory, PaymentUpload, UpdateEventAdmin,
     updateSocietyAdmin, verifyPayment, TerminateMemberAPI, resetPasswordAPI, verifyOtpAPI,
-    forgotPasswordAPI, updateUserProfile,
+    forgotPasswordAPI, updateUserProfile, fetchResidentialFromIdPayments,
     getTerminationRequests, TerminationRequest,
-    terminateResidential, PaymentEditUpload,ReActivateMemberAPI
+    terminateResidential, PaymentEditUpload, ReActivateMemberAPI, UsersContactUsListApi,
+    ChangePasswordAdmin,
+    ChangePasswordResedential
 } from "./api";
 
 export const loginService = async userData => {
@@ -165,47 +167,56 @@ export const UploadPaymentService = async (userData, isAdmin) => {
     }
 };
 
-export const EditPaymentService = async (userData, paymentId) => {
+export const EditPaymentService = async (paymentData, paymentId) => {
     try {
         console.log("Payment ID : ", paymentId);
-        const response = await PaymentEditUpload(userData, paymentId);
+        const response = await PaymentEditUpload(paymentData, paymentId);
         console.log(response.data, 'response from service edit payment.');
-        return response; // axios wraps in .data
+        return response;
     } catch (error) {
         console.log('Error:', error?.response?.data || error.message);
         return Promise.reject(error);
     }
 };
 
-export const PaymentHistoryService = async (year, page, limit) => {
+export const PaymentHistoryService = async (page = 1, limit = 20) => {
     try {
-        const response = await PaymentHistory(year, page, limit);
-        console.log(response, 'res') 
+        const response = await PaymentHistory(page, limit);
+        console.log(response, 'res');
         return response;
     } catch (error) {
-        console.log(error, 'error')
+        console.log(error, 'error');
         return Promise.reject(error);
     }
 };
 
-export const fetchResidentialPaymentsService = async (type = 'all') => {
+export const fetchResidentialPaymentsService = async (
+    type = 'all',
+    page = 1,
+    limit = 10
+) => {
     try {
-        const response = await fetchResidentialPayments(type);
+        const response = await fetchResidentialPayments(type, page, limit);
         console.log('Payments Response:', response.data);
         return response.data;
     } catch (error) {
         console.error('Payments Error:', error);
         throw error.response?.data || { message: 'Failed to fetch payments' };
     }
-}
+};
 
-export const verifyPaymentService = async (paymentId, status, paidFrom, paidTo) => {
+export const fetchResidentialPaymentsFromIdService = async (
+    userId,
+    page = 1,
+    limit = 10
+) => {
     try {
-        const response = await verifyPayment(paymentId, status, paidFrom, paidTo);
-        console.log(response, 'response++++++++++++++=')
+        const response = await fetchResidentialFromIdPayments(userId, page, limit);
+        console.log('Payments Response:', response.data);
         return response.data;
     } catch (error) {
-        throw error.response?.data || { message: 'Failed to update payment status' };
+        console.error('Payments Error:', error);
+        throw error.response?.data || { message: 'Failed to fetch payments' };
     }
 };
 
@@ -221,12 +232,16 @@ export const getProfileService = async () => {
 
 export const updateUserProfileService = async (updatedData) => {
     try {
+        console.log('Updated profile data from slice :', updatedData);
         const response = await updateUserProfile(updatedData);
         console.log('API response for profile update:', response);
         return response.data;
     } catch (error) {
-        console.log(error);
-        throw new Error('Failed to update profile.');
+        const serverMessage = error?.response?.data?.message;
+        console.log('Failed to update profile. Status:', error?.response?.status);
+        console.log('Failed to update profile. Server data:', error?.response?.data);
+        console.log('Failed to update profile. Raw error:', error.message);
+        throw new Error(serverMessage || error.message || 'Failed to update profile.');
     }
 };
 
@@ -381,7 +396,7 @@ export const ContactusService = async (message) => {
         const response = await ContactUs(message);
         return response.data
     } catch (error) {
-        throw error.response?.data || { message: 'Failed to update payment status' };
+        throw error.response?.data || { message: 'Failed to Send Your complaint.' };
     }
 }
 
@@ -395,3 +410,39 @@ export const UserContactUsSerivce = async (formData) => {
         throw error || { message: 'Failed to Send Your complaint.' };
     }
 }
+
+export const usersContactUsListSerivce = async (status, page, limit) => {
+    try {
+        const response = await UsersContactUsListApi(status, page, limit);
+        console.log(response, 'response++++');
+        return response.data;
+    } catch (error) {
+        console.log(error, 'error hgvhjkj');
+        throw error || { message: 'Failed to get users complaint.' };
+    }
+};
+
+export const chnageAdminPasswordService = async (userData) => {
+    try {
+        const response = await ChangePasswordAdmin(userData);
+        return response;
+    } catch (error) {
+        return Promise.reject(error);
+    }
+};
+
+export const chnageResedentialPasswordService = async (userData) => {
+    try {
+        const response = await ChangePasswordResedential(userData);
+        return response;
+    } catch (error) {
+        return Promise.reject(error);
+    }
+};
+
+
+
+export const verifyPaymentService = async (paymentId, status, paidFrom, paidTo) => {
+    const response = await verifyPayment(paymentId, status, paidFrom, paidTo);
+    return response.data; 
+};

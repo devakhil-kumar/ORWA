@@ -14,7 +14,7 @@ import adminResidentialSlice from '../app/features/getResidentails';
 import adminMemberRequestsSlice from '../app/features/adminMemberRequestsSlice';
 import societyReducer from '../app/features/societySlice';
 import contactSlice from '../app/features/contactSlice';
-import userContactSerivce from '../../src/app/features/userContactSlice';
+import userContactSerivce from '../app/features/userContactSlice';
 import DeleteAcountReducer from '../app/features/deleteAcountSlice';
 import { showMessage } from "../app/features/messageSlice";
 

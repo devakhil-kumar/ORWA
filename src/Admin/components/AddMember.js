@@ -84,26 +84,6 @@ const SignatureBox = forwardRef(({ onSave, onBeginSigning, onEndSigning }, ref) 
 });
 
 // Captcha Generator
-// const generateCaptcha = () => {
-//   const num1 = Math.floor(Math.random() * 20) + 1;
-//   const num2 = Math.floor(Math.random() * 20) + 1;
-//   const operators = ['+', '-', '*'];
-//   const operator = operators[Math.floor(Math.random() * operators.length)];
-
-//   let answer;
-//   switch (operator) {
-//     case '+': answer = num1 + num2; break;
-//     case '-': answer = num1 - num2; break;
-//     case '*': answer = num1 * num2; break;
-//     default: answer = 0;
-//   }
-//   if (num1 > num2) {
-//     return { num1, num2, operator, answer };
-//   } else {
-//     return { num2, num1, operator, answer };
-//   }
-
-// };
 const generateCaptcha = () => {
   let num1 = Math.floor(Math.random() * 20) + 1;
   let num2 = Math.floor(Math.random() * 20) + 1;
@@ -150,10 +130,6 @@ export default function MembershipForm() {
       scrollRef.current.scrollTo({ y: 0, animated: true });
     }
   }, [step]);
-
-  React.useEffect(() => {
-    setSignature(""); // clear signature
-  }, [signatureType]);
 
   // Form Fields
   const [firstName, setFirstName] = useState('');
@@ -203,6 +179,13 @@ export default function MembershipForm() {
   const signatureRef = useRef(null);
   const captchaData = useMemo(() => generateCaptcha(), [step === 6]);
 
+  // FIX: this effect used to sit above the `signature`/`signatureType` state
+  // declarations, so it referenced them before they existed (TDZ error /
+  // undefined dependency). It now runs after those useState calls.
+  React.useEffect(() => {
+    setSignature(""); // clear signature
+  }, [signatureType]);
+
 
 
   // set data 
@@ -213,7 +196,7 @@ export default function MembershipForm() {
       console.log("Data from edit : ", member)
 
       //membership Nos
-      setMembershipNo(member.membershipNo);
+      setMembershipNo(member.membershipNos);
       setMembershipType(member.membershipType);
 
       setFirstName(member.firstName);
@@ -241,7 +224,7 @@ export default function MembershipForm() {
       setState(member.state);
       setPostalCode(member.postalCode);
       setCountry(member.country);
-      setFamilyMembers(member.familyMembersCount.toString());
+      setFamilyMembers(member.familyMembersCount != null ? member.familyMembersCount.toString() : '');
       setHobbies(member.hobbiesAndSkills);
       setIdProof(member.identityProofDocument);
       setAddressProof(member.addressProofDocument);
@@ -371,12 +354,14 @@ export default function MembershipForm() {
   const formatDate = (date) => {
     if (!date) return '';
 
-    // Convert string to Date if it's not already
     const d = typeof date === 'string' ? new Date(date) : date;
 
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+    // Guard against an invalid date too (e.g. bad member.dateOfBirth on edit)
+    if (isNaN(d.getTime())) return '';
+
+    const year = d.getFullYear();                              // number, no .trim()
+    const month = String(d.getMonth() + 1).padStart(2, '0');    // already a string
+    const day = String(d.getDate()).padStart(2, '0');           // already a string
 
     return `${year}-${month}-${day}`;
   };
@@ -386,8 +371,8 @@ export default function MembershipForm() {
     if (!membershipType.trim()) missing.push('• Membership Type');
     if (!firstName.trim()) missing.push('• First Name');
     if (!lastName.trim()) missing.push('• Last Name');
-    if (!relativeName.trim()) missing.push('• Relative First Name');
-    if (!relativelastName.trim()) missing.push('• Relative Last Name');
+    // if (!relativeName.trim()) missing.push('• Relative First Name');
+    // if (!relativelastName.trim()) missing.push('• Relative Last Name');
     // if (livingHere === null) missing.push('• Are you living here?');
     // if (!dob) missing.push('• Date of Birth');
     // if (!occupation.trim()) missing.push('• Occupation');
@@ -395,27 +380,12 @@ export default function MembershipForm() {
 
     if (!membershipNo.trim()) missing.push('• Membership Number');
 
-    // if (dob) {
-    //   const today = new Date();
-    //   const birthDate = new Date(dob);
-    //   const age = today.getFullYear() - birthDate.getFullYear();
-    //   const monthDiff = today.getMonth() - birthDate.getMonth();
-    //   const dayDiff = today.getDate() - birthDate.getDate();
-
-    // Adjust age if birthday hasn't occurred yet this year
-    //   const actualAge = (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) ? age - 1 : age;
-
-    //   if (actualAge < 18) {
-    //     missing.push('• Date of Birth: Must be at least 18 years old');
-    //   }
-    // }
-
     // Phone validation
-    if (!phone.trim()) {
-      missing.push('• Phone Number');
-    } else if (!/^[6-9][0-9]{9}$/.test(phone.trim())) {
-      missing.push('• Phone Number: Please enter a valid mobile number.');
-    }
+    // if (!phone.trim()) {
+    //   missing.push('• Phone Number');
+    // } else if (!/^[6-9][0-9]{9}$/.test(phone.trim())) {
+    //   missing.push('• Phone Number: Please enter a valid mobile number.');
+    // }
 
     // Email validation
     if (!email.trim()) {
@@ -435,11 +405,6 @@ export default function MembershipForm() {
     } else {
       if (!floor.trim()) missing.push('• Floor No.');
     }
-    // if (!city.trim()) missing.push('• City');
-    // if (!state.trim()) missing.push('• State');
-    // if (!postalCode.trim()) {
-    //   missing.push('• Postal Code');
-    // } else 
     // Check Postal Code only if it's provided
     if (postalCode.trim()) {
       if (!/^\d{6}$/.test(postalCode.trim())) {
@@ -461,18 +426,6 @@ export default function MembershipForm() {
       }
     }
 
-
-
-    // if (!familyMembers.trim()) {
-    //   missing.push('• No. of Family Members');
-    // } else
-    // if (!/^\d+$/.test(familyMembers.trim())) {
-    //   missing.push('• No. of Family Members: Only numbers allowed');
-    // } else if (parseInt(familyMembers.trim(), 10) === 0) {
-    //   missing.push('• No. of Family Members: Must be at least 1');
-    // } else if (parseInt(familyMembers.trim()) > 15) {
-    //   missing.push('• No. of Family Members: Must be minimum than 15');
-    // }
     if (!scheme) {
       missing.push('• Scheme');
     }
@@ -508,12 +461,6 @@ export default function MembershipForm() {
   };
 
   const handleSubmit = async () => {
-    // const userAnswer = parseInt(captcha, 10);
-    // if (isNaN(userAnswer) || userAnswer !== captchaData.answer) {
-    //   Alert.alert('Error', 'Incorrect captcha answer. Please try again.');
-    //   return;
-    // }
-
     const allMissing = [
       ...validateStep1(),
       ...validateStep2(),
@@ -660,17 +607,22 @@ export default function MembershipForm() {
     </View>
   );
 
+  const getFileUri = (file) => {
+    if (!file) return null;
+    return typeof file === 'string' ? file : file.uri;
+  };
+
   const UploadBox = ({ title, file, onPress, hint }) => (
     <TouchableOpacity style={styles.uploadBox} onPress={onPress}>
       {file ? (
-        <Image source={{ uri: isEdit ? file : file.uri }} style={styles.uploadedImage} resizeMode="cover" />
+        <Image source={{ uri: getFileUri(file) }} style={styles.uploadedImage} resizeMode="contain" />
       ) : (
         <>
           <Ionicons name='cloud-upload-outline' size={40} color={'#666'} />
           <Text style={styles.uploadText}>Choose File</Text>
         </>
       )}
-      {file && <Text style={styles.fileName}>{file.name}</Text>}
+      {file && typeof file === 'object' && <Text style={styles.fileName}>{file.name}</Text>}
       <Text style={styles.hint}>{hint || title}</Text>
     </TouchableOpacity>
   );
@@ -716,11 +668,11 @@ export default function MembershipForm() {
                 <Text style={styles.label}>Last Name *</Text>
                 <TextInput style={styles.input} placeholder="Last" value={lastName} onChangeText={setLastName} placeholderTextColor={'#E0E0E0'} />
 
-                <Text style={styles.label}>Father/Husband/Mother/Wife's Name *</Text>
+                <Text style={styles.label}>Father/Husband/Mother/Wife's Name</Text>
                 <TextInput style={styles.inputFull} placeholder="First" placeholderTextColor={'#E0E0E0'} value={relativeName} onChangeText={setRelativeName} />
                 <Text style={styles.label}>Middle Name </Text>
                 <TextInput style={styles.input} placeholder="Middle" value={relativemiddleName} onChangeText={setrelativeMiddleName} placeholderTextColor={'#E0E0E0'} />
-                <Text style={styles.label}>Last Name *</Text>
+                <Text style={styles.label}>Last Name</Text>
                 <TextInput style={styles.input} placeholder="Last" value={relativelastName} onChangeText={setrelativeLastName} placeholderTextColor={'#E0E0E0'} />
 
                 <Text style={styles.label}>Membership No. *</Text>
@@ -758,11 +710,14 @@ export default function MembershipForm() {
                   onCancel={() => setDatePickerVisible(false)}
                   maximumDate={new Date()}
                   minimumDate={new Date(1800, 0, 1)}
+                  themeVariant="light"           // forces light theme text/controls
+                  isDarkModeEnabled={false}      // some versions also read this
+                  pickerContainerStyleIOS={{ backgroundColor: '#FFFFFF' }} // explicit bg to match
                 />
                 <Text style={styles.label}>Occupation</Text>
                 <TextInput style={styles.inputFull} placeholder="Occupation" placeholderTextColor={'#E0E0E0'} value={occupation} onChangeText={setOccupation} />
 
-                <Text style={styles.label}>Phone Number *</Text>
+                <Text style={styles.label}>Phone Number</Text>
                 <TextInput style={styles.input} placeholder="Phone *" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholderTextColor={'#E0E0E0'} />
 
                 <Text style={styles.label}>Email *</Text>
@@ -776,7 +731,6 @@ export default function MembershipForm() {
                 <TextInput style={styles.inputFull} placeholder="Flat/Villa/Plot No." placeholderTextColor={'#E0E0E0'} value={flatNo} onChangeText={setFlatNo} />
 
                 <Text style={styles.label}>Floor *</Text>
-                {/* <TextInput style={styles.inputFull} placeholder="Floor" placeholderTextColor={'#E0E0E0'} value={floor} onChangeText={setFloor} /> */}
                 <TextInput
                   style={styles.inputFull}
                   placeholder={
@@ -964,7 +918,7 @@ export default function MembershipForm() {
                   <>
                     {signature && (
                       <View style={{ marginVertical: 10 }}>
-                        <Image source={{ uri: signature }} style={{ width: '100%', height: 100, borderRadius: 12 }} resizeMode="contain" />
+                        <Image source={{ uri: getFileUri(signature) }} style={{ width: '100%', height: 100, borderRadius: 12 }} resizeMode="contain" />
                         <Text style={{ textAlign: 'center', color: 'green', marginTop: 5 }}>✓ Signature captured</Text>
                       </View>
                     )}
@@ -1027,7 +981,7 @@ const styles = StyleSheet.create({
   content: { padding: 0 },
   label: { fontSize: 16, fontWeight: '600', marginVertical: 10, color: '#1A1A1A' },
   row: { flexDirection: 'row', marginBottom: 10 },
-  input: { backgroundColor: '#FFF', borderRadius: 12, height: 56, paddingHorizontal: 15, borderColor: '#C4C4C4', borderWidth: 1 },
+  input: { backgroundColor: '#FFF', borderRadius: 12, height: 56, paddingHorizontal: 15, borderColor: '#C4C4C4', borderWidth: 1, color: '#000' },
   inputFull: { backgroundColor: '#FFF', borderRadius: 12, height: 56, paddingHorizontal: 15, marginBottom: 10, borderColor: '#C4C4C4', borderWidth: 1 },
   dropdown: { borderRadius: 12, height: 56, borderColor: '#C4C4C4', backgroundColor: '#FFF' },
   dropdownList: { borderRadius: 12, borderColor: '#C4C4C4', height: 120, alignSelf: 'center' },
@@ -1038,7 +992,7 @@ const styles = StyleSheet.create({
   radioLabel: { fontSize: 16 },
   uploadGrid: { gap: 20 },
   uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding: 30, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed' },
-  uploadedImage: { width: 200, height: 120, borderRadius: 12, marginBottom: 10 },
+  uploadedImage: { width: 340, height: 200, borderRadius: 12, marginBottom: 10 },
   uploadText: { fontSize: 14, color: '#666', marginTop: 10 },
   fileName: { color: '#519377', fontSize: 12, marginTop: 8 },
   hint: { fontSize: 12, color: '#999', marginTop: 10 },

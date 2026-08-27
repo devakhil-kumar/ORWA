@@ -1,13 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
   FlatList,
-  ScrollView,
-  SectionList,
   ActivityIndicator,
   Image,
 } from 'react-native';
@@ -15,56 +12,53 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { moderateScale } from 'react-native-size-matters';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import Feather from '@react-native-vector-icons/feather';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchPaymentHistory } from '../app/features/paymentHistorySlice';
+import {
+  fetchPaymentHistory,
+  resetPaymentHistoryState,
+} from '../app/features/paymentHistorySlice';
 import { useNavigation } from '@react-navigation/native';
-const { width } = Dimensions.get('window');
 
-const months = ['Oct 2025', 'Nov 2025', 'Dec 2025'];
-const paymentStatus = ['All', 'Paid', 'Pending', 'Failed'];
-const DATA = [
-  {
-    title: 'Today',
-    data: [
-      {
-        name: 'Maintenance Bill',
-        month: 'Oct 2025',
-        amount: '₹1150.00',
-        status: 'Pending',
-        statusColor: '#FF9900',
-      },
-      {
-        name: 'Bill',
-        month: 'Oct 2025',
-        amount: '₹1150.00',
-        status: 'Failed',
-        statusColor: '#FF3B30',
-      },
-    ],
-  },
-];
+const PAGE_LIMIT = 20;
 
-const SectionItem = (item) => {
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const SectionItem = ({ item }) => {
   const navigation = useNavigation();
+
   const handleNavigation = () => {
-    console.log(item, 'item from user payment history page')
-    navigation.navigate('UserHistoryPaymentsDetails', item.item)
-  }
+    navigation.navigate('UserHistoryPaymentsDetails', item);
+  };
+
+  const fromDate = formatDate(item?.paidFrom);
+  const toDate = formatDate(item?.paidTo);
+
+  const name =
+    item?.residentialId?.name || item?.residentialName || 'Resident';
+  const address =
+    item?.residentialId?.address || item?.residentialAddress || '';
+  const photo =
+    item?.residentialId?.applicantPhoto || item?.residentialPhoto || null;
+
   return (
     <TouchableOpacity
-      key={item.id}
       style={styles.card}
       activeOpacity={0.7}
       onPress={handleNavigation}
     >
       <View style={styles.cardLeft}>
-        {item?.residentialId?.applicantPhoto ? (
+        {photo ? (
           <View style={styles.avatar}>
-            <Image
-              source={item?.residentialId?.applicantPhoto}
-              style={styles.avatarImage}
-            />
+            <Image source={{ uri: photo }} style={styles.avatarImage} />
           </View>
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder]}>
@@ -72,82 +66,103 @@ const SectionItem = (item) => {
           </View>
         )}
         <View style={styles.cardInfo}>
-          <Text style={styles.residentName}>{item?.item?.residentialId.name}</Text>
-          <Text style={styles.residentAddress}>{item?.item?.residentialId.address}</Text>
+          <Text style={styles.residentName}>{name}</Text>
+          {!!address && (
+            <Text style={styles.residentAddress}>{address}</Text>
+          )}
+          {(fromDate || toDate) && (
+            <Text style={styles.paymentPeriod}>
+              {fromDate}
+              {fromDate && toDate ? ' - ' : ''}
+              {toDate}
+            </Text>
+          )}
         </View>
       </View>
       <View style={styles.receiptIconContainer}>
-        <Image
-          source={{ uri:item?.item?.paymentScreenshot }}
-          onError={(e) => console.log('Image error:', e.nativeEvent.error)}  // ✅ debug
-          onLoad={() => console.log('Image loaded!')}
-          style={styles.receiptIcon}
-          resizeMode="contain"
-        />
+        {item?.paymentScreenshot ? (
+          <Image
+            source={{ uri: item.paymentScreenshot }}
+            style={styles.receiptIcon}
+            resizeMode="contain"
+            onError={(e) =>
+              console.log('Image error:', e.nativeEvent.error)
+            }
+          />
+        ) : null}
       </View>
     </TouchableOpacity>
   );
 };
 
-
 const PaymentHistory = () => {
-  const [selectedMonth, setSelectedMonth] = useState('Oct 2025');
-  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState('All');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const onEndReachedCalledDuringMomentum = useRef(true);
+
   const navigation = useNavigation();
-
-
   const dispatch = useDispatch();
+
   const {
-    data,
+    data = [],
     loading,
     error,
-    page,
-    totalPages,
-    total,
+    page = 1,
+    totalPages = 1,
   } = useSelector((state) => state.paymentHistory);
 
+  // Initial load – page 1 only
   useEffect(() => {
-    dispatch(fetchPaymentHistory({ year: new Date().getFullYear() , page: 1, limit: 50 }));
+    dispatch(resetPaymentHistoryState());
+    dispatch(fetchPaymentHistory({ page: 1, limit: PAGE_LIMIT }));
   }, [dispatch]);
+
+  const handleLoadMore = useCallback(() => {
+    if (onEndReachedCalledDuringMomentum.current) return;
+    if (loading || isFetchingMore) return;
+    if (!totalPages || page >= totalPages) return;
+
+    onEndReachedCalledDuringMomentum.current = true;
+    setIsFetchingMore(true);
+
+    dispatch(fetchPaymentHistory({ page: page + 1, limit: PAGE_LIMIT })).finally(
+      () => setIsFetchingMore(false)
+    );
+  }, [dispatch, loading, isFetchingMore, page, totalPages]);
 
   const filteredData = data.filter((item) => {
     if (selectedFilter === 'all') return true;
-    return item.status.toLowerCase() === selectedFilter;
+    return item.status?.toLowerCase() === selectedFilter;
   });
-
-  console.log(filteredData, 'cilbfdsvf')
 
   const filters = [
     { key: 'all', label: 'All' },
     { key: 'pending', label: 'Pending' },
-    { key: 'verified', label: 'paid' },
-    { key: 'rejected', label: 'failed' },
+    { key: 'verified', label: 'Paid' },
+    { key: 'rejected', label: 'Failed' },
   ];
 
-  if (loading) {
-    return <View style={styles.loaderOverlay}>
-      <ActivityIndicator size="large" color="#519377" />
-    </View>
-  }
+  const handleGoback = () => navigation.goBack();
 
-  const handleGoback = () => {
-    navigation.goBack();
-  }
-
-  console.log(data, 'data')
-
+  const renderFooter = () => {
+    if (!isFetchingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#519377" />
+      </View>
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', '0']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleGoback}>
           <Ionicons name="chevron-back" size={28} color="#519377" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Payment History</Text>
-        <View style={{ width: '20%' }} />
+        <View style={{ width: 28 }} />
       </View>
-      {/* </ScrollView> */}
+
       <View style={styles.container}>
         {/* Filter Tabs */}
         <View style={styles.filterContainer}>
@@ -161,24 +176,41 @@ const PaymentHistory = () => {
               onPress={() => setSelectedFilter(filter.key)}
             >
               <Text
-                style=
-                {[styles.filterText,
-                selectedFilter === filter.key && styles.activeFilterText,]}
-
+                style={[
+                  styles.filterText,
+                  selectedFilter === filter.key && styles.activeFilterText,
+                ]}
               >
                 {filter.label}
               </Text>
               {filter.key !== 'all' && (
-                <Text style={[styles.countText,
-                selectedFilter === filter.key && styles.activeCountText,]}>
-                  ({data.filter((i) => i.status.toLowerCase() === filter.key).length})
+                <Text
+                  style={[
+                    styles.countText,
+                    selectedFilter === filter.key && styles.activeCountText,
+                  ]}
+                >
+                  (
+                  {
+                    data.filter(
+                      (i) => i.status?.toLowerCase() === filter.key
+                    ).length
+                  }
+                  )
                 </Text>
               )}
             </TouchableOpacity>
           ))}
         </View>
-        {loading ? (
-          <Text style={styles.loadingText}>Loading...</Text>
+
+        {loading && data.length === 0 ? (
+          <View style={styles.loaderOverlay}>
+            <ActivityIndicator size="large" color="#519377" />
+          </View>
+        ) : error ? (
+          <Text style={styles.emptyText}>
+            {typeof error === 'string' ? error : error?.message || 'Error'}
+          </Text>
         ) : filteredData.length === 0 ? (
           <Text style={styles.emptyText}>No payments found</Text>
         ) : (
@@ -186,7 +218,13 @@ const PaymentHistory = () => {
             data={filteredData}
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => <SectionItem item={item} />}
-            contentContainerStyle={{ padding: 20 }}
+            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.4}
+            onMomentumScrollBegin={() => {
+              onEndReachedCalledDuringMomentum.current = false;
+            }}
+            ListFooterComponent={renderFooter}
           />
         )}
       </View>
@@ -203,180 +241,27 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#F9FAFB',
-
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: moderateScale(15),
     paddingTop: moderateScale(10),
     paddingBottom: moderateScale(15),
-    justifyContent: "space-between"
+    justifyContent: 'space-between',
   },
   headerText: {
     fontSize: moderateScale(20),
     color: '#111827',
-    marginStart: moderateScale(16),
     fontWeight: '700',
-  },
-  // month List category
-  monthCategoryContainer: {
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  monthCategoryList: {
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(8),
-  },
-
-  monthItem: {
-    paddingVertical: moderateScale(8),
-    paddingHorizontal: moderateScale(16),
-    borderRadius: 30,
-    marginRight: moderateScale(12),
-  },
-
-  activeMonth: {
-    backgroundColor: '#A9A9A9',
-    shadowColor: '#7C8CF3',
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-  },
-
-  inactiveMonth: {
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#E4E6EB',
-  },
-
-  monthText: {
-    fontSize: moderateScale(16),
-    fontWeight: '600',
-  },
-
-  activeText: {
-    color: '#FFF',
-  },
-
-  inactiveText: {
-    color: '#3A3A3A',
-  },
-  totalSpentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: moderateScale(20),
-  },
-  totalSpentText: {
-    fontSize: moderateScale(16),
-    color: '#000000',
-    fontWeight: '500',
-  },
-  totalSpentRupeeText: {
-    fontSize: moderateScale(36),
-    color: '#000000',
-    fontWeight: '500',
-  },
-  label: {
-    fontSize: moderateScale(16),
-    color: '#fff',
-    marginStart: moderateScale(8),
-    fontWeight: '500',
-  },
-  exportContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#519377',
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(8),
-    borderRadius: moderateScale(20),
-  },
-
-  // payment status category
-  paymentStatusCategoryContainer: {
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  paymentStatusCategoryList: {
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(8),
-  },
-
-  paymentStatusItem: {
-    paddingVertical: moderateScale(8),
-    paddingHorizontal: moderateScale(24),
-    borderRadius: 30,
-    marginRight: moderateScale(12),
-  },
-
-  activePaymentStatus: {
-    backgroundColor: '#519377',
-    shadowColor: '#519377',
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-  },
-
-  inactivePaymentStatus: {
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#E4E6EB',
-  },
-
-  paymentStatusText: {
-    fontSize: moderateScale(16),
-    fontWeight: '600',
-  },
-
-  paymentStatusActiveText: {
-    color: '#FFF',
-  },
-
-  paymentStatusInactiveText: {
-    color: '#3A3A3A',
-  },
-  sectionHeader: {
-    fontSize: moderateScale(20),
-    fontWeight: '600',
-    marginTop: moderateScale(16),
-    marginBottom: moderateScale(8),
-  },
-  leftRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: moderateScale(10),
-  },
-
-  iconCircle: {
-    width: 45,
-    height: 45,
-    borderRadius: 100,
-    backgroundColor: '#E8F9EE',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  title: {
-    fontSize: moderateScale(16),
-    fontWeight: '700',
-    color: '#000',
-  },
-
-  month: {
-    fontSize: moderateScale(14),
-    color: '#666',
-    marginTop: moderateScale(4),
-  },
-
-  amount: {
-    fontSize: moderateScale(16),
-    fontWeight: '700',
-    color: '#000',
   },
   loaderOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1
+    flex: 1,
+  },
+  footerLoader: {
+    paddingVertical: moderateScale(16),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   residentName: {
     fontSize: moderateScale(16),
@@ -401,7 +286,6 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   avatarPlaceholder: {
-
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -438,7 +322,6 @@ const styles = StyleSheet.create({
   filterContainer: {
     flexDirection: 'row',
     backgroundColor: '#F9FAFB',
-
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
@@ -474,16 +357,16 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 12,
   },
-  loadingText: {
-    textAlign: 'center',
-    marginTop: 50,
-    fontSize: 16,
-    color: '#666',
-  },
   emptyText: {
     textAlign: 'center',
     marginTop: 50,
     fontSize: 16,
     color: '#999',
+  },
+  paymentPeriod: {
+    fontSize: moderateScale(13),
+    color: '#519377',
+    fontWeight: '500',
+    marginTop: moderateScale(4),
   },
 });

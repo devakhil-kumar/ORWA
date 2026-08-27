@@ -12,6 +12,7 @@ import {
     Image,
     ActivityIndicator,
     Alert,
+    Platform, // ✅ added
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { moderateScale } from 'react-native-size-matters';
@@ -20,7 +21,6 @@ import Feather from '@react-native-vector-icons/feather';
 import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import { useDispatch, useSelector } from 'react-redux';
-import { State } from 'react-native-gesture-handler';
 import { uploadPaymentThunk, editPaymentThunk } from '../app/features/paymentUploadSlice';
 import { showMessage } from '../app/features/messageSlice';
 import FontAwesome from '@react-native-vector-icons/fontawesome';
@@ -59,10 +59,10 @@ const UploadBox = ({ title, file, onPress, hint }) => (
             <>
                 <Ionicons name='cloud-upload-outline' size={40} color={'#666'} />
                 <Text style={styles.hint}>{hint || title}</Text>
-                <Text style={styles.uploadText}>JPG,PNG or PDF (Max 5MB)</Text>
+                <Text style={styles.uploadText}>JPG, PNG or PDF (Max 5MB)</Text>
             </>
         )}
-        {file && <Text style={styles.fileName}>{file.name}</Text>}
+        {file && <Text style={styles.fileName}>{file.name || 'payment_screenshot'}</Text>}
     </TouchableOpacity>
 );
 
@@ -71,16 +71,12 @@ const CustomInput = ({ placeholder, type, style, isEditable = true }) => {
 
     return (
         <View style={[styles.textInputContainer, style]}>
-            {/* Left Icon */}
-
             {type === 'person' && (
                 <Ionicons name="person" size={28} color="#9CA3AF" />
             )}
-
             {type === 'email' && (
                 <MaterialDesignIcons name="gmail" size={28} color="#9CA3AF" />
             )}
-
             {type === 'payment' && (
                 <MaterialDesignIcons name="currency-rupee" size={28} color="#9CA3AF" />
             )}
@@ -112,8 +108,7 @@ const SubmitPayment = ({ route }) => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [description, setDescription] = useState('');
-    const { residentials: userList = [], loading: loadingUsers } = useSelector((state) => state.residential); console.log('userList:', userList);
-    console.log('full residential state:', useSelector((state) => state.residential));
+    const { residentials: userList = [], loading: loadingUsers } = useSelector((state) => state.residential);
     const [existingScreenshot, setExistingScreenshot] = useState(null);
 
     const [fromDate, setFromDate] = useState(null);
@@ -121,43 +116,49 @@ const SubmitPayment = ({ route }) => {
     const [showFromPicker, setShowFromPicker] = useState(false);
     const [showToPicker, setShowToPicker] = useState(false);
 
-    useFocusEffect(
-        useCallback(() => {
-            if (isAdmin) {
-                console.log("Payment :", payment);
-                dispatch(fetchAdminResidentials())
-                    .unwrap()
-                    .then(() => checkIsEdit())
-                    .catch((err) => console.log('API error:', err));
-            }
-        }, [dispatch, isAdmin])
-    );
-
-
-    const checkIsEdit = () => {
+    const checkIsEdit = (freshUserList = []) => {
         if (!isEdit || !payment) return;
-        const matchedUser = userList.find((u) => u._id === payment?.residentialId);
-        setSelectedUser(matchedUser);
-        if (!matchedUser) {
+
+        const matchedUser = freshUserList.find((u) => u._id === payment?.residentialId);
+        setSelectedUser(matchedUser ?? null);
+
+        if (!matchedUser && isAdmin) {
+            console.warn('Residential user not found for payment, going back.');
             navigation.goBack();
-        };
+            return;
+        }
+
         setFromDate(payment?.paidFrom ? new Date(payment.paidFrom) : null);
         setToDate(payment?.paidTo ? new Date(payment.paidTo) : null);
         setDescription(payment?.remarks || '');
 
-        // ✅ Normalize URL string to { uri, name } object
         if (payment?.paymentScreenshot) {
             const url = payment.paymentScreenshot;
-            setExistingScreenshot({ uri: url, name: url.split('/').pop() });
+            const name = url.split('/').pop() || 'payment_screenshot'; // ✅ fallback name
+            setExistingScreenshot({ uri: url, name });
         }
 
-        setIdProof(null); // user must pick new image to replace
+        setIdProof(null);
         console.log("Payment screenshot:", payment?.paymentScreenshot);
-
-
     };
 
-
+    useFocusEffect(
+        useCallback(() => {
+            if (isAdmin) {
+                dispatch(fetchAdminResidentials())
+                    .unwrap()
+                    .then((result) => {
+                        // ✅ Pass fresh resolved list directly — avoids stale Redux closure
+                        const freshList = result?.data ?? result ?? [];
+                        if (isEdit) checkIsEdit(freshList);
+                    })
+                    .catch((err) => console.log('API error:', err));
+            } else if (isEdit) {
+                // ✅ Non-admin edit: populate fields without needing user list
+                checkIsEdit([]);
+            }
+        }, [dispatch, isAdmin, isEdit]) // ✅ isEdit added to deps
+    );
 
     const handleSubmit = async () => {
         if (isAdmin && !selectedUser?._id) {
@@ -181,53 +182,40 @@ const SubmitPayment = ({ route }) => {
             return;
         }
 
-
-
         const fromData = new FormData();
-        if (isAdmin && selectedUser?._id != null) fromData.append('residentialId', selectedUser?._id);
+        if (isAdmin && selectedUser?._id != null) fromData.append('residentialId', selectedUser._id);
         if (idProof) fromData.append('paymentScreenshot', idProof);
         if (fromDate) fromData.append('paidFrom', fromDate.toISOString());
         if (toDate) fromData.append('paidTo', toDate.toISOString());
         if (description.trim()) fromData.append('remarks', description.trim());
 
-        console.log(fromData, 'formadata=====')
         try {
-
-            const response = await dispatch(uploadPaymentThunk({ userData: fromData, isAdmin }))
+            const response = await dispatch(uploadPaymentThunk({ userData: fromData, isAdmin }));
             console.log("Response : ", response);
 
             if (response.meta.requestStatus === 'fulfilled') {
-                dispatch(
-                    showMessage({
-                        type: 'success',
-                        text: response?.payload?.message || 'Payment uploaded successfully. Pending verification.',
-                    })
-                );
-
+                dispatch(showMessage({
+                    type: 'success',
+                    text: response?.payload?.message || 'Payment uploaded successfully. Pending verification.',
+                }));
                 setFromDate(null);
                 setToDate(null);
-                setDescription(null);
+                setDescription('');
                 setIdProof(null);
-                navigation.goBack()
+                navigation.goBack();
             } else {
                 dispatch(showMessage({
                     type: 'error',
-                    text: response?.payload?.message || 'Error while submit payment.',
+                    text: response?.payload?.message || 'Error while submitting payment.',
                 }));
             }
-
-
         } catch (error) {
-            dispatch(
-                showMessage({
-                    type: 'error',
-                    text: error || 'Error while submit payment.',
-                })
-            );
-
+            dispatch(showMessage({
+                type: 'error',
+                text: error?.message || 'Error while submitting payment.',
+            }));
         }
     };
-
 
     const handleEditSubmit = async () => {
         if (isAdmin && !selectedUser?._id) {
@@ -253,13 +241,16 @@ const SubmitPayment = ({ route }) => {
 
         console.log('payment._id:', payment?._id);
 
-        const isLocalFile = (file) =>
-            file?.uri?.startsWith('http://');
+        // ✅ Local RN image picker files use file:// not http://
+        const isLocalFile = (file) => file?.uri?.startsWith('file://');
 
-        const fileToUpload = idProof ?? (isLocalFile(existingScreenshot) ? existingScreenshot : null);
+        // ✅ New pick always takes priority; only re-upload existing if it's a local file
+        const fileToUpload = idProof
+            ? idProof
+            : (existingScreenshot && isLocalFile(existingScreenshot) ? existingScreenshot : null);
 
         const fromData = new FormData();
-        if (isAdmin && selectedUser?._id != null) fromData.append('residentialId', selectedUser?._id);
+        if (isAdmin && selectedUser?._id != null) fromData.append('residentialId', selectedUser._id);
         if (fileToUpload) {
             console.log("Screenshot : ", fileToUpload);
             fromData.append('paymentScreenshot', fileToUpload);
@@ -268,18 +259,22 @@ const SubmitPayment = ({ route }) => {
         if (toDate) fromData.append('paidTo', toDate.toISOString());
         if (description.trim()) fromData.append('remarks', description.trim());
 
-        console.log(fromData, 'formadata=====')
-
         try {
-            const response = await dispatch(editPaymentThunk({ userData: fromData, paymentId: payment?._id })).unwrap();
+            const response = await dispatch(
+                editPaymentThunk({ paymentData: fromData, paymentId: payment?._id })
+            ).unwrap();
+
             console.log("Print edit response :", response);
             dispatch(showMessage({ type: 'success', text: response?.message || 'Edited!' }));
-            setDescription(null);
+            setDescription('');
             setIdProof(null);
             navigation.popTo('PaymentHistory');
 
         } catch (error) {
-            dispatch(showMessage({ type: 'error', text: error + ",Please Try Again." || 'Edit failed.' }));
+            dispatch(showMessage({
+                type: 'error',
+                text: error?.message || 'Edit failed. Please Try Again.'
+            }));
         }
     };
 
@@ -289,28 +284,25 @@ const SubmitPayment = ({ route }) => {
     };
 
     if (loading) {
-        return <View style={styles.loaderOverlay}>
-            <ActivityIndicator size="large" color="#519377" />
-        </View>
+        return (
+            <View style={styles.loaderOverlay}>
+                <ActivityIndicator size="large" color="#519377" />
+            </View>
+        );
     }
 
     const handleHistory = () => {
-        navigation.navigate('UserHistoryPayments')
-    }
+        navigation.navigate('UserHistoryPayments');
+    };
 
     const handlegoBack = () => {
         navigation.goBack();
-    }
-
-
+    };
 
     const formatDate = (date) => {
         if (!date) return 'Select Date';
-
         const d = date instanceof Date ? date : new Date(date);
-
         if (isNaN(d.getTime())) return 'Select Date';
-
         return d.toLocaleDateString('en-US', {
             day: '2-digit',
             month: 'short',
@@ -335,33 +327,29 @@ const SubmitPayment = ({ route }) => {
         }
     };
 
-
-
     return (
-        <SafeAreaView style={styles.container} edges={['top', '0']}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={handlegoBack}>
                     <Ionicons name="chevron-back" size={28} color="#519377" />
                 </TouchableOpacity>
                 <Text style={styles.headerText}>{isEdit ? "Edit Payment" : "Submit Payment"}</Text>
-                {/* <View style={{ width: '10%' }} /> */}
-                {isAdmin ? <View style={{ width: 27 }} /> : (<TouchableOpacity onPress={handleHistory}>
-                    <FontAwesome name="history" size={27} color='#519377' />
-                </TouchableOpacity>)}
+                {isAdmin ? (
+                    <View style={{ width: 27 }} />
+                ) : (
+                    <TouchableOpacity onPress={handleHistory}>
+                        <FontAwesome name="history" size={27} color='#519377' />
+                    </TouchableOpacity>
+                )}
             </View>
+
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 style={{ flex: 1, backgroundColor: '#F9FAFB80', padding: 16 }}
             >
                 {isAdmin ? (
-                    // ── Admin View: User Dropdown ──
                     <View style={styles.profileCard}>
-                        <Text
-                            style={[
-                                styles.label,
-                                { color: 'black', marginBottom: moderateScale(8) },
-                            ]}
-                        >
+                        <Text style={[styles.label, { color: 'black', marginBottom: moderateScale(8) }]}>
                             Select User
                         </Text>
                         <TouchableOpacity
@@ -387,11 +375,11 @@ const SubmitPayment = ({ route }) => {
                                     showsVerticalScrollIndicator={false}
                                 >
                                     {userList.map((u) => (
-                                        <TouchableOpacity key={u._id}
+                                        <TouchableOpacity
+                                            key={u._id}
                                             style={[
                                                 styles.dropdownItem,
-                                                selectedUser?._id === u._id &&
-                                                styles.dropdownItemActive,
+                                                selectedUser?._id === u._id && styles.dropdownItemActive,
                                             ]}
                                             onPress={() => {
                                                 setSelectedUser(u);
@@ -399,19 +387,11 @@ const SubmitPayment = ({ route }) => {
                                             }}
                                         >
                                             <View style={styles.dropdownAvatar}>
-                                                <Ionicons
-                                                    name="person"
-                                                    size={20}
-                                                    color="#000"
-                                                />
+                                                <Ionicons name="person" size={20} color="#000" />
                                             </View>
                                             <View>
-                                                <Text style={styles.dropdownItemText}>
-                                                    {u.name}
-                                                </Text>
-                                                <Text style={styles.dropdownItemSub}>
-                                                    Flat No. : {u.flatNumber}
-                                                </Text>
+                                                <Text style={styles.dropdownItemText}>{u.name}</Text>
+                                                <Text style={styles.dropdownItemSub}>Flat No. : {u.flatNumber}</Text>
                                             </View>
                                         </TouchableOpacity>
                                     ))}
@@ -419,45 +399,27 @@ const SubmitPayment = ({ route }) => {
                             </View>
                         )}
 
-                        {/* Show selected user's fields below */}
                         {selectedUser && (
                             <>
-                                <Text
-                                    style={[
-                                        styles.label,
-                                        { color: 'black', marginTop: moderateScale(16) },
-                                    ]}
-                                >
+                                <Text style={[styles.label, { color: 'black', marginTop: moderateScale(16) }]}>
                                     Name
                                 </Text>
                                 <CustomInput
                                     placeholder={selectedUser?.name}
                                     type={'person'}
                                     style={{ marginTop: moderateScale(6) }}
-                                    value={selectedUser?.name}
                                     isEditable={false}
                                 />
-                                <Text
-                                    style={[
-                                        styles.label,
-                                        { color: 'black', marginTop: moderateScale(16) },
-                                    ]}
-                                >
+                                <Text style={[styles.label, { color: 'black', marginTop: moderateScale(16) }]}>
                                     Email
                                 </Text>
                                 <CustomInput
                                     isEditable={false}
                                     placeholder={selectedUser?.email}
-                                    value={selectedUser?.email}
                                     type={'email'}
                                     style={{ marginTop: moderateScale(6) }}
                                 />
-                                <Text
-                                    style={[
-                                        styles.label,
-                                        { color: 'black', marginTop: moderateScale(16) },
-                                    ]}
-                                >
+                                <Text style={[styles.label, { color: 'black', marginTop: moderateScale(16) }]}>
                                     Description
                                 </Text>
                                 <TextInput
@@ -474,15 +436,11 @@ const SubmitPayment = ({ route }) => {
                         )}
                     </View>
                 ) : (
-                    // ── Normal User View ──
                     <View style={styles.profileCard}>
                         <View style={styles.nameRow}>
                             <View style={styles.iconCircle}>
                                 {user?.profileImage ? (
-                                    <Image
-                                        source={{ uri: user.profileImage }}
-                                        style={styles.avatar}
-                                    />
+                                    <Image source={{ uri: user.profileImage }} style={styles.avatar} />
                                 ) : (
                                     <View style={styles.avatarPlaceholder}>
                                         <Ionicons name="person" size={30} color="#000" />
@@ -494,43 +452,25 @@ const SubmitPayment = ({ route }) => {
                                 <Text style={styles.label}>{user?.flatNumber}</Text>
                             </View>
                         </View>
-                        <Text
-                            style={[
-                                styles.label,
-                                { color: 'black', marginTop: moderateScale(16) },
-                            ]}
-                        >
+                        <Text style={[styles.label, { color: 'black', marginTop: moderateScale(16) }]}>
                             Name
                         </Text>
                         <CustomInput
                             placeholder={user?.name}
                             type={'person'}
                             style={{ marginTop: moderateScale(6) }}
-                            value={user?.name}
                             isEditable={false}
                         />
-                        <Text
-                            style={[
-                                styles.label,
-                                { color: 'black', marginTop: moderateScale(16) },
-                            ]}
-                        >
+                        <Text style={[styles.label, { color: 'black', marginTop: moderateScale(16) }]}>
                             Email
                         </Text>
                         <CustomInput
                             isEditable={false}
                             placeholder={user?.email}
-                            value={user?.email}
                             type={'email'}
                             style={{ marginTop: moderateScale(6) }}
                         />
-
-                        <Text
-                            style={[
-                                styles.label,
-                                { color: 'black', marginTop: moderateScale(16) },
-                            ]}
-                        >
+                        <Text style={[styles.label, { color: 'black', marginTop: moderateScale(16) }]}>
                             Description
                         </Text>
                         <TextInput
@@ -546,11 +486,8 @@ const SubmitPayment = ({ route }) => {
                     </View>
                 )}
 
-
-
                 {/* Date Pickers */}
                 <View style={styles.dateRow}>
-                    {/* From Date */}
                     <View style={styles.dateGroup}>
                         <Text style={styles.dateLabel}>From</Text>
                         <TouchableOpacity
@@ -564,10 +501,8 @@ const SubmitPayment = ({ route }) => {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Divider */}
                     <View style={styles.dateDivider} />
 
-                    {/* To Date */}
                     <View style={styles.dateGroup}>
                         <Text style={styles.dateLabel}>To</Text>
                         <TouchableOpacity
@@ -582,7 +517,6 @@ const SubmitPayment = ({ route }) => {
                     </View>
                 </View>
 
-                {/* From Date Picker */}
                 {showFromPicker && (
                     <DateTimePicker
                         value={fromDate || new Date()}
@@ -590,10 +524,10 @@ const SubmitPayment = ({ route }) => {
                         display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                         onChange={handleFromDateChange}
                         maximumDate={toDate || undefined}
+                        themeVariant="light"
                     />
                 )}
 
-                {/* To Date Picker */}
                 {showToPicker && (
                     <DateTimePicker
                         value={toDate || new Date()}
@@ -601,33 +535,25 @@ const SubmitPayment = ({ route }) => {
                         display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                         onChange={handleToDateChange}
                         minimumDate={fromDate || undefined}
+                        themeVariant="light"
                     />
                 )}
 
-                <View
-                    style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        marginTop: moderateScale(24),
-                    }}
-                >
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: moderateScale(24) }}>
                     <Text style={[styles.mediumText, { fontSize: moderateScale(16) }]}>
                         Payment Proof
                     </Text>
-                    <Text
-                        style={[
-                            styles.mediumText,
-                            {
-                                marginStart: moderateScale(4),
-                                color: '#787878',
-                                fontSize: moderateScale(14),
-                            },
-                        ]}
-                    >
+                    <Text style={[styles.mediumText, { marginStart: moderateScale(4), color: '#787878', fontSize: moderateScale(14) }]}>
                         (Screenshot or Receipt)
                     </Text>
                 </View>
-                <UploadBox title="Tap to upload screenshot" file={idProof ?? existingScreenshot} onPress={() => pickAndCrop(setIdProof)} />
+
+                <UploadBox
+                    title="Tap to upload screenshot"
+                    file={idProof ?? existingScreenshot}
+                    onPress={() => pickAndCrop(setIdProof)}
+                />
+
                 <TouchableOpacity
                     style={[styles.buttonStyle, { marginTop: moderateScale(24) }]}
                     onPress={isEdit ? handleEditSubmit : handleSubmit}
@@ -636,15 +562,9 @@ const SubmitPayment = ({ route }) => {
                         {isEdit ? "Edit Payment" : "Submit Payment"}
                     </Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
-                    style={[
-                        styles.buttonStyle,
-                        {
-                            backgroundColor: '#D9D9D9',
-                            marginTop: moderateScale(16),
-                            marginBottom: moderateScale(32),
-                        },
-                    ]}
+                    style={[styles.buttonStyle, { backgroundColor: '#D9D9D9', marginTop: moderateScale(16), marginBottom: moderateScale(32) }]}
                     onPress={handleCancel}
                 >
                     <Text style={[styles.mediumText, { color: 'black' }]}>Cancel</Text>
@@ -688,8 +608,6 @@ const styles = StyleSheet.create({
         marginStart: moderateScale(16),
         fontWeight: '700',
     },
-
-    // Profile card
     profileCard: {
         backgroundColor: '#FFFFFF',
         borderRadius: moderateScale(10),
@@ -701,7 +619,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
         elevation: 4,
     },
-
     iconCircle: {
         width: 45,
         height: 45,
@@ -725,8 +642,6 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         alignItems: 'center',
     },
-
-    //drop down style
     dropdownBox: {
         height: 50,
         borderRadius: moderateScale(10),
@@ -739,19 +654,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         elevation: 2,
     },
-
     selectedText: {
         fontSize: moderateScale(16),
         fontWeight: '500',
         color: '#000',
     },
-
     modalOverlay: {
         flex: 1,
         justifyContent: 'center',
         backgroundColor: 'rgba(0,0,0,0.3)',
     },
-
     modalBox: {
         backgroundColor: '#fff',
         marginHorizontal: moderateScale(30),
@@ -759,20 +671,16 @@ const styles = StyleSheet.create({
         paddingVertical: moderateScale(10),
         maxHeight: 250,
     },
-
     item: {
         padding: moderateScale(16),
         borderBottomWidth: 0.3,
         borderColor: '#ccc',
     },
-
     itemText: {
         fontSize: moderateScale(16),
         fontWeight: '500',
         color: '#000',
     },
-
-    // uploadBox
     uploadContainer: {
         borderWidth: moderateScale(2),
         borderColor: '#D3D3D3',
@@ -785,19 +693,16 @@ const styles = StyleSheet.create({
         backgroundColor: '#F9F9F9',
         marginVertical: moderateScale(10),
     },
-
     uploadTitle: {
         fontSize: moderateScale(16),
         fontWeight: '500',
         color: '#000',
     },
-
     uploadSubtitle: {
         fontSize: moderateScale(12),
         fontWeight: '500',
         color: '#838383',
     },
-    //buttons
     buttonStyle: {
         backgroundColor: '#519377',
         width: '95%',
@@ -807,7 +712,6 @@ const styles = StyleSheet.create({
         paddingVertical: moderateScale(12),
         borderRadius: 20,
     },
-    //  textinput style
     textInputContainer: {
         height: 50,
         backgroundColor: '#F9FAFB',
@@ -817,19 +721,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: moderateScale(12),
-
-    },
-    textInputLeftIcon: {
-        width: 12,
-        height: 12,
-        tintColor: '#D1D5DB',
-        marginRight: moderateScale(8),
-    },
-    textInputRightIcon: {
-        width: 12,
-        height: 12,
-        tintColor: '#D1D5DB',
-        marginLeft: moderateScale(8),
     },
     textInput: {
         flex: 1,
@@ -837,24 +728,33 @@ const styles = StyleSheet.create({
         color: '#374151',
         marginLeft: 8
     },
-    uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding: 30, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed', marginTop: 12 },
+    uploadBox: {
+        backgroundColor: '#FFF',
+        borderRadius: 16,
+        padding: 30,
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#E0E0E0',
+        borderStyle: 'dashed',
+        marginTop: 12
+    },
     uploadedImage: {
         width: '100%',
         minHeight: 300,
         height: undefined,
-        aspectRatio: 9 / 16, // screenshot ratio
+        aspectRatio: 9 / 16,
         borderRadius: 12,
         marginBottom: 10,
     },
-    hint: { fontSize: 14, color: '#000', marginTop: 10, fontWeight: 500 },
-    uploadText: { fontSize: 12, color: '#838383', fontWeight: 500 },
+    hint: { fontSize: 14, color: '#000', marginTop: 10, fontWeight: '500' },
+    uploadText: { fontSize: 12, color: '#838383', fontWeight: '500' },
+    fileName: { fontSize: 12, color: '#666', marginTop: 6 },
     loaderOverlay: {
         backgroundColor: 'rgba(0,0,0,0.5)',
         alignItems: 'center',
         justifyContent: 'center',
         flex: 1
     },
-
     dateRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -900,12 +800,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#E5E7EB',
         marginHorizontal: 10,
     },
-
-
-
-
-
-
     dropdownTrigger: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -963,5 +857,18 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#999',
         marginTop: 2,
+    },
+    avatar: {
+        width: 45,
+        height: 45,
+        borderRadius: 100,
+    },
+    avatarPlaceholder: {
+        width: 45,
+        height: 45,
+        borderRadius: 100,
+        backgroundColor: '#D9D9D9',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

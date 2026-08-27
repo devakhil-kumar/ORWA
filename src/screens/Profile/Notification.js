@@ -95,7 +95,7 @@ const Notification = () => {
         if (!loading) return null;
         return (
             <View style={{ paddingVertical: 20 }}>
-                <ActivityIndicator size="small" color="#519377" />
+                <ActivityIndicator size='large' color="#519377" />
             </View>
         );
     };
@@ -134,8 +134,8 @@ const Notification = () => {
                             onEndReachedThreshold={0.5}
                             ListFooterComponent={renderFooter}
                             ListEmptyComponent={renderEmpty}
-                            refreshing={loading && currentPage === 1}
-                            onRefresh={handleRefresh}
+                        // refreshing={loading && currentPage === 1}
+                        // onRefresh={handleRefresh}
                         />
                     </View>
                 </View>

@@ -49,6 +49,7 @@ import UserProfile from '../screens/UserProfile.js';
 import imagePath from '../contests/imagePath.jsx';
 import ContactUs from '../screens/Profile/ContactUs.js';
 import EditProfileScreen from '../screens/EditProfileScreen.js';
+import ChangePasswordScreen from '../screens/Profile/ChangePassword.js';
 const { width, height } = Dimensions.get('window');
 
 
@@ -86,6 +87,7 @@ export const ProfileNavigator = () => {
         <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName='UserProfile'>
             <Stack.Screen name="UserProfile" component={UserProfile} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
         </Stack.Navigator>
     )
 }
@@ -191,7 +193,7 @@ const UserBottomTabs = () => {
                     ),
                     tabBarStyle: (() => {
                         const routeName = getFocusedRouteNameFromRoute(route) ?? 'Profile';
-                        if (routeName === 'EditProfile') {
+                        if (routeName === 'EditProfile' || routeName === 'ChangePassword') {
                             return { display: 'none' };
                         }
                         return defaultTabBarStyle;

@@ -1,7 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
     loginService, loginServiceAdmin, forgotPasswordService, forgotPasswordServiceAdmin,
-    verifyOtpService, verifyOtpServiceAdmin, resetPasswordService, resetPasswordServiceAdmin
+    verifyOtpService, verifyOtpServiceAdmin, resetPasswordService, resetPasswordServiceAdmin,
+    chnageAdminPasswordService,
+    chnageResedentialPasswordService
 } from "../../apis/service";
 import { clearUserData, getUserData, saveUserData } from "../../units/asyncStorageManager";
 
@@ -94,6 +96,32 @@ export const loadInitialState = createAsyncThunk(
         }
     }
 );
+
+
+export const changePasswordAdmin = createAsyncThunk(
+    'auth/changePasswordAdmin',
+    async (userData, { rejectWithValue }) => {
+        try {
+            const response = await chnageAdminPasswordService(userData);
+            console.log(response, 'cbsdfbvdsfhvbdvbvh')
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error?.response?.data)
+        }
+    }
+)
+export const changePasswordResedential = createAsyncThunk(
+    'auth/changePasswordResedential',
+    async (userData, { rejectWithValue }) => {
+        try {
+            const response = await chnageResedentialPasswordService(userData);
+            console.log(response, 'cbsdfbvdsfhvbdvbvh')
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error?.response?.data)
+        }
+    }
+)
 
 const initialState = {
     isLoggedIn: false,
@@ -219,6 +247,36 @@ const authSlice = createSlice({
                 console.log(" resetPAssword : ", action.payload);
             })
             .addCase(resetPassword.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
+            //change password admin
+            .addCase(changePasswordAdmin.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(changePasswordAdmin.fulfilled, (state, action) => {
+                state.loading = false;
+                state.message = action.payload?.message;
+                console.log(" changePasswordAdmin : ", action.payload);
+            })
+            .addCase(changePasswordAdmin.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
+            //change password resedential
+            .addCase(changePasswordResedential.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(changePasswordResedential.fulfilled, (state, action) => {
+                state.loading = false;
+                state.message = action.payload?.message;
+                console.log(" changePasswordResedential : ", action.payload);
+            })
+            .addCase(changePasswordResedential.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })

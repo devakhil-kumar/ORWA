@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API_ROUTES } from "./constant";
 import { getUserData } from "../units/asyncStorageManager";
+import { withDelay } from "react-native-reanimated";
 
 // const BASE_URL = "http://49.13.70.253:5010/api/";
 const BASE_URL = "http://49.13.70.253:2424/api/";
@@ -95,6 +96,9 @@ export const addMemberAPI = async (formData) => {
         body: formData,
     });
 
+    console.log('Response dfxfcg:', response);
+
+
     if (!response.ok) {
         // Log the actual error response body from server
         const errorBody = await response.json();
@@ -150,12 +154,12 @@ export const PaymentUpload = async (userData, isAdmin = false) => {
     });
 }
 
-export const PaymentEditUpload = async (userData, paymentId) => {
+export const PaymentEditUpload = async (paymentData, paymentId) => {
     const { token } = await getUserData();
     console.log("Payment ID : ", paymentId);
+    console.log("token: ", token);
     console.log(`Url : ${BASE_URL}${API_ROUTES.ADMIN_EDIT_PAYMENT(paymentId)}`);
-    // ✅ Debug: inspect every FormData part
-    console.log('FormData parts:', JSON.stringify(userData));
+    console.log('FormData parts:', JSON.stringify(paymentData));
 
     const response = await fetch(`${BASE_URL}${API_ROUTES.ADMIN_EDIT_PAYMENT(paymentId)}`, {
         method: 'PUT',
@@ -163,30 +167,43 @@ export const PaymentEditUpload = async (userData, paymentId) => {
             'x-request-source': 'mobile',
             Authorization: `Bearer ${token}`,
         },
-        body: userData,
+        body: paymentData,
     });
 
-    // ✅ Parse ONCE, store in variable
     const data = await response.json();
-
     console.log("Response from api.js:", data);
 
     if (!response.ok) {
-        // ✅ Now you can read the error message from parsed data too
-        console.log("Error from api.js",response.json());
+        console.log("Error from api.js", data);
         throw new Error(data?.message || 'Payment edit upload failed');
     }
 
-    return data;
+    return { data };
 };
 
-export const PaymentHistory = (year, page, limit) => {
-    return axiosInstance.get(`${API_ROUTES.PAYMENT_HISTORY}?year=${year}&page=${page}&limit=${limit}`);
-}
+export const PaymentHistory = (page = 1, limit = 20) => {
+    return axiosInstance.get(API_ROUTES.PAYMENT_HISTORY, {
+        params: { page, limit },
+    });
+};
 
+export const fetchResidentialPayments = (type = 'all', page = 1, limit = 10) => {
+    return axiosInstance.get(API_ROUTES.RESIDENTIAL_PAYMENTS, {
+        params: {
+            type,
+            page,
+            limit,
+        },
+    });
+};
 
-export const fetchResidentialPayments = (type = 'all') => {
-    return axiosInstance.get(`${API_ROUTES.RESIDENTIAL_PAYMENTS}?type=${type}&page=${1}&limit=${30}`);
+export const fetchResidentialFromIdPayments = (userId, page = 1, limit = 10) => {
+    return axiosInstance.get(API_ROUTES.RESIDENTIAL_PAYMENTS_FROM_ID(userId), {
+        params: {
+            page,
+            limit,
+        },
+    });
 };
 
 
@@ -208,20 +225,60 @@ export const getAdminProfile = () => {
     return axiosInstance.get(API_ROUTES.ADMIN_PROFILE)
 }
 
-export const updateUserProfile = async (updatedData) => {
+export const updateUserProfile = async (updatedData, retryCount = 0) => {
     const { token } = await getUserData();
 
-    return axios.put(
-        `${BASE_URL}${API_ROUTES.UPDATE_USER_PROFILE}`,
-        updatedData,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'x-request-source': 'mobile',
-                'Content-Type': 'multipart/form-data',
-            },
+    try {
+        const response = await axios.put(
+            `${BASE_URL}${API_ROUTES.UPDATE_USER_PROFILE}`,
+            updatedData,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'x-request-source': 'mobile',
+                    Accept: 'application/json',
+                },
+                timeout: 120000,
+                maxBodyLength: Infinity,
+                maxContentLength: Infinity,
+                onUploadProgress: (e) => {
+                    if (e.total) {
+                        console.log('Upload progress:', e.loaded, '/', e.total);
+                    }
+                },
+                transformRequest: (data, headers) => {
+                    if (data instanceof FormData && headers) {
+                        if (typeof headers.delete === 'function') {
+                            headers.delete('Content-Type');
+                        } else {
+                            delete headers['Content-Type'];
+                        }
+                    }
+                    return data;
+                },
+            }
+        );
+
+        return response;
+    } catch (error) {
+        const isNetworkError =
+            error?.message === 'Network Error' || error?.code === 'ERR_NETWORK';
+
+        if (isNetworkError && retryCount < 1) {
+            console.log('Network error after upload, retrying once...');
+            await new Promise((r) => setTimeout(r, 1000));
+            return updateUserProfile(updatedData, retryCount + 1);
         }
-    );
+
+        console.log('Update profile failed:', {
+            message: error?.message,
+            code: error?.code,
+            status: error?.response?.status,
+            data: error?.response?.data,
+        });
+
+        throw error;
+    }
 };
 
 
@@ -300,7 +357,22 @@ export const ContactUsUser = async (formData) => {
     // return axiosInstance.post(API_ROUTES.USERCONTACT_US, fromData)
 }
 
-export const deleteResidential = ()=> {
+export const deleteResidential = () => {
     return axiosInstance.post(`${API_ROUTES.DELETE_ACOUNT}`)
 }
+
+export const UsersContactUsListApi = (status, page, limit) => {
+    return axiosInstance.get(
+        `${API_ROUTES.GET_COMPLAINTS}?status=${status}&page=${page}&limit=${limit}`
+    );
+};
+
+export const ChangePasswordAdmin = (userData) => {
+    return axiosInstance.put(API_ROUTES.CHANGE_PASSWORD_ADMIN, userData)
+}
+
+export const ChangePasswordResedential = (userData) => {
+    return axiosInstance.put(API_ROUTES.CHANGE_PASSWORD_RESEDENTIAL, userData)
+}
+
 

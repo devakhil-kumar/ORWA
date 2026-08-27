@@ -13,6 +13,7 @@ export const API_ROUTES = {
     ADMIN_EDIT_PAYMENT: (paymentId) => `payment/admin/${paymentId}/edit`,
     PAYMENT_HISTORY: 'payment/history',
     RESIDENTIAL_PAYMENTS: 'admin/residential/payments',
+    RESIDENTIAL_PAYMENTS_FROM_ID: (userId) => `admin/residential/${userId}/payments`,
     VERIFY_PAYMENT: (id) => `payment/admin/${id}/verify`,
     PROFILE_GET: 'residential/profile',
     MY_NOTIFICATION: 'notifications',
@@ -31,5 +32,10 @@ export const API_ROUTES = {
     CONTACT_US: 'admin/post-contact',
     USERCONTACT_US: 'contact-us',
     DELETE_ACOUNT: 'residential/termination',
-    GET_TERMINATION_REQUESTS: 'admin/residential/termination-requests'
+    GET_TERMINATION_REQUESTS: 'admin/residential/termination-requests',
+    GET_COMPLAINTS: `contact-us/admin`,
+    UPDATE_USER_PROFILE: 'residential/profile',
+    CHANGE_PASSWORD_ADMIN: 'admin/change-password',
+    CHANGE_PASSWORD_RESEDENTIAL: 'residential/change-password',
+
 }

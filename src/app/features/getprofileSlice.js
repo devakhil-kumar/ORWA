@@ -10,7 +10,7 @@ export const fetchProfile = createAsyncThunk(
             saveProfileData(data?.data)
             return data?.data || {};
         } catch (error) {
-            return rejectWithValue({message:error.message,status: error.response?.status,});
+            return rejectWithValue({ message: error.message, status: error.response?.status, });
         }
     }
 );
@@ -30,13 +30,15 @@ export const fetchAdminProfile = createAsyncThunk(
 
 export const updateUserProfile = createAsyncThunk(
     'profile/updateUserProfile',
-    async (updatedData,{ rejectWithValue }) => {
+    async (updatedData, { rejectWithValue }) => {
         try {
+            console.log('Updated profile data from slice :', updatedData);
             const data = await updateUserProfileService(updatedData);
             console.log('Updated profile data from slice:', data);
             saveProfileData(data?.data)
             return data?.data || {};
         } catch (error) {
+            console.log("Error :",error);
             return rejectWithValue(error.message);
         }
     }

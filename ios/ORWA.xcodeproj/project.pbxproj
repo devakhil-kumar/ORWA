@@ -8,22 +8,22 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		2507C2B7D0C3FD0C699F4F51 /* libPods-ORWA.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 267FB55938EF6004BEC2608F /* libPods-ORWA.a */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		82F630F7091A190A0F6F8DF3 /* libPods-ORWA.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9834016FBE6AA3EAC6C6D035 /* libPods-ORWA.a */; };
 		C07D246FDCC2013C4DD10FAF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0D111172EE1147F3337A7F91 /* Pods-ORWA.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ORWA.release.xcconfig"; path = "Target Support Files/Pods-ORWA/Pods-ORWA.release.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* ORWA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ORWA.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ORWA/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ORWA/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = ORWA/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		267FB55938EF6004BEC2608F /* libPods-ORWA.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ORWA.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		18E503B0FBBE50F818CB1510 /* Pods-ORWA.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ORWA.debug.xcconfig"; path = "Target Support Files/Pods-ORWA/Pods-ORWA.debug.xcconfig"; sourceTree = "<group>"; };
+		42617C3C368DA621A7A2663B /* Pods-ORWA.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ORWA.release.xcconfig"; path = "Target Support Files/Pods-ORWA/Pods-ORWA.release.xcconfig"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ORWA/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = ORWA/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		B766E9BFB4F586C3CFF16284 /* Pods-ORWA.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ORWA.debug.xcconfig"; path = "Target Support Files/Pods-ORWA/Pods-ORWA.debug.xcconfig"; sourceTree = "<group>"; };
+		9834016FBE6AA3EAC6C6D035 /* libPods-ORWA.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ORWA.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -32,7 +32,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2507C2B7D0C3FD0C699F4F51 /* libPods-ORWA.a in Frameworks */,
+				82F630F7091A190A0F6F8DF3 /* libPods-ORWA.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,7 +55,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				267FB55938EF6004BEC2608F /* libPods-ORWA.a */,
+				9834016FBE6AA3EAC6C6D035 /* libPods-ORWA.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -92,8 +92,8 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				B766E9BFB4F586C3CFF16284 /* Pods-ORWA.debug.xcconfig */,
-				0D111172EE1147F3337A7F91 /* Pods-ORWA.release.xcconfig */,
+				18E503B0FBBE50F818CB1510 /* Pods-ORWA.debug.xcconfig */,
+				42617C3C368DA621A7A2663B /* Pods-ORWA.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -105,13 +105,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "ORWA" */;
 			buildPhases = (
-				CDDB2EEE83E68C7DA96FBDA9 /* [CP] Check Pods Manifest.lock */,
+				0F79DE26F0782E66499A1D10 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				03C5E14E175B03E9C627C70B /* [CP] Embed Pods Frameworks */,
-				FB4E0B87C3660651B7183CD5 /* [CP] Copy Pods Resources */,
+				80A8499A70400B13399AF61D /* [CP] Embed Pods Frameworks */,
+				ED1AC6D7ECF58DA04D6D60BB /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -183,28 +183,7 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		03C5E14E175B03E9C627C70B /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-ORWA/Pods-ORWA-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			inputPaths = (
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-ORWA/Pods-ORWA-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ORWA/Pods-ORWA-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		CDDB2EEE83E68C7DA96FBDA9 /* [CP] Check Pods Manifest.lock */ = {
+		0F79DE26F0782E66499A1D10 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -226,7 +205,28 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		FB4E0B87C3660651B7183CD5 /* [CP] Copy Pods Resources */ = {
+		80A8499A70400B13399AF61D /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ORWA/Pods-ORWA-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ORWA/Pods-ORWA-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ORWA/Pods-ORWA-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		ED1AC6D7ECF58DA04D6D60BB /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -263,11 +263,11 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B766E9BFB4F586C3CFF16284 /* Pods-ORWA.debug.xcconfig */;
+			baseConfigurationReference = 18E503B0FBBE50F818CB1510 /* Pods-ORWA.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = XLS66J3QVX;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = ORWA/Info.plist;
@@ -278,7 +278,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4;
+				MARKETING_VERSION = 2.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -294,11 +294,11 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0D111172EE1147F3337A7F91 /* Pods-ORWA.release.xcconfig */;
+			baseConfigurationReference = 42617C3C368DA621A7A2663B /* Pods-ORWA.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = XLS66J3QVX;
 				INFOPLIST_FILE = ORWA/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ORWA;
@@ -308,7 +308,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4;
+				MARKETING_VERSION = 2.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

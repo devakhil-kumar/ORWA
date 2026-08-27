@@ -1,6 +1,6 @@
 
 export default {
-    loginImage: require('../assets/images/appLogo.png'),
+    loginImage: require('../assets/images/appLogo.jpg'),
     cardImage: require('../assets/images/Card.png'),
     usersImage: require('../assets/images/Users.png'),
     speakerImage: require('../assets/images/Speaker.png'),

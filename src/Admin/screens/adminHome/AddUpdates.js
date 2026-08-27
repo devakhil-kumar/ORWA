@@ -12,7 +12,9 @@ import {
     Dimensions,
     Alert,
     ActivityIndicator,
+    TextInput,
 } from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { moderateScale } from 'react-native-size-matters';
 import Ionicons from '@react-native-vector-icons/ionicons';
@@ -29,19 +31,24 @@ const AddUpdates = ({ navigation }) => {
     const [societyName, setSocietyName] = useState('');
     const [societyDescription, setSocietyDescription] = useState('');
     const [addressProof, setAddressProof] = useState(null);
+    const [date, setDate] = useState(null);
+    const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const dispatch = useDispatch();
     const { addloading } = useSelector((state) => state.eventAdmin)
 
+    // FIX: previously this forced `cropping: true` with a fixed
+    // width/height (1000x800), so every picked image was pushed through
+    // the crop UI and resized/squeezed toward that box before upload.
+    // Cropping is now off by default so the full original image is used —
+    // pass { cropping: true, width, height } in `options` from a specific
+    // call site if you want cropping back for that one upload.
     const pickAndCrop = async (setter, options = {}) => {
         try {
             const image = await ImageCropPicker.openPicker({
-                width: options.width || 1000,
-                height: options.height || 800,
-                cropping: true,
-                cropperCircleOverlay: options.circle || false,
-                freeStyleCropEnabled: true,
+                cropping: false,
                 compressImageQuality: 0.8,
                 includeBase64: false,
+                mediaType: 'photo',
                 ...options,
             });
             setter({
@@ -56,6 +63,15 @@ const AddUpdates = ({ navigation }) => {
         }
     };
 
+    const formatDate = (date) => {
+        return date.toISOString().split('T')[0];
+    };
+
+    const handleDateConfirm = (selectedDate) => {
+        setDate(selectedDate);
+        setDatePickerVisible(false);
+    };
+
     const handleSubmit = async () => {
         if (!societyName.trim()) {
             Alert.alert('Validation Error', 'Please enter a title');
@@ -65,31 +81,47 @@ const AddUpdates = ({ navigation }) => {
             Alert.alert('Validation Error', 'Please enter a description');
             return;
         }
+        if (!date) {
+            Alert.alert('Validation Error', 'Please select a date');
+            return;
+        }
+
+        // Format date as YYYY-MM-DD
+        const formattedDate = formatDate(date);
+
+        console.log("Formatted Date : ", formattedDate);
+
         if (!addressProof) {
             Alert.alert('Validation Error', 'Please select an image');
             return;
         }
+
         const formData = new FormData();
         formData.append('title', societyName.trim());
         formData.append('description', societyDescription.trim());
+        formData.append('eventDate', formattedDate);        // ← Changed here
         formData.append('image', {
             uri: addressProof.uri,
             type: addressProof.type,
             name: addressProof.name,
         });
-        console.log(formData, 'formdata+++++++++++++')
+
         try {
             const result = await dispatch(addEvent(formData)).unwrap();
             console.log('Event added successfully:', result);
+
             dispatch(
                 showMessage({
                     type: 'success',
                     text: result?.message || 'Announcements Add successful!',
                 })
             );
-            setAddressProof(null)
-            setSocietyName('')
-            setSocietyDescription('')
+
+            // Reset form
+            setAddressProof(null);
+            setSocietyName('');
+            setDate(null);
+            setSocietyDescription('');
             navigation.goBack();
         } catch (error) {
             dispatch(
@@ -104,7 +136,7 @@ const AddUpdates = ({ navigation }) => {
     const UploadBox = ({ title, file, onPress, hint }) => (
         <TouchableOpacity style={styles.uploadBox} onPress={onPress}>
             {file ? (
-                <Image source={{ uri: file.uri }} style={styles.uploadedImage} resizeMode="cover" />
+                <Image source={{ uri: file.uri }} style={styles.uploadedImage} resizeMode="contain" />
             ) : (
                 <>
                     <Ionicons name='cloud-upload-outline' size={20} color={'#666'} />
@@ -155,6 +187,30 @@ const AddUpdates = ({ navigation }) => {
                         multiline
                     />
                 </View>
+                <Text style={styles.label}>Announcement Date *</Text>
+                <TouchableOpacity onPress={() => setDatePickerVisible(true)}>
+                    <TextInput
+                        style={styles.inputFull}
+                        value={date ? formatDate(date) : ''}
+                        placeholder="Select Date"
+                        editable={false}
+                        pointerEvents="none"
+                        placeholderTextColor={'#E0E0E0'}
+                    />
+                </TouchableOpacity>
+
+                <DateTimePickerModal
+                    isVisible={isDatePickerVisible}
+                    mode="date"
+                    onConfirm={handleDateConfirm}
+                    onCancel={() => setDatePickerVisible(false)}
+                    maximumDate={new Date()}
+                    minimumDate={new Date(1800, 0, 1)}
+                    themeVariant="light"           // forces light theme text/controls
+                    isDarkModeEnabled={false}      // some versions also read this
+                    pickerContainerStyleIOS={{ backgroundColor: '#FFFFFF' }} // explicit bg to match
+                />
+
                 <View>
                     <Text style={styles.label}>Announcement Image *</Text>
                     <UploadBox title="Upload Image" file={addressProof} onPress={() => pickAndCrop(setAddressProof)} />
@@ -365,8 +421,10 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
     uploadBox: { backgroundColor: '#FFF', borderRadius: 16, padding: 25, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed', marginTop: 5 },
-    uploadedImage: { width: 200, height: 120, borderRadius: 12, marginBottom: 10 },
+    uploadedImage: { width: 340, height: 200, borderRadius: 12, marginBottom: 10 },
     uploadText: { fontSize: 14, color: '#666' },
     fileName: { color: '#0066CC', fontSize: 12, marginTop: 8 },
     hint: { fontSize: 12, color: '#999', marginTop: 10 },
+    inputFull: { marginTop: 10, backgroundColor: '#FFF', borderRadius: 12, height: 56, paddingHorizontal: 15, marginBottom: 10, borderColor: '#C4C4C4', borderWidth: 1 },
+
 });

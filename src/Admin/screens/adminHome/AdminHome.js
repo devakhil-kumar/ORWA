@@ -57,6 +57,11 @@ const AdminHome = () => {
     const { admin, adminLoading } = useSelector((state) => state.profile);
     const { events, loading } = useSelector((state) => state.eventAdmin);
 
+    // Sort events by eventDate — newest first
+    const sortedEvents = [...(events || [])].sort(
+        (a, b) => new Date(b.eventDate) - new Date(a.eventDate)
+    );
+
     useEffect(() => {
         dispatch((fetchAdminProfile()))
     }, [dispatch])
@@ -70,9 +75,9 @@ const AdminHome = () => {
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB', }} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor="#519377" />
-            <ScrollView style={styles.container} 
-            contentContainerStyle={styles.contentContainer}  
-            showsVerticalScrollIndicator={false} >
+            <ScrollView style={styles.container}
+                contentContainerStyle={styles.contentContainer}
+                showsVerticalScrollIndicator={false} >
                 <View style={styles.header}>
                     <TouchableOpacity style={styles.profileSection} onPress={onHandleProfile}>
                         <View style={styles.avatar}>
@@ -130,7 +135,7 @@ const AdminHome = () => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Announcements</Text>
-                        {events?.length > 0 && (
+                        {sortedEvents?.length > 0 && (
                             <TouchableOpacity onPress={handleViewAll}>
                                 <Text style={styles.viewAllText}>View all</Text>
                             </TouchableOpacity>
@@ -140,12 +145,12 @@ const AdminHome = () => {
                         <View style={{ height: 100, justifyContent: 'center' }}>
                             <ActivityIndicator size="small" color="#519377" style={{ marginTop: 0 }} />
                         </View>
-                    ) : events?.length === 0 ? (
+                    ) : sortedEvents?.length === 0 ? (
                         <View style={{ height: 100, justifyContent: 'center' }}>
                             <Text style={styles.noDataText}>No events available</Text>
                         </View>
                     ) : (
-                        events.slice(0, 8).map((item, index) => (
+                        sortedEvents.slice(0, 8).map((item, index) => (
                             <View
                                 key={`${item?._id ?? 'event'}-${index}`}
                                 style={styles.card}
@@ -164,10 +169,9 @@ const AdminHome = () => {
 
                                 <View style={styles.dateWrapper}>
                                     <Text style={styles.dateText}>
-                                        {new Date(item.createdAt).toLocaleDateString("en-US", {
-                                            month: "short",
-                                            day: "numeric",
-                                        })}
+                                        {item?.eventDate
+                                            ? item.eventDate.split('T')[0]
+                                            : 'N/A'}
                                     </Text>
                                 </View>
                             </View>
@@ -184,9 +188,9 @@ const styles = StyleSheet.create({
         flex: 1
     },
     contentContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 40,  
-},
+        paddingHorizontal: 16,
+        paddingBottom: 40,
+    },
     header: {
         marginTop: 16,
         flexDirection: 'row',
@@ -389,8 +393,7 @@ const styles = StyleSheet.create({
     billTitle: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#000000',
-        marginBottom: 2,
+        color: '#333',
     },
     billDate: {
         fontSize: 12,
@@ -419,7 +422,7 @@ const styles = StyleSheet.create({
     },
     card: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         paddingVertical: 10,
         backgroundColor: "#fff",
         borderRadius: 10,

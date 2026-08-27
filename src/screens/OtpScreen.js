@@ -186,7 +186,7 @@ const OTPScreen = () => {
                         style={styles.signInButton}
                         onPress={handleVerifyOtp}
                     >
-                        <Text style={styles.signInButtonText}>Send Code</Text>
+                        <Text style={styles.signInButtonText}>Submit Code</Text>
                     </TouchableOpacity>
 
                 </ScrollView>

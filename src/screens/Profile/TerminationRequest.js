@@ -305,7 +305,7 @@ const TerminationRequest = () => {
                                 }
                                 renderItem={renderItem}
                                 showsVerticalScrollIndicator={false}
-                                contentContainerStyle={{ paddingBottom: 20 }}
+                                contentContainerStyle={{ paddingBottom: 80 }}
                                 ListEmptyComponent={renderEmpty}
                             />
                         </View>}

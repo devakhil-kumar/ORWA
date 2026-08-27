@@ -266,25 +266,27 @@ const Announcement = () => {
     const { list, loading, page } = useSelector((state) => state.userAnnouncement);
     console.log(list, loading, page, 'data+++++++++++')
 
-    const filteredAnnouncements = list.filter((item) => {
-        if (selectedAnnouncementFilter === 'System') {
-            return item.type === 'system';
-        }
+    const filteredAnnouncements = list
+        .filter((item) => {
+            if (selectedAnnouncementFilter === 'System') {
+                return item.type === 'system';
+            }
 
-        if (selectedAnnouncementFilter === 'Announcements') {
-            return item.type === 'event';
-        }
+            if (selectedAnnouncementFilter === 'Announcements') {
+                return item.type === 'event';
+            }
 
-        if (searchText.trim().length > 0) {
-            const search = searchText.toLowerCase();
-            const titleMatch = item?.title?.toLowerCase().includes(search);
-            const messageMatch = item?.message?.toLowerCase().includes(search);
-            const typeMatch = item?.type?.toLowerCase().includes(search);
-            return titleMatch || messageMatch || typeMatch;
-        }
+            if (searchText.trim().length > 0) {
+                const search = searchText.toLowerCase();
+                const titleMatch = item?.title?.toLowerCase().includes(search);
+                const messageMatch = item?.message?.toLowerCase().includes(search);
+                const typeMatch = item?.type?.toLowerCase().includes(search);
+                return titleMatch || messageMatch || typeMatch;
+            }
 
-        return true;
-    });
+            return true;
+        })
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     const EmptyState = ({ message }) => {
         return (
@@ -305,7 +307,7 @@ const Announcement = () => {
                     </TouchableOpacity>
                     {/* <Text style={styles.headerText}>Announcements</Text> */}
                 </View>
-                <Text style={styles.headerText}>Notinvbvm,.fications</Text>
+                <Text style={styles.headerText}>Notifications</Text>
                 <View style={{ width: '10%' }} />
             </View>
             {/* <ScrollView

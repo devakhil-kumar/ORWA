@@ -51,9 +51,17 @@ const UserProfile = () => {
         dispatch(logout())
     }
 
+    const handleChangePassword = () => {
+        navigation.navigate('ChangePassword');
+    }
+
     const handlegoBack = () => {
         navigation.goBack();
     }
+
+    const handleNavigateToEditProfile = () => {
+        navigation.navigate('EditProfile');
+    };
 
     // Open delete modal
     const openDeleteModal = () => {
@@ -95,7 +103,7 @@ const UserProfile = () => {
             dispatch(
                 showMessage({
                     type: 'error',
-                    text: error?.message || 'Failed to terminate account', 
+                    text: error?.message || 'Failed to terminate account',
                 })
             );
         }
@@ -113,12 +121,18 @@ const UserProfile = () => {
                     <TouchableOpacity onPress={handlegoBack}>
                         <Ionicons name="chevron-back" size={28} color="#519377" />
                     </TouchableOpacity>
+                    <TouchableOpacity style={{ flexDirection: 'row', paddingHorizontal: 10, }} onPress={handleNavigateToEditProfile}>
+                        <MaterialIcons name="edit" size={23} color="#333" />
+                        <Text style={{ marginLeft: 16, color: "#333", fontWeight: '500', fontSize: 16 }}>Edit Profile</Text>
+                    </TouchableOpacity>
                 </View>
                 <View style={styles.profileWrapper}>
-                    <Image
+                    {user?.profileImage ? <Image
                         source={{ uri: getUri(userData.profileImage) }}
                         style={styles.profileImage}
-                    />
+                    /> : <View style={styles.avatar}>
+                        <Text style={styles.avatarText}>{user?.name?.charAt(0)?.toUpperCase()}</Text>
+                    </View>}
                 </View>
 
                 <View style={styles.nameRow}>
@@ -131,11 +145,14 @@ const UserProfile = () => {
                     <InfoRow icon="home-outline" label="Flat No" value={userData.flatNo} />
                     {/* <InfoRow icon="card-account-details-outline" label="Aadhar Card no" value={userData.aadhar} /> */}
                 </View>
-                <TouchableOpacity style={styles.infoRow} onPress={openDeleteModal}>
+                {/* <TouchableOpacity style={styles.infoRow} onPress={openDeleteModal}>
                     <MaterialIcons name="delete-outline" size={23} color="#333" />
                     <Text style={{ marginLeft: 16, color: "#333", fontWeight: '500', fontSize: 16 }}>Terminate Account</Text>
+                </TouchableOpacity> */}
+                <TouchableOpacity style={styles.infoRow} onPress={handleChangePassword}>
+                    <MaterialIcons name="password" size={23} color="#585858" />
+                    <Text style={{ marginLeft: 16, color: "#333", fontWeight: '500', fontSize: 16 }}>Change Password</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity style={styles.infoRow} onPress={handleLogout}>
                     <MaterialIcons name="logout" size={23} color="#585858" />
                     <Text style={{ marginLeft: 16, color: "#333", fontWeight: '500', fontSize: 16 }}>Logout</Text>
@@ -200,6 +217,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         padding: 16,
+        backgroundColor: '#F9FAFB',
     },
     profileWrapper: {
         alignItems: 'center',
@@ -321,5 +339,19 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: '#fff',
+    },
+    avatar: {
+        width: 140,
+        height: 140,
+        borderRadius: 100,
+        backgroundColor: '#E0E0E0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    avatarText: {
+        fontSize: 80,
+        fontWeight: '600',
+        color: '#000',
     },
 });

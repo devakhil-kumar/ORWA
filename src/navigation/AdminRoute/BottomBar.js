@@ -27,6 +27,9 @@ import ResidentsList from '../../screens/Profile/ResidentsList.js';
 import TerminationRequest from '../../screens/Profile/TerminationRequest.js'
 import imagePath from '../../contests/imagePath.jsx';
 import UserSubmitPayment from '../../screens/UserSubmitPayments.js';
+import ComplaintsList from '../../screens/Profile/ComplaintsList.js';
+import ComplaintDetail from '../../screens/Profile/ComplaintDetail.js';
+import ChangePassword from '../../screens/Profile/ChangePassword.js';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,6 +55,8 @@ export const AdminNavigator = () => {
             <Stack.Screen name="ResidentsList" component={ResidentsList} />
             <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
             <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
+            <Stack.Screen name="UserSubmitPayment" component={UserSubmitPayment} />
+
         </Stack.Navigator>
     )
 }
@@ -66,7 +71,12 @@ export const ProfileNavigator = () => {
             <Stack.Screen name='ContactUs' component={ContactUs} />
             <Stack.Screen name='Notification' component={Notification} />
             <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
+            <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
             <Stack.Screen name='TerminationRequest' component={TerminationRequest} />
+            <Stack.Screen name='ComplaintsList' component={ComplaintsList} />
+            <Stack.Screen name='ComplaintDetail' component={ComplaintDetail} />
+            <Stack.Screen name='ChangePassword' component={ChangePassword} />
+            <Stack.Screen name="UserSubmitPayment" component={UserSubmitPayment} />
 
         </Stack.Navigator>
     )
@@ -77,7 +87,7 @@ export const PaymentNavigator = () => {
         <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName='PaymentHistory'>
             <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
             <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
-            <Stack.Screen name="UserSubmitPayment" component={UserSubmitPayment} />            
+            <Stack.Screen name="UserSubmitPayment" component={UserSubmitPayment} />
         </Stack.Navigator>
     )
 }
@@ -95,7 +105,7 @@ const AdminBottomTabs = () => {
     const insets = useSafeAreaInsets();
     const bottomInset = Platform.OS === 'android' ? insets.bottom : 10;
     const defaultTabBarStyle = {
-    
+
         left: 0,
         right: 0,
         bottom: 0,
@@ -134,7 +144,7 @@ const AdminBottomTabs = () => {
                     ),
                     tabBarStyle: (() => {
                         const routeName = getFocusedRouteNameFromRoute(route) ?? 'Profile';
-                        if (routeName === 'Announcements' || routeName === 'AddMember' || routeName === 'AddUpdates' || routeName === 'ResidentsList' || routeName === 'PaymentHistory' || routeName === 'PaymentDetails') {
+                        if (routeName === 'Announcements' || routeName === 'AddMember' || routeName === 'AddUpdates' || routeName === 'ResidentsList' || routeName === 'PaymentHistory' || routeName === 'PaymentDetails' || routeName === 'UserSubmitPayment') {
                             return { display: 'none' };
                         }
                         return defaultTabBarStyle;
@@ -174,7 +184,7 @@ const AdminBottomTabs = () => {
                 })}
                 options={({ route }) => ({
                     tabBarIcon: ({ focused }) => (
-                        <Ionicons name='wallet' size={28} color={focused ? '#519377' : '#000'} />
+                        <Ionicons name='wallet-outline' size={28} color={focused ? '#519377' : '#000'} />
                     ),
                     tabBarLabel: ({ focused }) => (
                         <Text style={{ color: focused ? '#519377' : '#000', fontSize: 12 }}>Payments</Text>
@@ -228,8 +238,8 @@ const AdminBottomTabs = () => {
                     ),
                     tabBarStyle: (() => {
                         const routeName = getFocusedRouteNameFromRoute(route) ?? 'Profile';
-                        if (routeName === 'SocietyInfoScreen' || routeName === 'ResdentsList' || routeName === 'ContactUs' || routeName === 'Notification' || routeName === 'AddMember'
-                            || routeName === 'TerminationRequest'
+                        if (routeName === 'SocietyInfoScreen' || routeName === 'ResdentsList' || routeName === 'UserSubmitPayment' || routeName === 'ContactUs' || routeName === 'Notification' || routeName === 'AddMember'
+                            || routeName === 'TerminationRequest' || routeName === 'ComplaintsList' || routeName === 'ComplaintDetail' || routeName === 'ChangePassword'
                         ) {
                             return { display: 'none' };
                         }

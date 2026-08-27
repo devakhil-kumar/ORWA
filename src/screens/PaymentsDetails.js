@@ -47,6 +47,7 @@ const PaymentDetails = () => {
             return;
         }
 
+        console.log('Payment details : ', payment);
         const result = await dispatch(verifyPaymentThunk({
             paymentId: payment._id,
             paidFrom: formatForAPI(fromDate),
@@ -121,7 +122,7 @@ const PaymentDetails = () => {
                     <Ionicons name="pencil" size={28} color="#519377" />
                 </TouchableOpacity>
             </View>
-            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: '#F9FAFB', paddingHorizontal: 16 }}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: '#F9FAFB', paddingHorizontal: 16, paddingBottom: 40 }}>
 
                 {/* Resident Card */}
                 <View style={styles.card}>
@@ -211,12 +212,14 @@ const PaymentDetails = () => {
 
                 {/* From Date Picker */}
                 {showFromPicker && (
+
                     <DateTimePicker
                         value={fromDate || new Date()}
                         mode="date"
                         display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                         onChange={handleFromDateChange}
                         maximumDate={toDate || undefined}
+                        themeVariant="light"
                     />
                 )}
 
@@ -228,6 +231,7 @@ const PaymentDetails = () => {
                         display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                         onChange={handleToDateChange}
                         minimumDate={fromDate || undefined}
+                        themeVariant="light"
                     />
                 )}
                 <View style={styles.buttonContainer}>
